@@ -1,0 +1,6 @@
+{
+  "name": "Galaxy ERP",
+  "description": "Next-Gen School & College Cloud SaaS ERP with AI Assistants, Smart Campus Modules, UPI Fees, GPS Tracking, Face Recognition & Advanced Analytics",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
