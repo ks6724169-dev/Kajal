@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 interface NavbarProps {
+  children?: React.ReactNode;
   currentTenant: Tenant;
   onSelectTenant: (tenant: Tenant) => void;
   currentRole: Role;
@@ -32,7 +33,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   language,
   onSelectLanguage,
   onOpenMobileApp,
-  onOpenSettings
+  onOpenSettings,
+  children
 }) => {
   const [showTenantMenu, setShowTenantMenu] = useState(false);
   const [showRoleMenu, setShowRoleMenu] = useState(false);
@@ -201,6 +203,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
         </div>
+
+        {children}
 
         {/* Mobile App Simulator Button */}
         <button

@@ -17,6 +17,7 @@ import {
   Shield
 } from 'lucide-react';
 import { Role } from '../types';
+import { useAuth } from '../core/auth';
 
 interface LoginPageProps {
   onBack: () => void;
@@ -24,9 +25,16 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess }) => {
+  const auth = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [schoolCode, setSchoolCode] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [showRoleSelect, setShowRoleSelect] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const roles = [
     { id: 'super_admin', label: 'School / College Owner' },
@@ -36,16 +44,60 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess }) 
     { id: 'parent', label: 'Parent' },
   ];
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRole) {
-      alert('Please select a role to login.');
+      setStatusMessage('Please select a role to login.');
       return;
     }
-    
-    // Default to super_admin if mapped role isn't perfectly matched, but we use the id
+
     const roleId = roles.find(r => r.label === selectedRole)?.id as Role || 'student';
-    onLoginSuccess(roleId);
+    setIsSubmitting(true);
+    setStatusMessage('');
+    try {
+      await auth.login({ schoolCode, email, password, role: roleId, rememberMe });
+      onLoginSuccess(roleId);
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : 'Unable to login.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setStatusMessage('Enter your email before requesting a password reset.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatusMessage('');
+    try {
+      await auth.forgotPassword(email);
+      setStatusMessage('If the account exists, a password reset email has been sent.');
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : 'Unable to send reset email.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      setStatusMessage('Enter your email before requesting verification.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatusMessage('');
+    try {
+      await auth.resendVerification(email);
+      setStatusMessage('If verification is pending, a new verification email has been sent.');
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : 'Unable to send verification email.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -118,6 +170,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess }) 
               </div>
               <input
                 type="text"
+                value={schoolCode}
+                onChange={(event) => setSchoolCode(event.target.value)}
                 placeholder="Enter School Unique ID"
                 className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 required
@@ -134,6 +188,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess }) 
               </div>
               <input
                 type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
                 placeholder="Enter your Gmail"
                 className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 required
@@ -150,6 +206,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess }) 
               </div>
               <input
                 type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
                 placeholder="Enter your Password"
                 className="w-full pl-10 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 required
@@ -186,23 +244,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess }) 
 
           <div className="flex items-center justify-between pt-1">
             <label className="flex items-center space-x-2 cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+              <input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
               <span className="text-xs font-medium text-slate-600">Remember Me</span>
             </label>
-            <a href="#" className="text-xs font-bold text-indigo-700 hover:text-indigo-800">
+            <button type="button" onClick={handleForgotPassword} className="text-xs font-bold text-indigo-700 hover:text-indigo-800">
               Forgot Password?
-            </a>
+            </button>
           </div>
+
+          {statusMessage && (
+            <div className="rounded-xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">{statusMessage}</div>
+          )}
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2 shadow-lg shadow-indigo-200"
+            disabled={isSubmitting}
+            className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2 shadow-lg shadow-indigo-200 disabled:opacity-60"
           >
-            <span>Login</span>
+            <span>{isSubmitting ? 'Signing in...' : 'Login'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
 
-          <div className="pt-2">
+          <div className="pt-2 space-y-2">
+            <button type="button" onClick={handleResendVerification} className="w-full bg-blue-50 text-blue-600 text-xs font-semibold py-2.5 rounded-xl flex items-center justify-center space-x-1.5">
+              <ShieldCheck className="w-4 h-4" />
+              <span>Resend Email Verification</span>
+            </button>
             <div className="w-full bg-emerald-50 text-emerald-600 text-xs font-semibold py-2.5 rounded-xl flex items-center justify-center space-x-1.5">
               <ShieldCheck className="w-4 h-4" />
               <span>Secure • Reliable • Efficient</span>
