@@ -129,26 +129,30 @@ DECLARE
   org_id UUID := NULL;
   cam_id UUID := NULL;
   u_id UUID := NULL;
+  rec_id UUID := NULL;
 BEGIN
   IF (TG_OP = 'UPDATE') THEN
     old_r := to_jsonb(OLD);
     new_r := to_jsonb(NEW);
-    t_id := NEW.tenant_id;
-    org_id := NEW.organization_id;
-    cam_id := NEW.campus_id;
-    u_id := NEW.updated_by;
+    t_id := (new_r->>'tenant_id')::uuid;
+    org_id := (new_r->>'organization_id')::uuid;
+    cam_id := (new_r->>'campus_id')::uuid;
+    u_id := (new_r->>'updated_by')::uuid;
+    rec_id := (new_r->>'id')::uuid;
   ELSIF (TG_OP = 'INSERT') THEN
     new_r := to_jsonb(NEW);
-    t_id := NEW.tenant_id;
-    org_id := NEW.organization_id;
-    cam_id := NEW.campus_id;
-    u_id := NEW.created_by;
+    t_id := (new_r->>'tenant_id')::uuid;
+    org_id := (new_r->>'organization_id')::uuid;
+    cam_id := (new_r->>'campus_id')::uuid;
+    u_id := (new_r->>'created_by')::uuid;
+    rec_id := (new_r->>'id')::uuid;
   ELSIF (TG_OP = 'DELETE') THEN
     old_r := to_jsonb(OLD);
-    t_id := OLD.tenant_id;
-    org_id := OLD.organization_id;
-    cam_id := OLD.campus_id;
-    u_id := OLD.updated_by;
+    t_id := (old_r->>'tenant_id')::uuid;
+    org_id := (old_r->>'organization_id')::uuid;
+    cam_id := (old_r->>'campus_id')::uuid;
+    u_id := COALESCE((old_r->>'updated_by')::uuid, (old_r->>'deleted_by')::uuid);
+    rec_id := (old_r->>'id')::uuid;
   END IF;
 
   INSERT INTO core_audit.audit_event_log (
@@ -166,7 +170,7 @@ BEGIN
     TG_OP,
     TG_TABLE_SCHEMA,
     TG_TABLE_NAME,
-    COALESCE(NEW.id, OLD.id),
+    COALESCE(rec_id, (old_r->>'id')::uuid, (new_r->>'id')::uuid),
     old_r,
     new_r,
     t_id,
@@ -175,6 +179,9 @@ BEGIN
     u_id
   );
   
+  IF (TG_OP = 'DELETE') THEN
+    RETURN OLD;
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
