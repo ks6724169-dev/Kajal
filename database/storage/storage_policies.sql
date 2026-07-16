@@ -4,7 +4,7 @@
 
 -- 1. Create Supabase Bucket Registries Schema reference (if not exists)
 CREATE TABLE IF NOT EXISTS core_storage.bucket_registry (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   bucket_name VARCHAR(256) UNIQUE NOT NULL,
   is_public BOOLEAN DEFAULT FALSE NOT NULL,
   allowed_file_extensions VARCHAR(32)[] DEFAULT ARRAY['pdf','docx','png','jpg','xlsx','zip']::VARCHAR(32)[] NOT NULL,

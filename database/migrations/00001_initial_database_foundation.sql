@@ -85,8 +85,8 @@ $$ LANGUAGE plpgsql;
 -- 4. FOUNDATIONAL AUDIT LOGGING SCHEMA
 -- ==========================================
 CREATE TABLE core_audit.audit_event_log (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
-  transaction_id UUID DEFAULT public.gen_random_uuid(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  transaction_id UUID DEFAULT gen_random_uuid(),
   event_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
   actor_user_id UUID,
   tenant_id UUID,
@@ -170,7 +170,7 @@ $$ LANGUAGE plpgsql;
 
 -- 5.1 System Version
 CREATE TABLE public.system_version (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   major INT NOT NULL,
   minor INT NOT NULL,
   patch INT NOT NULL,
@@ -197,7 +197,7 @@ CREATE TABLE public.system_version (
 
 -- 5.2 Migration History
 CREATE TABLE public.migration_history (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   migration_name VARCHAR(256) UNIQUE NOT NULL,
   executed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
   duration_ms INT NOT NULL,
@@ -223,7 +223,7 @@ CREATE TABLE public.migration_history (
 
 -- 5.3 Environment Configuration
 CREATE TABLE public.environment (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   env_name VARCHAR(64) UNIQUE NOT NULL,
   provider VARCHAR(128) NOT NULL,
   is_production BOOLEAN DEFAULT FALSE NOT NULL,
@@ -248,7 +248,7 @@ CREATE TABLE public.environment (
 
 -- 5.4 Application Settings
 CREATE TABLE public.application_settings (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   setting_key VARCHAR(128) UNIQUE NOT NULL,
   setting_value TEXT NOT NULL,
   description TEXT,
@@ -274,7 +274,7 @@ CREATE TABLE public.application_settings (
 
 -- 5.5 Feature Flags
 CREATE TABLE public.feature_flags (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   flag_name VARCHAR(128) UNIQUE NOT NULL,
   is_enabled BOOLEAN DEFAULT FALSE NOT NULL,
   description TEXT,
@@ -300,7 +300,7 @@ CREATE TABLE public.feature_flags (
 
 -- 5.6 Locales
 CREATE TABLE public.locales (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   locale_code VARCHAR(32) UNIQUE NOT NULL,
   locale_name VARCHAR(128) NOT NULL,
   native_name VARCHAR(128),
@@ -325,7 +325,7 @@ CREATE TABLE public.locales (
 
 -- 5.7 Languages
 CREATE TABLE public.languages (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   language_iso VARCHAR(16) UNIQUE NOT NULL,
   language_name VARCHAR(128) NOT NULL,
   native_name VARCHAR(128),
@@ -350,7 +350,7 @@ CREATE TABLE public.languages (
 
 -- 5.8 Countries
 CREATE TABLE public.countries (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   iso_alpha2 VARCHAR(2) UNIQUE NOT NULL,
   iso_alpha3 VARCHAR(3) UNIQUE NOT NULL,
   numeric_code VARCHAR(8) UNIQUE NOT NULL,
@@ -378,7 +378,7 @@ CREATE TABLE public.countries (
 
 -- 5.9 Currencies
 CREATE TABLE public.currencies (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   currency_code VARCHAR(3) UNIQUE NOT NULL,
   currency_name VARCHAR(128) NOT NULL,
   currency_symbol VARCHAR(16) NOT NULL,
@@ -404,7 +404,7 @@ CREATE TABLE public.currencies (
 
 -- 5.10 Timezones
 CREATE TABLE public.timezones (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   timezone_name VARCHAR(128) UNIQUE NOT NULL,
   utc_offset_seconds INT NOT NULL,
   is_dst BOOLEAN DEFAULT FALSE NOT NULL,
@@ -429,7 +429,7 @@ CREATE TABLE public.timezones (
 
 -- 5.11 Audit Configurations
 CREATE TABLE public.audit_configuration (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   target_table_name VARCHAR(128) UNIQUE NOT NULL,
   logging_active BOOLEAN DEFAULT TRUE NOT NULL,
   retention_days_limit INT DEFAULT 90 NOT NULL,
@@ -455,7 +455,7 @@ CREATE TABLE public.audit_configuration (
 
 -- 5.12 Security Parameters Configuration
 CREATE TABLE public.security_configuration (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   parameter_name VARCHAR(128) UNIQUE NOT NULL,
   parameter_val TEXT NOT NULL,
   threat_risk_level VARCHAR(64) DEFAULT 'medium' NOT NULL,
@@ -604,7 +604,7 @@ CREATE TRIGGER tr_seccfg_audit AFTER INSERT OR UPDATE OR DELETE ON public.securi
 -- 8. STORAGE FOUNDATION REGISTRY (SUPABASE SIMULATED)
 -- ==========================================
 CREATE TABLE core_storage.bucket_registry (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   bucket_name VARCHAR(256) UNIQUE NOT NULL,
   is_public BOOLEAN DEFAULT FALSE NOT NULL,
   allowed_file_extensions VARCHAR(32)[] DEFAULT ARRAY['pdf','docx','png','jpg','xlsx','zip']::VARCHAR(32)[] NOT NULL,
@@ -649,7 +649,7 @@ CREATE TRIGGER tr_bucket_audit AFTER INSERT OR UPDATE OR DELETE ON core_storage.
 -- 9. MONITORING FOUNDATION SCHEMA
 -- ==========================================
 CREATE TABLE core_monitoring.db_health_metrics (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   metric_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
   cpu_usage_pct NUMERIC(5, 2) DEFAULT 0.00 NOT NULL,
   memory_usage_pct NUMERIC(5, 2) DEFAULT 0.00 NOT NULL,
@@ -662,7 +662,7 @@ CREATE TABLE core_monitoring.db_health_metrics (
 );
 
 CREATE TABLE core_monitoring.db_error_logs (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   error_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
   error_code VARCHAR(32) NOT NULL,
   error_message TEXT NOT NULL,
@@ -678,7 +678,7 @@ CREATE TABLE core_monitoring.db_error_logs (
 -- 10. BACKUP & SNAPSHOT REGISTRY
 -- ==========================================
 CREATE TABLE core_backup.snapshot_registry (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   snapshot_name VARCHAR(256) NOT NULL,
   snapshot_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
   size_bytes BIGINT NOT NULL,

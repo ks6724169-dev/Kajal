@@ -16,7 +16,7 @@
 
 ### 1.3 Primary Keys
 - Every table MUST implement a single `id` column of type `UUID` as its primary key.
-- The default value must be generated using `public.uuid_generate_v4()`.
+- The default value must be generated using `gen_random_uuid()`.
 
 ### 1.4 Audit Columns
 - Every operational or configuration table must declare the following standardized audit tracking columns:

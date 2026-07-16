@@ -9,7 +9,7 @@
 
 -- 1.1 Tenant Registry
 CREATE TABLE public.tenant_registry (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_code VARCHAR(64) UNIQUE NOT NULL,
   tenant_name VARCHAR(256) NOT NULL,
   domain_name VARCHAR(256) UNIQUE,
@@ -31,7 +31,7 @@ CREATE TABLE public.tenant_registry (
 
 -- 1.2 Organization Registry
 CREATE TABLE public.organization_registry (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES public.tenant_registry(id) ON DELETE RESTRICT,
   org_code VARCHAR(64) UNIQUE NOT NULL,
   org_name VARCHAR(256) NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE public.organization_registry (
 
 -- 1.3 Campus Registry
 CREATE TABLE public.campus_registry (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES public.tenant_registry(id) ON DELETE RESTRICT,
   organization_id UUID NOT NULL REFERENCES public.organization_registry(id) ON DELETE RESTRICT,
   campus_code VARCHAR(64) UNIQUE NOT NULL,
@@ -80,7 +80,7 @@ CREATE TABLE public.campus_registry (
 
 -- 1.4 Academic Session Binding
 CREATE TABLE public.academic_session_registry (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES public.tenant_registry(id) ON DELETE RESTRICT,
   campus_id UUID NOT NULL REFERENCES public.campus_registry(id) ON DELETE RESTRICT,
   session_code VARCHAR(64) NOT NULL,
@@ -109,7 +109,7 @@ CREATE TABLE public.academic_session_registry (
 -- 2. UNIVERSAL USER REGISTRY
 -- ==========================================
 CREATE TABLE public.universal_user (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES public.tenant_registry(id) ON DELETE RESTRICT,
   email VARCHAR(256) UNIQUE NOT NULL,
   phone VARCHAR(64) UNIQUE,
@@ -162,7 +162,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- ==========================================
 
 CREATE TABLE public.role_registry (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES public.tenant_registry(id) ON DELETE RESTRICT,
   role_code VARCHAR(64) NOT NULL,
   role_name VARCHAR(128) NOT NULL,
@@ -180,7 +180,7 @@ CREATE TABLE public.role_registry (
 );
 
 CREATE TABLE public.permission_registry (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   permission_code VARCHAR(128) UNIQUE NOT NULL,
   permission_name VARCHAR(128) NOT NULL,
   module_name VARCHAR(64) NOT NULL,
@@ -226,7 +226,7 @@ CREATE TABLE public.user_permissions (
 -- ==========================================
 
 CREATE TABLE public.user_sessions (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.universal_user(id) ON DELETE CASCADE,
   tenant_id UUID REFERENCES public.tenant_registry(id),
   session_token VARCHAR(512) UNIQUE NOT NULL,
@@ -244,7 +244,7 @@ CREATE TABLE public.user_sessions (
 );
 
 CREATE TABLE public.trusted_devices (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.universal_user(id) ON DELETE CASCADE,
   device_fingerprint VARCHAR(256) NOT NULL,
   device_name VARCHAR(128),
@@ -259,7 +259,7 @@ CREATE TABLE public.trusted_devices (
 );
 
 CREATE TABLE public.security_events (
-  id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES public.universal_user(id) ON DELETE SET NULL,
   tenant_id UUID REFERENCES public.tenant_registry(id),
   event_type VARCHAR(128) NOT NULL, -- login_success, login_failed, mfa_failed, impossible_travel

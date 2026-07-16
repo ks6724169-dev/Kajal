@@ -12,7 +12,7 @@ $$ language 'plpgsql';
 
 -- Organization / Tenant Table
 CREATE TABLE IF NOT EXISTS organizations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(255) UNIQUE NOT NULL,
     logo_url TEXT,
@@ -37,7 +37,7 @@ CREATE TRIGGER update_organizations_updated_at
 
 -- School Table
 CREATE TABLE IF NOT EXISTS schools (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     code VARCHAR(50) NOT NULL,
@@ -64,7 +64,7 @@ CREATE TRIGGER update_schools_updated_at
 
 -- Campus Table
 CREATE TABLE IF NOT EXISTS campuses (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     school_id UUID NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
