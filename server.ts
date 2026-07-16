@@ -3,13 +3,47 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import helmet from "helmet";
+import compression from "compression";
+
+import authRoutes from "./server/routes/auth.js";
+import tenantRoutes from "./server/routes/tenant.js";
+import userRoutes from "./server/routes/user.js";
+import roleRoutes from "./server/routes/role.js";
+import sessionRoutes from "./server/routes/session.js";
+import healthRoutes from "./server/routes/health.js";
+
+import { gatewayRouter } from "./server/gateway/index.js";
+import { correlationIdMiddleware } from "./server/middlewares/correlation.js";
+import { globalRateLimiter } from "./server/middlewares/rateLimiter.js";
+import { globalErrorHandler } from "./server/errors/ErrorHandler.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
+// Enterprise Global Middlewares Phase 03.1C
+app.use(helmet()); // Security headers
+app.use(compression()); // Response compression
+app.use(express.json({ limit: "10mb" })); // JSON body parser with size limit
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(correlationIdMiddleware);
+app.use(globalRateLimiter);
+
+// Health & Monitoring Phase 03.1C
+app.use("/", healthRoutes);
+
+// API Gateway Routes Phase 03.1C
+app.use("/api/gateway", gatewayRouter);
+
+// Legacy/Direct API Routes Phase 03.1B
+app.use("/api/auth", authRoutes);
+app.use("/api/tenants", tenantRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/roles", roleRoutes);
+app.use("/api/sessions", sessionRoutes);
+
 
 // Initialize Gemini AI (server-side only)
 const apiKey = process.env.GEMINI_API_KEY;
@@ -124,6 +158,9 @@ app.post("/api/ai/report-card", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Enterprise Global Error Handler Phase 03.1C
+app.use(globalErrorHandler);
 
 async function startServer() {
   // Vite middleware for development

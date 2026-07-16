@@ -1,0 +1,14 @@
+export const GoogleWorkspaceConnector = { name: 'Google Workspace', status: 'ready' };
+export const Microsoft365Connector = { name: 'Microsoft 365', status: 'ready' };
+export const ZoomConnector = { name: 'Zoom', status: 'ready' };
+export const RazorpayConnector = { name: 'Razorpay', status: 'ready' };
+export const StripeConnector = { name: 'Stripe', status: 'ready' };
+export const WhatsAppConnector = { name: 'WhatsApp', status: 'ready' };
+export const FirebaseConnector = { name: 'Firebase', status: 'ready' };
+export const SupabaseConnector = { name: 'Supabase', status: 'ready' };
+export const GeminiAIConnector = { name: 'Gemini AI', status: 'ready' };
+export const OpenAIConnector = { name: 'OpenAI', status: 'ready' };
+export const SMTPConnector = { name: 'SMTP', status: 'ready' };
+export const SMSConnector = { name: 'SMS', status: 'ready' };
+export const GPSConnector = { name: 'GPS', status: 'ready' };
+export const IoTConnector = { name: 'IoT', status: 'ready' };

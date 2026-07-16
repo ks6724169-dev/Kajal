@@ -1,6 +1,6 @@
 {
   "name": "Galaxy ERP",
-  "description": "Next-Gen School & College Cloud SaaS ERP with AI Assistants, Smart Campus Modules, UPI Fees, GPS Tracking, Face Recognition & Advanced Analytics",
+  "description": "Next-Gen School & College Cloud SaaS ERP with AI Assistants, Smart Campus Modules, UPI Fees, GPS Tracking, Face Recognition, Advanced Analytics, Universal Integration Platform Gateway (v10.8), Executive AI Analytics (v10.9), GALAXY Enterprise Operating System (GEOS v11.0), Enterprise Experience Platform (EXP v11.1), Enterprise Communication Fabric (ECF v11.2), Enterprise Identity & Trust Platform (EITP v11.3), Enterprise Cyber Defense Platform (ECDP v11.4), Enterprise Compliance, Risk & Governance Platform (ECRG v11.5), Enterprise DevSecOps, Platform Engineering & Autonomous Software Delivery Platform (EDPE v11.6), Enterprise Data Governance, Metadata Intelligence & Information Lifecycle Platform (EDGM v11.7), Enterprise Smart Campus, IoT, Digital Infrastructure & Autonomous Physical Operations Platform (ESC-IAP v11.8), Enterprise Autonomous Intelligence Platform (EAIP v11.9) & Galaxy Cognitive Enterprise Cloud (GCEC v12.0)",
   "requestFramePermissions": ["camera", "geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

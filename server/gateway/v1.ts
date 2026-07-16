@@ -1,0 +1,36 @@
+import { Router } from 'express';
+import authRoutes from '../routes/auth.js';
+import tenantRoutes from '../routes/tenant.js';
+import userRoutes from '../routes/user.js';
+import roleRoutes from '../routes/role.js';
+import sessionRoutes from '../routes/session.js';
+import organizationRoutes from '../routes/organization.js';
+import studentRoutes from '../routes/student.js';
+import attendanceRoutes from '../routes/attendance.js';
+import behaviourRoutes from '../routes/behaviour.js';
+import studentHealthRoutes from '../routes/student-health.js';
+import employeeRoutes from '../routes/employee.js';
+import teacherRoutes from '../routes/teacher.js';
+import teacherAttendanceRoutes from '../routes/teacher-attendance.js';
+import teacherLeaveRoutes from '../routes/teacher-leave.js';
+import performanceRoutes from '../routes/performance.js';
+import trainingRoutes from '../routes/training.js';
+
+export const v1Router = Router();
+
+v1Router.use('/auth', authRoutes);
+v1Router.use('/tenants', tenantRoutes);
+v1Router.use('/users', userRoutes);
+v1Router.use('/roles', roleRoutes);
+v1Router.use('/sessions', sessionRoutes);
+v1Router.use('/organizations', organizationRoutes);
+v1Router.use('/students', studentRoutes);
+v1Router.use('/attendance', attendanceRoutes);
+v1Router.use('/behaviour', behaviourRoutes);
+v1Router.use('/student-health', studentHealthRoutes);
+v1Router.use('/employees', employeeRoutes);
+v1Router.use('/teachers', teacherRoutes);
+v1Router.use('/teacher-attendance', teacherAttendanceRoutes);
+v1Router.use('/teacher-leave', teacherLeaveRoutes);
+v1Router.use('/performance', performanceRoutes);
+v1Router.use('/training', trainingRoutes);
