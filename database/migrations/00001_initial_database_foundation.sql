@@ -58,25 +58,40 @@ $$ LANGUAGE plpgsql;
 -- Standardized metadata structure validation
 CREATE OR REPLACE FUNCTION public.fn_validate_jsonb_metadata()
 RETURNS TRIGGER AS $$
+DECLARE
+  new_json jsonb;
 BEGIN
-  IF NEW.metadata IS NULL THEN
-    NEW.metadata = '{}'::jsonb;
+  -- Convert NEW record to jsonb
+  new_json := to_jsonb(NEW);
+
+  -- For each field, if it exists in the record, initialize to '{}' if null
+  IF new_json ? 'metadata' AND (new_json->>'metadata' IS NULL OR new_json->>'metadata' = '') THEN
+    new_json := jsonb_set(new_json, '{metadata}', '{}'::jsonb);
   END IF;
-  IF NEW.encryption_metadata IS NULL THEN
-    NEW.encryption_metadata = '{}'::jsonb;
+  
+  IF new_json ? 'encryption_metadata' AND (new_json->>'encryption_metadata' IS NULL OR new_json->>'encryption_metadata' = '') THEN
+    new_json := jsonb_set(new_json, '{encryption_metadata}', '{}'::jsonb);
   END IF;
-  IF NEW.key_reference_fields IS NULL THEN
-    NEW.key_reference_fields = '{}'::jsonb;
+
+  IF new_json ? 'key_reference_fields' AND (new_json->>'key_reference_fields' IS NULL OR new_json->>'key_reference_fields' = '') THEN
+    new_json := jsonb_set(new_json, '{key_reference_fields}', '{}'::jsonb);
   END IF;
-  IF NEW.pii_classification IS NULL THEN
-    NEW.pii_classification = '{}'::jsonb;
+
+  IF new_json ? 'pii_classification' AND (new_json->>'pii_classification' IS NULL OR new_json->>'pii_classification' = '') THEN
+    new_json := jsonb_set(new_json, '{pii_classification}', '{}'::jsonb);
   END IF;
-  IF NEW.retention_metadata IS NULL THEN
-    NEW.retention_metadata = '{}'::jsonb;
+
+  IF new_json ? 'retention_metadata' AND (new_json->>'retention_metadata' IS NULL OR new_json->>'retention_metadata' = '') THEN
+    new_json := jsonb_set(new_json, '{retention_metadata}', '{}'::jsonb);
   END IF;
-  IF NEW.audit_metadata IS NULL THEN
-    NEW.audit_metadata = '{}'::jsonb;
+
+  IF new_json ? 'audit_metadata' AND (new_json->>'audit_metadata' IS NULL OR new_json->>'audit_metadata' = '') THEN
+    new_json := jsonb_set(new_json, '{audit_metadata}', '{}'::jsonb);
   END IF;
+
+  -- Populate the NEW record from the modified jsonb
+  NEW := jsonb_populate_record(NEW, new_json);
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
