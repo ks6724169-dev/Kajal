@@ -19,6 +19,11 @@ jobs:
         with:
           version: latest
 
+      - name: Sync Migrations to Supabase Folder
+        run: |
+          mkdir -p supabase/migrations
+          cp -rv server/database/migrations/* supabase/migrations/
+
       - name: Link Project and Push Migrations
         run: |
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} -p ${{ secrets.SUPABASE_DB_PASSWORD }}

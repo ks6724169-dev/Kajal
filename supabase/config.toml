@@ -1,0 +1,12 @@
+# Supabase Configuration
+project_id = "" # GitHub Secrets से ऑटोमैटिकली लिंक होगा
+
+[api]
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+
+[db]
+port = 54322
+# Note: Supabase CLI expects migrations in ./supabase/migrations
+# We use our sync script and CI/CD pipeline to map server/database/migrations to this path.
