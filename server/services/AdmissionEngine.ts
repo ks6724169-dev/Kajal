@@ -33,8 +33,9 @@ export class AdmissionEngine {
         }
       }
 
+      const { parents, address, ...cleanStudentData } = data;
       const studentPayload: Partial<Student> = {
-        ...data,
+        ...cleanStudentData,
         studentId,
         rfid,
         rollNumber,

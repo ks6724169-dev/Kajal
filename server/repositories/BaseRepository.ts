@@ -5,6 +5,26 @@ import { QuerySpecification } from './QuerySpecification.js';
 import { logger } from '../telemetry/logger.js';
 import { v4 as uuidv4 } from 'uuid';
 
+function camelToSnake(str: string): string {
+  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+}
+
+function snakeToCamel(str: string): string {
+  return str.replace(/(_\w)/g, m => m[1].toUpperCase());
+}
+
+function mapRowKeys<T>(row: any): T {
+  if (!row) return row;
+  const mapped = { ...row };
+  for (const [key, value] of Object.entries(row)) {
+    const camelKey = snakeToCamel(key);
+    if (camelKey !== key) {
+      mapped[camelKey] = value;
+    }
+  }
+  return mapped as T;
+}
+
 export abstract class BaseRepository<T extends BaseEntity> {
   protected abstract tableName: string;
 
@@ -14,7 +34,7 @@ export abstract class BaseRepository<T extends BaseEntity> {
   ) {}
 
   protected getClient() {
-    return this.txManager ? this.txManager.getClient() : dbManager;
+    return (this.txManager && this.txManager.hasActiveTransaction) ? this.txManager.getClient() : dbManager;
   }
 
   protected enforceTenant(spec: QuerySpecification): QuerySpecification {
@@ -34,7 +54,7 @@ export abstract class BaseRepository<T extends BaseEntity> {
     const client = this.getClient();
     const result = await client.query(sql, params);
     
-    return result.rows.length ? (result.rows[0] as T) : null;
+    return result.rows.length ? mapRowKeys<T>(result.rows[0]) : null;
   }
 
   public async findMany(spec?: QuerySpecification, limit: number = 100, offset: number = 0): Promise<T[]> {
@@ -48,12 +68,17 @@ export abstract class BaseRepository<T extends BaseEntity> {
     const client = this.getClient();
     const result = await client.query(sql, [...params, limit, offset]);
     
-    return result.rows as T[];
+    return result.rows.map(row => mapRowKeys<T>(row));
   }
 
   public async insert(entity: Partial<T>): Promise<T> {
+    const snakeEntity: any = {};
+    for (const [k, v] of Object.entries(entity)) {
+      snakeEntity[camelToSnake(k)] = v;
+    }
+
     const data = {
-      ...entity,
+      ...snakeEntity,
       id: entity.id || uuidv4(),
       tenant_id: this.tenantId,
       created_at: new Date(),
@@ -70,8 +95,7 @@ export abstract class BaseRepository<T extends BaseEntity> {
     const client = this.getClient();
     const result = await client.query(sql, values);
     
-    // Audit integration hook would go here
-    return result.rows[0] as T;
+    return mapRowKeys<T>(result.rows[0]);
   }
 
   public async update(id: string, data: Partial<T>, currentVersion: number): Promise<T | null> {
@@ -79,7 +103,12 @@ export abstract class BaseRepository<T extends BaseEntity> {
     const values = [];
     let paramIndex = 1;
 
-    for (const [key, value] of Object.entries(data)) {
+    const snakeData: any = {};
+    for (const [k, v] of Object.entries(data)) {
+      snakeData[camelToSnake(k)] = v;
+    }
+
+    for (const [key, value] of Object.entries(snakeData)) {
       if (key !== 'id' && key !== 'tenant_id' && key !== 'version') {
         updates.push(`${key} = $${paramIndex++}`);
         values.push(value);
@@ -106,8 +135,7 @@ export abstract class BaseRepository<T extends BaseEntity> {
       throw new Error('Optimistic Locking Error: Record not found, modified, or deleted');
     }
 
-    // Audit integration hook would go here
-    return result.rows[0] as T;
+    return mapRowKeys<T>(result.rows[0]);
   }
 
   public async softDelete(id: string, deletedBy?: string): Promise<boolean> {

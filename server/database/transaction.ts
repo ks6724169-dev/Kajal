@@ -12,6 +12,10 @@ export class TransactionManager {
     this.transactionId = uuidv4();
   }
 
+  public get hasActiveTransaction(): boolean {
+    return this.isActive;
+  }
+
   public async begin(isolationLevel?: 'READ COMMITTED' | 'REPEATABLE READ' | 'SERIALIZABLE'): Promise<void> {
     if (this.isActive) {
       throw new Error('Transaction is already active');
