@@ -47,6 +47,7 @@ export * from './FinanceRepository.js';
 export * from './TransportRepository.js';
 export * from './HRPayrollRepository.js';
 export * from './InventoryRepository.js';
+export * from './TimetableRepository.js';
 
 
 

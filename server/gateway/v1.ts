@@ -26,6 +26,7 @@ import transportRoutes from '../routes/transport.js';
 import hostelRoutes from '../routes/hostel.js';
 import hrPayrollRoutes from '../routes/hr-payroll.js';
 import inventoryRoutes from '../routes/inventory.js';
+import timetableRoutes from '../routes/timetable.js';
 
 export const v1Router = Router();
 
@@ -48,6 +49,7 @@ v1Router.use('/transport', transportRoutes);
 v1Router.use('/hostel', hostelRoutes);
 v1Router.use('/hr-payroll', hrPayrollRoutes);
 v1Router.use('/inventory', inventoryRoutes);
+v1Router.use('/timetable', timetableRoutes);
 v1Router.use('/attendance', attendanceRoutes);
 v1Router.use('/behaviour', behaviourRoutes);
 v1Router.use('/student-health', studentHealthRoutes);
