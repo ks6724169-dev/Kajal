@@ -201,31 +201,31 @@ ALTER TABLE ai_provider_health ENABLE ROW LEVEL SECURITY;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_ai_provider') THEN
-        CREATE POLICY tenant_isolation_ai_provider ON ai_provider_registry FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_ai_provider ON ai_provider_registry; CREATE POLICY tenant_isolation_ai_provider ON ai_provider_registry FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_ai_model') THEN
-        CREATE POLICY tenant_isolation_ai_model ON ai_model_registry FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_ai_model ON ai_model_registry; CREATE POLICY tenant_isolation_ai_model ON ai_model_registry FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_ai_usage') THEN
-        CREATE POLICY tenant_isolation_ai_usage ON ai_usage_log FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_ai_usage ON ai_usage_log; CREATE POLICY tenant_isolation_ai_usage ON ai_usage_log FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_ai_request') THEN
-        CREATE POLICY tenant_isolation_ai_request ON ai_request_log FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_ai_request ON ai_request_log; CREATE POLICY tenant_isolation_ai_request ON ai_request_log FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_ai_cache') THEN
-        CREATE POLICY tenant_isolation_ai_cache ON ai_response_cache FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_ai_cache ON ai_response_cache; CREATE POLICY tenant_isolation_ai_cache ON ai_response_cache FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_ai_keys') THEN
-        CREATE POLICY tenant_isolation_ai_keys ON ai_api_keys FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_ai_keys ON ai_api_keys; CREATE POLICY tenant_isolation_ai_keys ON ai_api_keys FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_ai_limits') THEN
-        CREATE POLICY tenant_isolation_ai_limits ON ai_rate_limits FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_ai_limits ON ai_rate_limits; CREATE POLICY tenant_isolation_ai_limits ON ai_rate_limits FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_ai_cost') THEN
-        CREATE POLICY tenant_isolation_ai_cost ON ai_cost_tracking FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_ai_cost ON ai_cost_tracking; CREATE POLICY tenant_isolation_ai_cost ON ai_cost_tracking FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_ai_health') THEN
-        CREATE POLICY tenant_isolation_ai_health ON ai_provider_health FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_ai_health ON ai_provider_health; CREATE POLICY tenant_isolation_ai_health ON ai_provider_health FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
 END $$;
 

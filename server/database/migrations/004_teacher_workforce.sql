@@ -34,8 +34,8 @@ CREATE TABLE IF NOT EXISTS employees (
     status VARCHAR(50) DEFAULT 'ACTIVE'
 );
 
-CREATE UNIQUE INDEX idx_emp_email_tenant ON employees(tenant_id, official_email) WHERE deleted_at IS NULL;
-CREATE UNIQUE INDEX idx_emp_id_tenant ON employees(tenant_id, employee_id) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_emp_email_tenant ON employees(tenant_id, official_email) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_emp_id_tenant ON employees(tenant_id, employee_id) WHERE deleted_at IS NULL;
 
 CREATE TABLE IF NOT EXISTS teachers (
     id UUID PRIMARY KEY,
@@ -154,22 +154,22 @@ CREATE TABLE IF NOT EXISTS employee_training (
 
 -- Apply RLS
 ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_employees ON employees FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_employees ON employees; CREATE POLICY tenant_isolation_employees ON employees FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
 
 ALTER TABLE teachers ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_teachers ON teachers FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_teachers ON teachers; CREATE POLICY tenant_isolation_teachers ON teachers FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
 
 ALTER TABLE employee_attendance ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_emp_att ON employee_attendance FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_emp_att ON employee_attendance; CREATE POLICY tenant_isolation_emp_att ON employee_attendance FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
 
 ALTER TABLE employee_leaves ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_emp_leave ON employee_leaves FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_emp_leave ON employee_leaves; CREATE POLICY tenant_isolation_emp_leave ON employee_leaves FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
 
 ALTER TABLE performance_reviews ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_perf_rev ON performance_reviews FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_perf_rev ON performance_reviews; CREATE POLICY tenant_isolation_perf_rev ON performance_reviews FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
 
 ALTER TABLE training_courses ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_train_courses ON training_courses FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_train_courses ON training_courses; CREATE POLICY tenant_isolation_train_courses ON training_courses FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
 
 ALTER TABLE employee_training ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_emp_train ON employee_training FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_emp_train ON employee_training; CREATE POLICY tenant_isolation_emp_train ON employee_training FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);

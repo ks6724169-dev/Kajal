@@ -570,85 +570,85 @@ DO $$
 BEGIN
     -- Policy creators
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_exam_master') THEN
-        CREATE POLICY tenant_isolation_exam_master ON examination_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_exam_master ON examination_master; CREATE POLICY tenant_isolation_exam_master ON examination_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_exam_session') THEN
-        CREATE POLICY tenant_isolation_exam_session ON examination_session FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_exam_session ON examination_session; CREATE POLICY tenant_isolation_exam_session ON examination_session FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_exam_schedule') THEN
-        CREATE POLICY tenant_isolation_exam_schedule ON examination_schedule FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_exam_schedule ON examination_schedule; CREATE POLICY tenant_isolation_exam_schedule ON examination_schedule FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_exam_rooms') THEN
-        CREATE POLICY tenant_isolation_exam_rooms ON examination_rooms FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_exam_rooms ON examination_rooms; CREATE POLICY tenant_isolation_exam_rooms ON examination_rooms FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_invig_assign') THEN
-        CREATE POLICY tenant_isolation_invig_assign ON invigilator_assignment FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_invig_assign ON invigilator_assignment; CREATE POLICY tenant_isolation_invig_assign ON invigilator_assignment FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_sub_paper') THEN
-        CREATE POLICY tenant_isolation_sub_paper ON subject_paper FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_sub_paper ON subject_paper; CREATE POLICY tenant_isolation_sub_paper ON subject_paper FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_blueprint') THEN
-        CREATE POLICY tenant_isolation_blueprint ON blueprint_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_blueprint ON blueprint_master; CREATE POLICY tenant_isolation_blueprint ON blueprint_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_quest_paper') THEN
-        CREATE POLICY tenant_isolation_quest_paper ON question_paper FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_quest_paper ON question_paper; CREATE POLICY tenant_isolation_quest_paper ON question_paper FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_quest_bank') THEN
-        CREATE POLICY tenant_isolation_quest_bank ON question_bank FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_quest_bank ON question_bank; CREATE POLICY tenant_isolation_quest_bank ON question_bank FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_assign_master') THEN
-        CREATE POLICY tenant_isolation_assign_master ON assignment_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_assign_master ON assignment_master; CREATE POLICY tenant_isolation_assign_master ON assignment_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_proj_assess') THEN
-        CREATE POLICY tenant_isolation_proj_assess ON project_assessment FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_proj_assess ON project_assessment; CREATE POLICY tenant_isolation_proj_assess ON project_assessment FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_int_assess') THEN
-        CREATE POLICY tenant_isolation_int_assess ON internal_assessment FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_int_assess ON internal_assessment; CREATE POLICY tenant_isolation_int_assess ON internal_assessment FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_ext_assess') THEN
-        CREATE POLICY tenant_isolation_ext_assess ON external_assessment FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_ext_assess ON external_assessment; CREATE POLICY tenant_isolation_ext_assess ON external_assessment FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_pract_exam') THEN
-        CREATE POLICY tenant_isolation_pract_exam ON practical_exam FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_pract_exam ON practical_exam; CREATE POLICY tenant_isolation_pract_exam ON practical_exam FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_viva_exam') THEN
-        CREATE POLICY tenant_isolation_viva_exam ON viva_exam FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_viva_exam ON viva_exam; CREATE POLICY tenant_isolation_viva_exam ON viva_exam FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_marks_entry') THEN
-        CREATE POLICY tenant_isolation_marks_entry ON marks_entry FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_marks_entry ON marks_entry; CREATE POLICY tenant_isolation_marks_entry ON marks_entry FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_grade_book') THEN
-        CREATE POLICY tenant_isolation_grade_book ON grade_book FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_grade_book ON grade_book; CREATE POLICY tenant_isolation_grade_book ON grade_book FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_gpa') THEN
-        CREATE POLICY tenant_isolation_gpa ON gpa_records FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_gpa ON gpa_records; CREATE POLICY tenant_isolation_gpa ON gpa_records FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_cgpa') THEN
-        CREATE POLICY tenant_isolation_cgpa ON cgpa_records FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_cgpa ON cgpa_records; CREATE POLICY tenant_isolation_cgpa ON cgpa_records FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_result') THEN
-        CREATE POLICY tenant_isolation_result ON result_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_result ON result_master; CREATE POLICY tenant_isolation_result ON result_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_result_pub') THEN
-        CREATE POLICY tenant_isolation_result_pub ON result_publication FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_result_pub ON result_publication; CREATE POLICY tenant_isolation_result_pub ON result_publication FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_promotion') THEN
-        CREATE POLICY tenant_isolation_promotion ON promotion_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_promotion ON promotion_master; CREATE POLICY tenant_isolation_promotion ON promotion_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_remark') THEN
-        CREATE POLICY tenant_isolation_remark ON academic_remark FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_remark ON academic_remark; CREATE POLICY tenant_isolation_remark ON academic_remark FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_perf') THEN
-        CREATE POLICY tenant_isolation_perf ON performance_registry FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_perf ON performance_registry; CREATE POLICY tenant_isolation_perf ON performance_registry FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_weak') THEN
-        CREATE POLICY tenant_isolation_weak ON weak_student_registry FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_weak ON weak_student_registry; CREATE POLICY tenant_isolation_weak ON weak_student_registry FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_gifted') THEN
-        CREATE POLICY tenant_isolation_gifted ON gifted_student_registry FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_gifted ON gifted_student_registry; CREATE POLICY tenant_isolation_gifted ON gifted_student_registry FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_rec') THEN
-        CREATE POLICY tenant_isolation_rec ON academic_recommendation FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_rec ON academic_recommendation; CREATE POLICY tenant_isolation_rec ON academic_recommendation FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
 END $$;
 
