@@ -15,8 +15,20 @@ import teacherAttendanceRoutes from '../routes/teacher-attendance.js';
 import teacherLeaveRoutes from '../routes/teacher-leave.js';
 import performanceRoutes from '../routes/performance.js';
 import trainingRoutes from '../routes/training.js';
+import parentRoutes from '../routes/parent.js';
+import examinationRoutes from '../routes/examination.js';
+import aiRoutes from '../routes/ai.js';
+import academicIntelligenceRoutes from '../routes/academic-intelligence.js';
+import communicationRoutes from '../routes/communication.js';
+import libraryRoutes from '../routes/library.js';
+import financeRoutes from '../routes/finance.js';
+import transportRoutes from '../routes/transport.js';
+import hostelRoutes from '../routes/hostel.js';
+import hrPayrollRoutes from '../routes/hr-payroll.js';
+import inventoryRoutes from '../routes/inventory.js';
 
 export const v1Router = Router();
+
 
 v1Router.use('/auth', authRoutes);
 v1Router.use('/tenants', tenantRoutes);
@@ -25,6 +37,17 @@ v1Router.use('/roles', roleRoutes);
 v1Router.use('/sessions', sessionRoutes);
 v1Router.use('/organizations', organizationRoutes);
 v1Router.use('/students', studentRoutes);
+v1Router.use('/parents', parentRoutes);
+v1Router.use('/examinations', examinationRoutes);
+v1Router.use('/ai', aiRoutes);
+v1Router.use('/academic-intelligence', academicIntelligenceRoutes);
+v1Router.use('/communication', communicationRoutes);
+v1Router.use('/library', libraryRoutes);
+v1Router.use('/finance', financeRoutes);
+v1Router.use('/transport', transportRoutes);
+v1Router.use('/hostel', hostelRoutes);
+v1Router.use('/hr-payroll', hrPayrollRoutes);
+v1Router.use('/inventory', inventoryRoutes);
 v1Router.use('/attendance', attendanceRoutes);
 v1Router.use('/behaviour', behaviourRoutes);
 v1Router.use('/student-health', studentHealthRoutes);

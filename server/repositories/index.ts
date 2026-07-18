@@ -36,3 +36,17 @@ export class AuditRepository extends BaseRepository<BaseEntity> {
 export class ConfigurationRepository extends BaseRepository<BaseEntity> {
   protected tableName = 'system_configuration';
 }
+
+export * from './ParentRepository.js';
+export * from './ExaminationRepository.js';
+export * from './AIRepository.js';
+export * from './AcademicIntelligenceRepository.js';
+export * from './CommunicationRepository.js';
+export * from './LibraryRepository.js';
+export * from './FinanceRepository.js';
+export * from './TransportRepository.js';
+export * from './HRPayrollRepository.js';
+export * from './InventoryRepository.js';
+
+
+
