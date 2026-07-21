@@ -16,6 +16,7 @@ import { SEO } from './components/seo/SEO';
 const LandingPage = lazy(() => import('./pages/public/LandingPage').then(m => ({ default: m.LandingPage })));
 const LoginPage = lazy(() => import('./features/LoginPage').then(m => ({ default: m.LoginPage })));
 const RegisterSchoolPage = lazy(() => import('./pages/auth/RegisterSchoolPage').then(m => ({ default: m.RegisterSchoolPage })));
+const SchoolPaymentCheckoutPage = lazy(() => import('./pages/auth/SchoolPaymentCheckoutPage').then(m => ({ default: m.SchoolPaymentCheckoutPage })));
 const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
 const VerifyOTPPage = lazy(() => import('./pages/auth/VerifyOTPPage').then(m => ({ default: m.VerifyOTPPage })));
@@ -125,6 +126,12 @@ export default function App() {
 
     if (route === '/register') {
       return <RegisterSchoolPage navigate={navigate} />;
+    }
+
+    if (route.startsWith('/school-registration/') && route.endsWith('/payment')) {
+      const parts = route.split('/');
+      const registrationId = parts[2];
+      return <SchoolPaymentCheckoutPage registrationId={registrationId} navigate={navigate} />;
     }
 
     if (route === '/verify-otp') {

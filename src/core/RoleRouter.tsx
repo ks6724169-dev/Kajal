@@ -46,7 +46,7 @@ export const RoleRouter: React.FC<RoleRouterProps> = ({
       '/contact'
     ];
 
-    const isPublic = publicRoutes.includes(route) || route.startsWith('/auth/');
+    const isPublic = publicRoutes.includes(route) || route.startsWith('/auth/') || route.startsWith('/school-registration/');
 
     if (!isAuthenticated && !isPublic) {
       // Force non-authenticated users back to login

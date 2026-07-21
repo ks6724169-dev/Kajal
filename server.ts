@@ -5,6 +5,8 @@ import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import compression from "compression";
+import bcrypt from "bcrypt";
+import { dbManager } from "./server/database/dbClient.js";
 
 import authRoutes from "./server/routes/auth.js";
 import tenantRoutes from "./server/routes/tenant.js";
@@ -56,7 +58,105 @@ app.use("/api/sessions", sessionRoutes);
 app.use("/api/v1/pricing", pricingRoutes);
 app.use("/api/v1/documentation", documentationRoutes);
 app.use("/api/v1/contact", contactRoutes);
+app.use("/api/school-registration", schoolRegistrationRoutes);
 app.use("/api/v1/school-registration", schoolRegistrationRoutes);
+
+// Dynamic School Lookup Endpoint for Phase 02
+const schoolsHandler = async (req: any, res: any) => {
+  try {
+    const { schoolId } = req.params;
+    const result = await dbManager.query(
+      "SELECT * FROM schools WHERE id::text = $1 OR school_unique_id = $1 OR registration_id = $1",
+      [schoolId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "School record not found" });
+    }
+    res.json({ success: true, school: result.rows[0] });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+app.get("/api/schools/:schoolId", schoolsHandler);
+app.get("/api/v1/schools/:schoolId", schoolsHandler);
+
+// Dynamic Tenant Lookup Endpoint for Phase 02
+const tenantsHandler = async (req: any, res: any) => {
+  try {
+    const { tenantId } = req.params;
+    const result = await dbManager.query(
+      "SELECT * FROM tenant_registry WHERE id::text = $1 OR tenant_code = $1",
+      [tenantId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Tenant registry entry not found" });
+    }
+    res.json({ success: true, tenant: result.rows[0] });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+app.get("/api/tenants/:tenantId", tenantsHandler);
+app.get("/api/v1/tenants/:tenantId", tenantsHandler);
+
+// Dynamic Subscription Lookup Endpoint for Phase 02
+const subscriptionsHandler = async (req: any, res: any) => {
+  try {
+    const { schoolId } = req.params;
+    const result = await dbManager.query(
+      "SELECT * FROM school_subscriptions WHERE school_id::text = $1 OR tenant_id::text = $1 OR registration_id = $1",
+      [schoolId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Subscription not found" });
+    }
+    res.json({ success: true, subscription: result.rows[0] });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+app.get("/api/subscriptions/:schoolId", subscriptionsHandler);
+app.get("/api/v1/subscriptions/:schoolId", subscriptionsHandler);
+
+// Dynamic Owner Password Config Endpoint for Phase 02
+const setupPasswordHandler = async (req: any, res: any) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: "Email and password are required parameters." });
+    }
+
+    // Password validation rules (min length, uppercase, lowercase, number, special char)
+    const isMinLength = password.length >= 8;
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[^A-Za-z0-9]/.test(password);
+
+    if (!isMinLength || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters and contain uppercase, lowercase, numbers, and special characters."
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await dbManager.query(
+      "UPDATE universal_user SET password_hash = $1 WHERE email = $2 RETURNING id",
+      [hashedPassword, email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "School owner account not found by email" });
+    }
+
+    res.json({ success: true, message: "Password configured and security record updated successfully." });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+app.post("/api/owner/setup-password", setupPasswordHandler);
+app.post("/api/v1/owner/setup-password", setupPasswordHandler);
 
 
 // Initialize Gemini AI (server-side only)

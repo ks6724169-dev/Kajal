@@ -71,14 +71,14 @@ export class SchoolRegistrationRepository extends BaseRepository<SchoolRegistrat
   }
 
   public async findByName(name: string): Promise<SchoolRegistration | null> {
-    const sql = `SELECT * FROM ${this.tableName} WHERE school_name = $1 AND deleted_at IS NULL LIMIT 1`;
+    const sql = `SELECT * FROM ${this.tableName} WHERE (school_name = $1 OR institution_name = $1) AND deleted_at IS NULL LIMIT 1`;
     const client = this.getClient();
     const result = await client.query(sql, [name]);
     return result.rows.length ? this.mapRowKeys<SchoolRegistration>(result.rows[0]) : null;
   }
 
   public async existsByName(name: string): Promise<boolean> {
-    const sql = `SELECT 1 FROM ${this.tableName} WHERE school_name = $1 AND deleted_at IS NULL LIMIT 1`;
+    const sql = `SELECT 1 FROM ${this.tableName} WHERE (school_name = $1 OR institution_name = $1) AND deleted_at IS NULL LIMIT 1`;
     const client = this.getClient();
     const result = await client.query(sql, [name]);
     return result.rows.length > 0;

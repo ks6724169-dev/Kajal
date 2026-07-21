@@ -1,19 +1,48 @@
 import { z } from 'zod';
 
-export const startRegistrationSchema = z.object({
-  schoolName: z.string().min(3, "School name must be at least 3 characters").max(255),
+const schoolRegistrationBaseSchema = z.object({
+  schoolName: z.string().max(255).optional(),
   schoolType: z.string().optional(),
   schoolCategory: z.string().optional(),
-  board: z.string().min(2, "Invalid board selection"),
-  establishmentYear: z.number().min(1800).max(new Date().getFullYear()),
-  country: z.string().default('India'),
-  state: z.string().min(2, "State is required"),
-  district: z.string().min(2, "District is required"),
-  city: z.string().min(2, "City is required"),
-  pincode: z.string().regex(/^\d{6}$/, "Invalid pin code"),
-  address: z.string().min(5, "Address is too short"),
+  board: z.string().optional(),
+  establishmentYear: z.number().min(1800).max(new Date().getFullYear()).optional(),
+  country: z.string().default('India').optional(),
+  state: z.string().optional(),
+  district: z.string().optional(),
+  city: z.string().optional(),
+  pincode: z.string().optional(),
+  address: z.string().optional(),
+
+  // New fields
+  institutionName: z.string().max(255).optional(),
+  institutionType: z.string().optional(),
+  boardType: z.string().optional(),
+  affiliationNumber: z.string().optional(),
+  officialWebsite: z.string().optional(),
+  officialEmail: z.string().optional(),
+  officialPhone: z.string().optional(),
+  postalCode: z.string().optional(),
+  ownerName: z.string().optional(),
+  administratorName: z.string().optional(),
+  administratorDesignation: z.string().optional(),
+  ownerEmail: z.string().optional(),
+  ownerMobile: z.string().optional(),
+  alternateMobile: z.string().optional(),
+  logoUrl: z.string().optional(),
+  shortName: z.string().optional(),
+  primaryBrandColor: z.string().optional(),
+  secondaryBrandColor: z.string().optional(),
 });
 
-export const updateRegistrationSchema = startRegistrationSchema.partial().extend({
+export const startRegistrationSchema = schoolRegistrationBaseSchema.refine(data => {
+  return !!(data.schoolName || data.institutionName);
+}, {
+  message: "Either schoolName or institutionName is required",
+  path: ["institutionName"]
+});
+
+export const updateRegistrationSchema = schoolRegistrationBaseSchema.partial().extend({
   registrationId: z.string().uuid(),
 });
+
+

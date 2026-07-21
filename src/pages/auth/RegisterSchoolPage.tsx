@@ -1,3 +1,4 @@
+import { RegistrationCertificateModal } from "../../components/auth/RegistrationCertificateModal";
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -15,8 +16,6 @@ import {
   AlertCircle,
   ShieldCheck,
   Cpu,
-  Zap,
-  Award,
   Lock,
   Mail,
   Phone,
@@ -29,7 +28,10 @@ import {
   Save,
   CheckCircle,
   FileCheck,
-  HelpCircle
+  Receipt,
+  HelpCircle,
+  Award,
+  X
 } from 'lucide-react';
 
 interface RegisterSchoolPageProps {
@@ -39,39 +41,41 @@ interface RegisterSchoolPageProps {
 export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
-  const totalPages = 5;
+  const totalPages = 6;
 
   // Form State
   const [formData, setFormData] = useState({
-    // Page 1: Institution Information (Phase 01)
-    schoolName: '',
-    schoolType: 'Co-Educational',
+    // Step 1 — Institution Details
+    institutionName: '',
+    institutionType: 'Co-Educational',
     schoolCategory: 'K-12',
     boardType: 'CBSE',
-    establishedYear: new Date().getFullYear().toString(),
-    country: 'India',
-    state: '',
-    district: '',
-    city: '',
-    pincode: '',
+    affiliationNumber: '',
+    establishmentYear: new Date().getFullYear().toString(),
+    officialWebsite: '',
+
+    // Step 2 — Institution Contact
+    officialEmail: '',
+    officialPhone: '',
     address: '',
-    
-    // Page 2: Admin & Principal Info
-    principalName: '',
-    principalEmail: '',
-    principalPhone: '',
-    adminName: '',
-    adminEmail: '',
-    adminPhone: '',
-    totalStudents: '1200',
-    totalTeachers: '65',
+    city: '',
+    state: '',
+    country: 'India',
+    postalCode: '',
 
-    // Page 3: Plan & Billing
-    selectedPlan: 'Standard ERP',
-    billingCycle: 'Annual',
+    // Step 3 — Owner / Authorized Administrator
+    ownerName: '',
+    administratorName: '',
+    administratorDesignation: 'Principal',
+    ownerEmail: '',
+    ownerMobile: '',
+    alternateMobile: '',
 
-    // Page 4: Documents & Logo Upload
+    // Step 4 — Branding
     logoUrl: '',
+    shortName: '',
+    primaryBrandColor: '#4f46e5',
+    secondaryBrandColor: '#7c3aed',
     agreeTerms: false
   });
 
@@ -81,8 +85,49 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
   const [registrationId, setRegistrationId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [finalSchoolUniqueId, setFinalSchoolUniqueId] = useState("");
+  const [finalTenantId, setFinalTenantId] = useState("");
+  const [isCertificateModalOpen, setIsCertificateModalOpen] = useState(false);
   const [error, setError] = useState('');
   
+  // Subscription Selector States
+  const [selectedPlan, setSelectedPlan] = useState<'silver' | 'gold' | 'platinum'>('silver');
+  const [studentCapacity, setStudentCapacity] = useState<number>(500);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
+  
+  // Real-time calculated pricing details
+  const [pricing, setPricing] = useState<{
+    baseAmount: number;
+    setupFee: number;
+    totalAmount: number;
+    requiredInitialPayment: number;
+    remainingAmount: number;
+    currency: string;
+    discountApplied: boolean;
+  }>({
+    baseAmount: 150000,
+    setupFee: 5000,
+    totalAmount: 155000,
+    requiredInitialPayment: 38750,
+    remainingAmount: 116250,
+    currency: 'INR',
+    discountApplied: true
+  });
+
+  // Simulated Payment Checkout Modal States
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState<string>('idle');
+  const [gatewayOrderId, setGatewayOrderId] = useState('');
+  const [gatewayPaymentId, setGatewayPaymentId] = useState('');
+  const [gatewaySignature, setGatewaySignature] = useState('');
+  const [paymentMethodUsed, setPaymentMethodUsed] = useState<'upi' | 'upi_qr' | 'card' | 'netbanking'>('upi_qr');
+  const [upiId, setUpiId] = useState('galaxy@okaxis');
+  const [selectedBank, setSelectedBank] = useState('State Bank of India');
+  const [cardNumber, setCardNumber] = useState('4111 1111 1111 1111');
+  const [cardExpiry, setCardExpiry] = useState('12/28');
+  const [cardCvv, setCardCvv] = useState('123');
+  const [cardName, setCardName] = useState('');
+
   // Save & Auto-save States
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('saved');
   const [lastSavedTime, setLastSavedTime] = useState<string>('just now');
@@ -90,6 +135,135 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
   const [isDragging, setIsDragging] = useState(false);
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   
+  // Resume Draft states
+  const [resumeIdInput, setResumeIdInput] = useState('');
+  const [showResumeInput, setShowResumeInput] = useState(false);
+  const [resumeError, setResumeError] = useState('');
+  const [isResuming, setIsResuming] = useState(false);
+
+  const handleResumeDraft = async () => {
+    if (!resumeIdInput.trim()) {
+      setResumeError('Please enter a valid Registration ID');
+      return;
+    }
+    setIsResuming(true);
+    setResumeError('');
+    try {
+      const response = await fetch(`/api/v1/school-registration/${resumeIdInput.trim()}`);
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Draft not found. Please verify the ID.');
+      }
+      
+      const draft = result.data;
+      if (!draft) throw new Error('No data returned for this draft ID.');
+      
+      // Update form fields
+      const updatedFormData = {
+        ...formData,
+        institutionName: draft.institution_name || draft.school_name || formData.institutionName,
+        institutionType: draft.institution_type || formData.institutionType,
+        schoolCategory: draft.school_category || formData.schoolCategory,
+        boardType: draft.board_type || draft.board || formData.boardType,
+        affiliationNumber: draft.affiliation_number || formData.affiliationNumber,
+        establishmentYear: draft.establishment_year ? String(draft.establishment_year) : formData.establishmentYear,
+        officialWebsite: draft.official_website || formData.officialWebsite,
+        officialEmail: draft.official_email || formData.officialEmail,
+        officialPhone: draft.official_phone || formData.officialPhone,
+        address: draft.address || formData.address,
+        city: draft.city || formData.city,
+        state: draft.state || formData.state,
+        country: draft.country || formData.country,
+        postalCode: draft.postal_code || draft.pincode || formData.postalCode,
+        ownerName: draft.owner_name || formData.ownerName,
+        administratorName: draft.administrator_name || formData.administratorName,
+        administratorDesignation: draft.administrator_designation || formData.administratorDesignation,
+        ownerEmail: draft.owner_email || formData.ownerEmail,
+        ownerMobile: draft.owner_mobile || formData.ownerMobile,
+        alternateMobile: draft.alternate_mobile || formData.alternateMobile,
+        shortName: draft.short_name || formData.shortName,
+        logoUrl: draft.logo_url || formData.logoUrl,
+        primaryBrandColor: draft.primary_brand_color || formData.primaryBrandColor,
+        secondaryBrandColor: draft.secondary_brand_color || formData.secondaryBrandColor,
+      };
+      
+      setFormData(updatedFormData);
+
+      if (draft.metadata?.admin_password) {
+        setPassword(draft.metadata.admin_password);
+      }
+
+      setRegistrationId(draft.registration_id);
+      
+      // Map 1-based steps correctly
+      const savedStep = draft.current_step || 1;
+      const targetPage = Math.min(6, Math.max(1, savedStep));
+      setCurrentPage(targetPage);
+
+      // Save to LocalStorage
+      localStorage.setItem('galaxy_erp_reg_draft', JSON.stringify({
+        formData: updatedFormData,
+        password: draft.metadata?.admin_password || '',
+        registrationId: draft.registration_id,
+        timestamp: Date.now()
+      }));
+
+      setSaveStatus('saved');
+    } catch (err: any) {
+      setResumeError(err.message || 'Failed to resume session');
+    } finally {
+      setIsResuming(false);
+    }
+  };
+  
+  // Fetch pricing dynamically when plan/capacity/cycle changes
+  useEffect(() => {
+    const calculatePricing = async () => {
+      try {
+        const response = await fetch('/api/v1/school-registration/calculate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            planId: selectedPlan,
+            studentCapacity,
+            billingCycle
+          })
+        });
+        const result = await response.json();
+        if (response.ok && result.success) {
+          setPricing(result.data);
+        }
+      } catch (err) {
+        // Fallback calculations in case of server delay
+        const rate = selectedPlan === 'silver' ? 30 : selectedPlan === 'gold' ? 45 : 60;
+        const base = rate * studentCapacity * (billingCycle === 'annual' ? 10 : 12);
+        let setup = 5000;
+        if (studentCapacity <= 100) setup = 2000;
+        else if (studentCapacity <= 200) setup = 3000;
+        else if (studentCapacity <= 500) setup = 5000;
+        else if (studentCapacity <= 1000) setup = 8000;
+        else if (studentCapacity <= 2000) setup = 12000;
+        else if (studentCapacity <= 3000) setup = 15000;
+        else if (studentCapacity <= 4000) setup = 18000;
+        else setup = 20000;
+
+        const total = base + setup;
+        const initial = Math.round(total * 0.25);
+        setPricing({
+          baseAmount: base,
+          setupFee: setup,
+          totalAmount: total,
+          requiredInitialPayment: initial,
+          remainingAmount: total - initial,
+          currency: 'INR',
+          discountApplied: billingCycle === 'annual'
+        });
+      }
+    };
+
+    calculatePricing();
+  }, [selectedPlan, studentCapacity, billingCycle]);
+
   // Load draft from LocalStorage on mount
   useEffect(() => {
     try {
@@ -190,52 +364,61 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
   const getStepValidationErrors = (step: number) => {
     const errors: string[] = [];
     if (step === 1) {
-      if (!formData.schoolName.trim()) errors.push('School Name is required');
-      if (!formData.boardType) errors.push('Affiliation Board is required');
-      if (!formData.state.trim()) errors.push('State is required');
-      if (!formData.district.trim()) errors.push('District is required');
+      if (!formData.institutionName.trim()) errors.push('Institution Name is required');
+      if (!formData.institutionType) errors.push('Institution Type is required');
+      if (!formData.boardType) errors.push('Board / Affiliation is required');
+      if (!formData.establishmentYear.trim()) {
+        errors.push('Establishment Year is required');
+      } else {
+        const yr = parseInt(formData.establishmentYear);
+        if (isNaN(yr) || yr < 1800 || yr > new Date().getFullYear()) {
+          errors.push('Please enter a valid Establishment Year between 1800 and current year');
+        }
+      }
+    } else if (step === 2) {
+      if (!formData.officialEmail.trim()) {
+        errors.push('Official Institution Email is required');
+      } else if (!validateEmail(formData.officialEmail)) {
+        errors.push('Official Institution Email is invalid');
+      }
+      if (!formData.officialPhone.trim()) {
+        errors.push('Official Phone number is required');
+      } else if (!validatePhone(formData.officialPhone)) {
+        errors.push('Official Phone number is invalid');
+      }
+      if (!formData.address.trim()) errors.push('Full Address is required');
       if (!formData.city.trim()) errors.push('City is required');
-      if (!formData.pincode.trim()) {
+      if (!formData.state.trim()) errors.push('State is required');
+      if (!formData.postalCode.trim()) {
         errors.push('PIN Code is required');
-      } else if (!/^\d{6}$/.test(formData.pincode)) {
+      } else if (!validatePincode(formData.postalCode)) {
         errors.push('PIN Code must be a 6-digit number');
       }
-      if (!formData.address.trim()) errors.push('Street Address is required');
-    } else if (step === 2) {
-      if (!formData.principalName.trim()) errors.push('Principal Name is required');
-      if (!formData.principalEmail.trim()) {
-        errors.push('Principal Email is required');
-      } else if (!validateEmail(formData.principalEmail)) {
-        errors.push('Principal Email is invalid');
+    } else if (step === 3) {
+      if (!formData.ownerName.trim()) errors.push('Owner / Founder Name is required');
+      if (!formData.administratorDesignation.trim()) errors.push('Designation is required');
+      if (!formData.ownerEmail.trim()) {
+        errors.push('Gmail / Email is required');
+      } else if (!validateEmail(formData.ownerEmail)) {
+        errors.push('Gmail / Email is invalid');
       }
-      if (!formData.principalPhone.trim()) {
-        errors.push('Principal Contact number is required');
-      } else if (!validatePhone(formData.principalPhone)) {
-        errors.push('Principal Contact number is invalid');
+      if (!formData.ownerMobile.trim()) {
+        errors.push('Mobile Number is required');
+      } else if (!validatePhone(formData.ownerMobile)) {
+        errors.push('Mobile Number is invalid');
       }
-
-      if (!formData.adminName.trim()) errors.push('Admin Name is required');
-      if (!formData.adminEmail.trim()) {
-        errors.push('Administrator Email is required');
-      } else if (!validateEmail(formData.adminEmail)) {
-        errors.push('Administrator Email is invalid');
-      }
-      if (!formData.adminPhone.trim()) {
-        errors.push('Administrator Contact number is required');
-      } else if (!validatePhone(formData.adminPhone)) {
-        errors.push('Administrator Contact number is invalid');
-      }
-
-      if (password && password.length < 8) {
+      if (!password) {
+        errors.push('Administrative Password is required');
+      } else if (password.length < 8) {
         errors.push('Administrative Password must be at least 8 characters long');
       }
     } else if (step === 4) {
       if (formData.logoUrl && !validateURL(formData.logoUrl)) {
         errors.push('Logo URL must be a valid image link');
       }
-    } else if (step === 5) {
+    } else if (step === 6) {
       if (!formData.agreeTerms) {
-        errors.push('You must agree to the Terms of Service & SLA Covenant');
+        errors.push('You must agree to confirm that the information provided is correct.');
       }
     }
     return errors;
@@ -245,32 +428,35 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
     const stepErrors = getStepValidationErrors(currentPage);
     if (stepErrors.length > 0) {
       setError(stepErrors[0]);
-      // Mark all fields in current page as touched to trigger inline red styling
       if (currentPage === 1) {
         setTouchedFields({
-          schoolName: true,
+          institutionName: true,
+          institutionType: true,
           boardType: true,
-          state: true,
-          district: true,
-          city: true,
-          pincode: true,
-          address: true
+          establishmentYear: true
         });
       } else if (currentPage === 2) {
         setTouchedFields({
-          principalName: true,
-          principalEmail: true,
-          principalPhone: true,
-          adminName: true,
-          adminEmail: true,
-          adminPhone: true
+          officialEmail: true,
+          officialPhone: true,
+          address: true,
+          city: true,
+          state: true,
+          postalCode: true
+        });
+      } else if (currentPage === 3) {
+        setTouchedFields({
+          ownerName: true,
+          administratorDesignation: true,
+          ownerEmail: true,
+          ownerMobile: true
         });
       }
       return;
     }
     setError('');
 
-    // Phase 01: Integrate Backend call on Step 1 Next
+    // Save draft immediately on step 1 next to reserve name
     if (currentPage === 1 && !registrationId) {
       setIsSubmitting(true);
       try {
@@ -278,17 +464,17 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            schoolName: formData.schoolName,
-            schoolType: formData.schoolType,
+            schoolName: formData.institutionName,
+            schoolType: formData.institutionType,
             schoolCategory: formData.schoolCategory,
             board: formData.boardType,
-            establishmentYear: parseInt(formData.establishedYear),
+            establishmentYear: parseInt(formData.establishmentYear),
             country: formData.country,
-            state: formData.state,
-            district: formData.district,
-            city: formData.city,
-            pincode: formData.pincode,
-            address: formData.address,
+            institutionName: formData.institutionName,
+            institutionType: formData.institutionType,
+            boardType: formData.boardType,
+            affiliationNumber: formData.affiliationNumber,
+            officialWebsite: formData.officialWebsite,
           })
         });
 
@@ -296,9 +482,7 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
         if (!response.ok || !data.success) throw new Error(data.message || 'Failed to start registration');
 
         const regId = data.data?.registration_id;
-        if (!regId) {
-          throw new Error('Registration ID was not returned by the server');
-        }
+        if (!regId) throw new Error('Registration ID was not returned by server');
 
         setRegistrationId(regId);
         triggerAutoSave(formData, password, regId);
@@ -308,6 +492,43 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
         return;
       } finally {
         setIsSubmitting(false);
+      }
+    }
+
+    // Standard save draft to update intermediate steps on the server
+    if (registrationId && (currentPage === 2 || currentPage === 3 || currentPage === 4)) {
+      try {
+        await fetch(`/api/v1/school-registration/${registrationId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            official_email: formData.officialEmail,
+            official_phone: formData.officialPhone,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            pincode: formData.postalCode,
+            postal_code: formData.postalCode,
+            owner_name: formData.ownerName,
+            administrator_name: formData.administratorName || formData.ownerName,
+            administrator_designation: formData.administratorDesignation,
+            owner_email: formData.ownerEmail,
+            owner_mobile: formData.ownerMobile,
+            alternate_mobile: formData.alternateMobile,
+            official_website: formData.officialWebsite,
+            short_name: formData.shortName,
+            logo_url: formData.logoUrl,
+            primary_brand_color: formData.primaryBrandColor,
+            secondary_brand_color: formData.secondaryBrandColor,
+            metadata: {
+              admin_password: password,
+              primary_color: formData.primaryBrandColor,
+              secondary_color: formData.secondaryBrandColor
+            }
+          })
+        });
+      } catch (e) {
+        console.warn('Failed to sync draft step to database');
       }
     }
 
@@ -344,43 +565,143 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
     }, 600);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  /**
+   * Action: Creates a Secure Checkout Order from the server,
+   * opening our fully integrated visual sandbox payment gateway.
+   */
+  const handleInitiatePayment = async () => {
     const finalErrors = getStepValidationErrors(5);
     if (finalErrors.length > 0) {
       setError(finalErrors[0]);
       return;
     }
+    if (!registrationId) {
+      setError('Registration record missing. Please go back and complete step 1.');
+      return;
+    }
+
     setError('');
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/v1/school-registration/complete', {
+      // 1. Trigger the server to save selection parameters and create a secure gateway order
+      const response = await fetch('/api/v1/school-registration/prepare-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           registrationId,
-          formData,
-          password
+          planId: selectedPlan,
+          studentCapacity,
+          billingCycle
         })
       });
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Registration failed');
+      const orderData = await response.json();
+      if (!response.ok || !orderData.success) {
+        throw new Error(orderData.message || 'Failed to prepare checkout order');
       }
 
-      setIsSuccess(true);
-      // Clean up draft on successful registration
-      try {
-        localStorage.removeItem('galaxy_erp_reg_draft');
-      } catch (err) {}
+      // 2. Redirect/Navigate to the dynamic full-page checkout page!
+      navigate(`/school-registration/${registrationId}/payment`);
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred during registration.');
+      setError(err.message || 'Payment initiation failed.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  /**
+   * Action: Simulates the client-side swipe/input and sends a transaction confirmation 
+   * to the backend to run HMAC security signature checks and provision resources.
+   */
+  const handleConfirmMockSuccessPayment = async () => {
+    setError('');
+    setCheckoutStep('processing');
+    
+    // Simulate Gateway callback wait
+    setTimeout(async () => {
+      setCheckoutStep('verifying');
+      
+      try {
+        // Mock gateway credentials compiled by the front-end simulation
+        const mockPaymentId = 'pay_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+        const mockSignature = 'sig_' + Math.random().toString(36).substring(2, 15).toUpperCase();
+
+        // 2. Perform actual signature checking & resource allocation server-side
+        const response = await fetch('/api/v1/school-registration/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            registrationId,
+            orderId: gatewayOrderId,
+            paymentId: mockPaymentId,
+            signature: mockSignature,
+            password: password // Enforce administrative login account hashing
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Server failed to verify payment signature.');
+        }
+
+        // Lock Final Registered Outputs in UI State
+        setGatewayPaymentId(mockPaymentId);
+        setGatewaySignature(mockSignature);
+        setFinalSchoolUniqueId(data.schoolUniqueId);
+        setFinalTenantId(data.tenantId);
+        
+        setCheckoutStep('success');
+        
+        // Clean up local drafting caches
+        try {
+          localStorage.removeItem('galaxy_erp_reg_draft');
+        } catch (_) {}
+        
+        // Transition wizard wrapper to success state
+        setTimeout(() => {
+          setIsCheckoutOpen(false);
+          setIsSuccess(true);
+        }, 1200);
+
+      } catch (err: any) {
+        setError(err.message || 'Transaction verification rejected by system.');
+        setCheckoutStep('failed');
+      }
+    }, 1200);
+  };
+
+  const handleConfirmMockFailedPayment = () => {
+    setError('');
+    setCheckoutStep('processing');
+    setTimeout(() => {
+      setError('Transaction rejected: Insufficient funds in bank account or invalid credentials.');
+      setCheckoutStep('failed');
+    }, 1000);
+  };
+
+  const handleConfirmMockCancelledPayment = () => {
+    setError('');
+    setCheckoutStep('processing');
+    setTimeout(() => {
+      setError('Transaction cancelled: You aborted the payment checkout process.');
+      setCheckoutStep('cancelled');
+    }, 800);
+  };
+
+  const handleConfirmMockPendingPayment = () => {
+    setError('');
+    setCheckoutStep('processing');
+    setTimeout(() => {
+      setError('Transaction pending: Waiting for confirmation from your banking institution.');
+      setCheckoutStep('pending');
+    }, 1000);
+  };
+
+  const handleRetryPayment = () => {
+    setError('');
+    setCheckoutStep('payment_methods');
   };
 
   // Fake drag & drop logo upload logic
@@ -421,7 +742,6 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
             const nextProg = f.progress + 25;
             if (nextProg >= 100) {
               clearInterval(interval);
-              // Set logo URL for form context if image was uploaded
               if (/\.(jpe?g|png|gif|svg|webp)$/i.test(name)) {
                 handleInputChange('logoUrl', 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=128');
               }
@@ -438,11 +758,11 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
   return (
     <div id="register-school-page" className="w-full min-h-screen bg-slate-50 flex flex-col lg:flex-row font-sans relative overflow-hidden selection:bg-indigo-600 selection:text-white">
       
-      {/* BACKGROUND DECORATIVE BLUR BLOBS (Subtle light grays, indigos - NO neon effects) */}
+      {/* Decorative Blur Blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-50/40 blur-[120px] pointer-events-none z-0"></div>
       <div className="absolute bottom-[-15%] right-[-10%] w-[45vw] h-[45vw] rounded-full bg-purple-50/30 blur-[130px] pointer-events-none z-0"></div>
 
-      {/* LEFT PANEL - 40% Width (Hidden on smaller viewports, beautiful premium slide-in on desktop) */}
+      {/* LEFT PANEL - 40% Width */}
       <div className="hidden lg:flex flex-col lg:w-[40%] bg-gradient-to-br from-indigo-50/40 via-slate-50/60 to-purple-50/20 border-r border-slate-200/60 p-12 overflow-y-auto h-screen justify-between relative z-10">
         
         {/* Brand Header */}
@@ -472,7 +792,7 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
           </div>
         </div>
 
-        {/* Live CSS Interactive Dashboard Graphic / Mock Panel */}
+        {/* Live CSS Interactive Dashboard Graphic */}
         <div className="my-8 relative bg-white/80 border border-slate-200/50 p-6 rounded-2xl shadow-xl shadow-slate-100/50 backdrop-blur-md">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
             <div className="flex items-center gap-2">
@@ -489,7 +809,7 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                   <Cpu className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-[11px] font-bold text-slate-900">Biometric Facial Attendance</h4>
+                  <h4 className="text-[11px] font-bold text-slate-900">Biometric Attendance Module</h4>
                   <p className="text-[9px] text-slate-400">Continuous check-in model</p>
                 </div>
               </div>
@@ -524,7 +844,7 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
           </div>
         </div>
 
-        {/* Trust Badges & Secure Footer */}
+        {/* Trust Badges */}
         <div className="space-y-4">
           <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-200/60 pt-4">
             <div className="flex items-center gap-1.5 text-slate-400">
@@ -546,10 +866,10 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
         </div>
       </div>
 
-      {/* RIGHT PANEL - 60% Width (Fully responsive, occupies 100vh on small screens) */}
+      {/* RIGHT PANEL - 60% Width */}
       <div className="w-full lg:w-[60%] flex flex-col justify-between min-h-screen bg-white relative overflow-y-auto z-10">
         
-        {/* TOP STATUS BAR & HEADER NAVIGATION */}
+        {/* TOP STATUS BAR */}
         <div className="px-6 py-4 md:px-12 border-b border-slate-100 flex items-center justify-between bg-white/80 backdrop-blur-sm sticky top-0 z-20">
           <div className="flex items-center gap-2.5 lg:hidden" onClick={() => navigate('/')}>
             <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white">
@@ -560,7 +880,7 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
             <span className="font-display font-extrabold text-sm tracking-wide text-slate-900">GALAXY ERP</span>
           </div>
 
-          {/* Save Draft Indicator (Floating Status indicator) */}
+          {/* Save Draft Indicator */}
           <div className="flex items-center gap-4 ml-auto">
             <div className="flex items-center gap-2 text-xs">
               {saveStatus === 'saving' && (
@@ -579,7 +899,6 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                 <button
                   onClick={handleManualSave}
                   className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-semibold text-xs focus:outline-none"
-                  title="Manual Save"
                 >
                   <Save className="w-3.5 h-3.5" />
                   Save Draft
@@ -597,7 +916,7 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
           </div>
         </div>
 
-        {/* MODERN WIZARD PROGRESS BAR */}
+        {/* WIZARD PROGRESS BAR */}
         {!isSuccess && (
           <div className="px-6 py-6 md:px-12 bg-slate-50/50 border-b border-slate-100">
             <div className="max-w-xl mx-auto flex items-center justify-between relative">
@@ -639,24 +958,23 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
               })}
             </div>
             
-            {/* Step Titles under Progress */}
             <div className="max-w-xl mx-auto flex justify-between text-[10px] font-bold text-slate-400 mt-2 tracking-wider uppercase">
               <span className={currentPage === 1 ? 'text-indigo-600' : ''}>01. Profile</span>
-              <span className={currentPage === 2 ? 'text-indigo-600' : ''}>02. Admin</span>
-              <span className={currentPage === 3 ? 'text-indigo-600' : ''}>03. License</span>
-              <span className={currentPage === 4 ? 'text-indigo-600' : ''}>04. Upload</span>
-              <span className={currentPage === 5 ? 'text-indigo-600' : ''}>05. Consent</span>
+              <span className={currentPage === 2 ? 'text-indigo-600' : ''}>02. Contact</span>
+              <span className={currentPage === 3 ? 'text-indigo-600' : ''}>03. Security</span>
+              <span className={currentPage === 4 ? 'text-indigo-600' : ''}>04. Branding</span>
+              <span className={currentPage === 5 ? 'text-indigo-600' : ''}>05. Checkout</span>
             </div>
           </div>
         )}
 
-        {/* WIZARD CONTENT - WRAPPED IN FRAMER MOTION DIRECTIONS */}
+        {/* WIZARD CONTENT CONTAINER */}
         <div className="flex-1 flex items-center justify-center py-8 px-6 md:px-12">
           <div className="w-full max-w-xl mx-auto">
             
             <AnimatePresence initial={false} custom={direction} mode="wait">
               {isSuccess ? (
-                // SUCCESS STATE PANEL WITH TICKET DESIGN
+                // SUCCESS STATE TICKET DESIGN PANEL
                 <motion.div
                   key="success-card"
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -667,56 +985,72 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                   <div className="w-16 h-16 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center mx-auto shadow-sm text-emerald-600">
                     <CheckCircle2 className="w-9 h-9" />
                   </div>
-
                   <div className="space-y-2">
-                    <span className="text-[10px] bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold uppercase tracking-wider">Onboarding Initiated</span>
-                    <h2 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
-                      Institutional Node Configured
+                    <span className="text-[10px] bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold uppercase tracking-wider">Registration Activated</span>
+                    <h2 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight animate-pulse">
+                      School Instance Live & Provisioned! 🎉
                     </h2>
                     <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                      Congratulations! Your university/school node has been provisionally provisioned. Galaxy compliance operators are review-locking your state affiliation parameters to unlock live logins.
+                      Your institutional slice has been fully configured. Print or download your secure registration receipt and official certificate below.
                     </p>
                   </div>
 
-                  {/* Summary Ticket Details */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl text-left overflow-hidden">
-                    <div className="px-5 py-3 border-b border-slate-100 bg-slate-100/40 flex justify-between items-center">
-                      <span className="font-mono text-[10px] text-slate-400 font-bold uppercase">PROVISIONAL ID CARRIER</span>
-                      <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">GALAXY-V4-SYS</span>
+                    <div className="px-5 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">School Unique ID</span>
+                        <div className="text-xl font-mono font-bold text-indigo-700">{finalSchoolUniqueId}</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(finalSchoolUniqueId);
+                            alert("School ID copied!");
+                          }}
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold rounded-lg transition-colors"
+                        >
+                          Copy ID
+                        </button>
+                        <button 
+                          onClick={() => setIsCertificateModalOpen(true)} 
+                          className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 shadow-sm"
+                        >
+                          <Receipt className="w-3.5 h-3.5" />
+                          Print Receipt / SLA
+                        </button>
+                      </div>
                     </div>
-                    <div className="p-5 space-y-3.5 text-xs text-slate-700">
+                    <div className="p-5 space-y-3.5 text-xs text-slate-700 bg-white/50">
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Campus Unit Name:</span>
-                        <strong className="text-slate-800">{formData.schoolName}</strong>
+                        <span className="text-slate-500">Registered School:</span>
+                        <strong className="text-slate-900">{formData.institutionName}</strong>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Platform Board:</span>
-                        <strong className="text-slate-800">{formData.boardType} Board</strong>
+                        <span className="text-slate-500">Database Tenant ID:</span>
+                        <span className="text-slate-800 font-mono text-[10px] font-semibold">{finalTenantId}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Assigned Admin ID:</span>
-                        <strong className="text-indigo-600 font-mono">{formData.adminEmail}</strong>
+                        <span className="text-slate-500">Licensing Tier:</span>
+                        <strong className="text-indigo-700 uppercase">{selectedPlan} ({studentCapacity} Pupils)</strong>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">License Subscribed:</span>
-                        <strong className="text-slate-800">{formData.selectedPlan} ({formData.billingCycle})</strong>
+                        <span className="text-slate-500">Master Owner Account:</span>
+                        <strong className="text-slate-900">{formData.ownerEmail}</strong>
                       </div>
-                    </div>
-                    <div className="p-4 bg-indigo-50/50 border-t border-slate-100 text-[11px] text-indigo-950 flex gap-2">
-                      <HelpCircle className="w-4.5 h-4.5 text-indigo-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="font-bold">Next steps dispatch:</strong> Temporary credential keys are routed to your administrator inbox. Onboard advisors will dial <strong className="text-slate-900">{formData.adminPhone || '+91 9123456789'}</strong> to aid terminal configurations.
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Initial Payment (25%):</span>
+                        <strong className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">₹{pricing.requiredInitialPayment.toLocaleString('en-IN')}.00 PAID</strong>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-2">
+                  <div className="pt-4">
                     <button
                       id="reg-success-proceed-btn"
                       onClick={() => navigate('/auth/login')}
-                      className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 mx-auto"
+                      className="w-full sm:w-auto px-8 py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 mx-auto"
                     >
-                      Proceed to Secure Console Gate <ArrowRight className="w-4 h-4" />
+                      Proceed to Admin Dashboard <ArrowRight className="w-4 h-4 ml-1" />
                     </button>
                   </div>
                 </motion.div>
@@ -731,72 +1065,125 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                   className="space-y-6 w-full"
                 >
                   
-                  {/* STEP TITLE HEADER */}
+                  {/* STEP HEADER */}
                   <div>
                     {currentPage === 1 && (
                       <div>
-                        <span className="text-[10px] text-indigo-600 font-extrabold tracking-wider uppercase bg-indigo-50 px-2.5 py-1 rounded-md">Step 01 / 05</span>
-                        <h3 className="font-display font-extrabold text-2xl text-slate-900 mt-2 tracking-tight">Institutional Profile</h3>
-                        <p className="text-xs text-slate-500 mt-1">Set up your campus registry parameters, affiliation codes, and geographic site coordinates.</p>
+                        <span className="text-[10px] text-indigo-600 font-extrabold tracking-wider uppercase bg-indigo-50 px-2.5 py-1 rounded-md">Step 01 / 06</span>
+                        <h3 className="font-display font-extrabold text-2xl text-slate-900 mt-2 tracking-tight">Institution Profile</h3>
+                        <p className="text-xs text-slate-500 mt-1">Specify your institution's registration profile and affiliation details.</p>
                       </div>
                     )}
                     {currentPage === 2 && (
                       <div>
-                        <span className="text-[10px] text-indigo-600 font-extrabold tracking-wider uppercase bg-indigo-50 px-2.5 py-1 rounded-md">Step 02 / 05</span>
-                        <h3 className="font-display font-extrabold text-2xl text-slate-900 mt-2 tracking-tight">Principal & ERP Administrator</h3>
-                        <p className="text-xs text-slate-500 mt-1">Configure campus credentials and key administrative points of contact.</p>
+                        <span className="text-[10px] text-indigo-600 font-extrabold tracking-wider uppercase bg-indigo-50 px-2.5 py-1 rounded-md">Step 02 / 06</span>
+                        <h3 className="font-display font-extrabold text-2xl text-slate-900 mt-2 tracking-tight">Institution Contact</h3>
+                        <p className="text-xs text-slate-500 mt-1">Provide direct physical address coordinates and official communication touchpoints.</p>
                       </div>
                     )}
                     {currentPage === 3 && (
                       <div>
-                        <span className="text-[10px] text-indigo-600 font-extrabold tracking-wider uppercase bg-indigo-50 px-2.5 py-1 rounded-md">Step 03 / 05</span>
-                        <h3 className="font-display font-extrabold text-2xl text-slate-900 mt-2 tracking-tight">Platform License Tier</h3>
-                        <p className="text-xs text-slate-500 mt-1">Select a service plan scaled precisely to your campus demographics.</p>
+                        <span className="text-[10px] text-indigo-600 font-extrabold tracking-wider uppercase bg-indigo-50 px-2.5 py-1 rounded-md">Step 03 / 06</span>
+                        <h3 className="font-display font-extrabold text-2xl text-slate-900 mt-2 tracking-tight">Management & Security</h3>
+                        <p className="text-xs text-slate-500 mt-1">Establish clear separation between ownership details and administrative login credentials.</p>
                       </div>
                     )}
                     {currentPage === 4 && (
                       <div>
-                        <span className="text-[10px] text-indigo-600 font-extrabold tracking-wider uppercase bg-indigo-50 px-2.5 py-1 rounded-md">Step 04 / 05</span>
-                        <h3 className="font-display font-extrabold text-2xl text-slate-900 mt-2 tracking-tight">Institutional Branding</h3>
-                        <p className="text-xs text-slate-500 mt-1">Upload school/university logo assets and official registration logs.</p>
+                        <span className="text-[10px] text-indigo-600 font-extrabold tracking-wider uppercase bg-indigo-50 px-2.5 py-1 rounded-md">Step 04 / 06</span>
+                        <h3 className="font-display font-extrabold text-2xl text-slate-900 mt-2 tracking-tight">Institution Branding</h3>
+                        <p className="text-xs text-slate-500 mt-1">Set up custom themes, abbreviations, and aesthetic identities for the school portal.</p>
                       </div>
                     )}
                     {currentPage === 5 && (
                       <div>
-                        <span className="text-[10px] text-indigo-600 font-extrabold tracking-wider uppercase bg-indigo-50 px-2.5 py-1 rounded-md">Step 05 / 05</span>
-                        <h3 className="font-display font-extrabold text-2xl text-slate-900 mt-2 tracking-tight">Review & Sign Consent</h3>
-                        <p className="text-xs text-slate-500 mt-1">Verify all parameters lock and sign off the Educational Operating Covenant.</p>
+                        <span className="text-[10px] text-indigo-600 font-extrabold tracking-wider uppercase bg-indigo-50 px-2.5 py-1 rounded-md">Step 05 / 06</span>
+                        <h3 className="font-display font-extrabold text-2xl text-slate-900 mt-2 tracking-tight">Subscription Plan</h3>
+                        <p className="text-xs text-slate-500 mt-1">Select your dynamic operating license capacity and billing cycle.</p>
+                      </div>
+                    )}
+                    {currentPage === 6 && (
+                      <div>
+                        <span className="text-[10px] text-indigo-600 font-extrabold tracking-wider uppercase bg-indigo-50 px-2.5 py-1 rounded-md">Step 06 / 06</span>
+                        <h3 className="font-display font-extrabold text-2xl text-slate-900 mt-2 tracking-tight">Review & Confirm</h3>
+                        <p className="text-xs text-slate-500 mt-1">Please review all submitted information carefully before proceeding to secure payment.</p>
                       </div>
                     )}
                   </div>
 
-                  {/* FORM FIELDS PER STEP */}
+                  {/* FIELDS PORTAL */}
                   <div className="space-y-4">
                     
-                    {/* STEP 1 FIELDS (Phase 01) */}
+                    {/* STEP 1 FIELDS (Institution Details) */}
                     {currentPage === 1 && (
                       <div className="space-y-4">
+                        {/* Collapsible Resume Registration ID Panel */}
+                        <div className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-indigo-600" />
+                              <span className="text-[11px] font-bold text-indigo-950 uppercase tracking-wider">Already started registering?</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowResumeInput(!showResumeInput);
+                                setResumeError('');
+                              }}
+                              className="text-xs font-extrabold text-indigo-600 hover:text-indigo-800 transition-colors"
+                            >
+                              {showResumeInput ? 'Cancel' : 'Resume Draft'}
+                            </button>
+                          </div>
+                          
+                          {showResumeInput && (
+                            <div className="space-y-2 pt-2 border-t border-indigo-100/60">
+                              <p className="text-[10px] text-slate-500">Enter your Registration ID (UUID format) to resume your saved draft where you left off.</p>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
+                                  value={resumeIdInput}
+                                  onChange={(e) => setResumeIdInput(e.target.value)}
+                                  className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100/50 transition-all placeholder:text-slate-400"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleResumeDraft}
+                                  disabled={isResuming}
+                                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xs font-bold rounded-xl shadow-sm transition-colors flex items-center gap-1"
+                                >
+                                  {isResuming ? 'Resuming...' : 'Load'}
+                                </button>
+                              </div>
+                              {resumeError && (
+                                <p className="text-[10px] font-bold text-rose-500">{resumeError}</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
                         <div className="space-y-1.5">
-                          <label htmlFor="reg-school-name" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            School / Institution Name *
+                          <label htmlFor="reg-institution-name" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            Institution / School Name *
                           </label>
                           <div className="relative flex items-center">
                             <School className="absolute left-3 w-4 h-4 text-slate-400" />
                             <input 
-                              id="reg-school-name"
+                              id="reg-institution-name"
                               type="text" 
                               required
-                              value={formData.schoolName}
-                              onChange={(e) => handleInputChange('schoolName', e.target.value)}
-                              onBlur={() => handleMarkTouched('schoolName')}
-                              placeholder="e.g. Apex International School"
+                              value={formData.institutionName}
+                              onChange={(e) => handleInputChange('institutionName', e.target.value)}
+                              onBlur={() => handleMarkTouched('institutionName')}
+                              placeholder="e.g. Galaxy Public School"
                               className={`w-full pl-10 pr-4 py-3 bg-slate-50/50 hover:bg-slate-50 border rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all outline-none placeholder:text-slate-400 ${
-                                touchedFields.schoolName && !formData.schoolName.trim()
+                                touchedFields.institutionName && !formData.institutionName.trim()
                                   ? 'border-rose-300 focus:border-rose-500'
                                   : 'border-slate-200 focus:border-indigo-600'
                               }`}
                             />
-                            {touchedFields.schoolName && formData.schoolName.trim() && (
+                            {touchedFields.institutionName && formData.institutionName.trim() && (
                               <CheckCircle className="absolute right-3 w-4 h-4 text-emerald-500" />
                             )}
                           </div>
@@ -804,10 +1191,10 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">School Type</label>
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Institution Type *</label>
                             <select 
-                              value={formData.schoolType}
-                              onChange={(e) => handleInputChange('schoolType', e.target.value)}
+                              value={formData.institutionType}
+                              onChange={(e) => handleInputChange('institutionType', e.target.value)}
                               className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all outline-none cursor-pointer"
                             >
                               <option value="Co-Educational">Co-Educational</option>
@@ -833,7 +1220,7 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Board *</label>
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Board / Affiliation *</label>
                             <select 
                               value={formData.boardType}
                               onChange={(e) => handleInputChange('boardType', e.target.value)}
@@ -848,19 +1235,119 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
 
                           <div className="space-y-1.5">
                             <label htmlFor="reg-est-year" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                              Establishment Year
+                              Establishment Year *
                             </label>
                             <div className="relative flex items-center">
                               <Calendar className="absolute left-3 w-4 h-4 text-slate-400" />
                               <input 
                                 id="reg-est-year"
                                 type="number" 
-                                value={formData.establishedYear}
-                                onChange={(e) => handleInputChange('establishedYear', e.target.value)}
-                                placeholder="e.g. 2010"
-                                className="w-full pl-10 pr-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all outline-none"
+                                required
+                                value={formData.establishmentYear}
+                                onChange={(e) => handleInputChange('establishmentYear', e.target.value)}
+                                onBlur={() => handleMarkTouched('establishmentYear')}
+                                placeholder="e.g. 2005"
+                                className={`w-full pl-10 pr-4 py-3 bg-slate-50/50 hover:bg-slate-50 border rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all outline-none ${
+                                  touchedFields.establishmentYear && getStepValidationErrors(1).length > 0
+                                    ? 'border-rose-300'
+                                    : 'border-slate-200'
+                                }`}
                               />
                             </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label htmlFor="reg-affiliation" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Affiliation Number (Optional)</label>
+                            <input 
+                              id="reg-affiliation"
+                              type="text"
+                              value={formData.affiliationNumber}
+                              onChange={(e) => handleInputChange('affiliationNumber', e.target.value)}
+                              placeholder="e.g. CBSE-110294"
+                              className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label htmlFor="reg-website" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Official Website (Optional)</label>
+                            <input 
+                              id="reg-website"
+                              type="url"
+                              value={formData.officialWebsite}
+                              onChange={(e) => handleInputChange('officialWebsite', e.target.value)}
+                              placeholder="e.g. https://school.edu"
+                              className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 2 FIELDS (Institution Contact) */}
+                    {currentPage === 2 && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label htmlFor="reg-official-email" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                              Official Email *
+                            </label>
+                            <div className="relative flex items-center">
+                              <Mail className="absolute left-3 w-4 h-4 text-slate-400" />
+                              <input 
+                                id="reg-official-email"
+                                type="email" 
+                                required
+                                value={formData.officialEmail}
+                                onChange={(e) => handleInputChange('officialEmail', e.target.value)}
+                                onBlur={() => handleMarkTouched('officialEmail')}
+                                placeholder="contact@school.edu"
+                                className={`w-full pl-10 pr-4 py-3 bg-slate-50/50 hover:bg-slate-50 border rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all outline-none ${
+                                  touchedFields.officialEmail && !formData.officialEmail.trim() ? 'border-rose-300' : 'border-slate-200'
+                                }`}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label htmlFor="reg-official-phone" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                              Official Phone Number *
+                            </label>
+                            <div className="relative flex items-center">
+                              <Phone className="absolute left-3 w-4 h-4 text-slate-400" />
+                              <input 
+                                id="reg-official-phone"
+                                type="tel" 
+                                required
+                                value={formData.officialPhone}
+                                onChange={(e) => handleInputChange('officialPhone', e.target.value)}
+                                onBlur={() => handleMarkTouched('officialPhone')}
+                                placeholder="e.g. +91 11 2345 6789"
+                                className={`w-full pl-10 pr-4 py-3 bg-slate-50/50 hover:bg-slate-50 border rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all outline-none ${
+                                  touchedFields.officialPhone && !formData.officialPhone.trim() ? 'border-rose-300' : 'border-slate-200'
+                                }`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label htmlFor="reg-street-address" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Full Address *</label>
+                          <div className="relative flex items-center">
+                            <MapPin className="absolute left-3 w-4 h-4 text-slate-400" />
+                            <textarea 
+                              id="reg-street-address"
+                              required
+                              rows={2}
+                              value={formData.address}
+                              onChange={(e) => handleInputChange('address', e.target.value)}
+                              onBlur={() => handleMarkTouched('address')}
+                              placeholder="e.g. Sector 12, Main Street Road"
+                              className={`w-full pl-10 pr-4 py-3 bg-slate-50/50 hover:bg-slate-50 border rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all outline-none resize-none ${
+                                touchedFields.address && !formData.address.trim() ? 'border-rose-300' : 'border-slate-200'
+                              }`}
+                            />
                           </div>
                         </div>
 
@@ -893,21 +1380,7 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div className="space-y-1.5">
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">District *</label>
-                            <input 
-                              type="text"
-                              value={formData.district}
-                              onChange={(e) => handleInputChange('district', e.target.value)}
-                              onBlur={() => handleMarkTouched('district')}
-                              placeholder="e.g. Mumbai City"
-                              className={`w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all outline-none ${
-                                touchedFields.district && !formData.district.trim() ? 'border-rose-300' : 'border-slate-200'
-                              }`}
-                            />
-                          </div>
-
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
                             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">City *</label>
                             <input 
@@ -923,37 +1396,16 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                           </div>
 
                           <div className="space-y-1.5">
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pincode *</label>
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">PIN Code *</label>
                             <input 
                               type="text"
-                              value={formData.pincode}
-                              onChange={(e) => handleInputChange('pincode', e.target.value)}
-                              onBlur={() => handleMarkTouched('pincode')}
-                              placeholder="400001"
+                              value={formData.postalCode}
+                              onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                              onBlur={() => handleMarkTouched('postalCode')}
+                              placeholder="e.g. 400001"
                               maxLength={6}
                               className={`w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all outline-none ${
-                                touchedFields.pincode && !/^\d{6}$/.test(formData.pincode) ? 'border-rose-300' : 'border-slate-200'
-                              }`}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <label htmlFor="reg-street-address" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Address *</label>
-                          <div className="relative flex items-center">
-                            <MapPin className="absolute left-3 w-4 h-4 text-slate-400" />
-                            <textarea 
-                              id="reg-street-address"
-                              required
-                              rows={2}
-                              value={formData.address}
-                              onChange={(e) => handleInputChange('address', e.target.value)}
-                              onBlur={() => handleMarkTouched('address')}
-                              placeholder="e.g. Sector 62, Landmark Gate"
-                              className={`w-full pl-10 pr-4 py-3 bg-slate-50/50 hover:bg-slate-50 border rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all outline-none placeholder:text-slate-400 resize-none ${
-                                touchedFields.address && !formData.address.trim()
-                                  ? 'border-rose-300 focus:border-rose-500'
-                                  : 'border-slate-200 focus:border-indigo-600'
+                                touchedFields.postalCode && !validatePincode(formData.postalCode) ? 'border-rose-300' : 'border-slate-200'
                               }`}
                             />
                           </div>
@@ -961,59 +1413,67 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                       </div>
                     )}
 
-                    {/* STEP 2 FIELDS */}
-                    {currentPage === 2 && (
-                      <div className="space-y-5">
-                        
-                        {/* Principal Profile Box */}
-                        <div className="bg-slate-50/60 p-5 border border-slate-100 rounded-2xl space-y-4">
+                    {/* STEP 3 FIELDS (Owner & Security) */}
+                    {currentPage === 3 && (
+                      <div className="space-y-4">
+                        <div className="bg-slate-50/60 p-4 border border-slate-100 rounded-xl space-y-3">
                           <div className="flex items-center gap-2">
-                            <User className="w-4.5 h-4.5 text-indigo-600" />
-                            <h4 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">1. Institution Principal Persona</h4>
+                            <User className="w-4 h-4 text-indigo-600" />
+                            <h4 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Owner / Founder Details</h4>
                           </div>
 
-                          <div className="space-y-3.5">
+                          <div className="space-y-3">
                             <div className="space-y-1.5">
-                              <label htmlFor="reg-principal-name" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Full Name *</label>
+                              <label htmlFor="reg-owner-name" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Owner Full Name *</label>
                               <input 
-                                id="reg-principal-name"
+                                id="reg-owner-name"
                                 type="text"
                                 required
-                                value={formData.principalName}
-                                onChange={(e) => handleInputChange('principalName', e.target.value)}
-                                placeholder="e.g. Dr. Arthur Pendelton"
-                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 transition-all outline-none"
+                                value={formData.ownerName}
+                                onChange={(e) => handleInputChange('ownerName', e.target.value)}
+                                onBlur={() => handleMarkTouched('ownerName')}
+                                placeholder="e.g. Manish Kumar"
+                                className={`w-full px-4 py-2.5 bg-white border rounded-xl text-slate-800 text-xs font-medium focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 transition-all outline-none ${
+                                  touchedFields.ownerName && !formData.ownerName.trim() ? 'border-rose-300' : 'border-slate-200'
+                                }`}
                               />
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="space-y-1.5">
-                                <label htmlFor="reg-principal-email" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Official Email *</label>
+                                <label htmlFor="reg-owner-email" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Owner Verified Email *</label>
                                 <div className="relative flex items-center">
                                   <Mail className="absolute left-3 w-4 h-4 text-slate-400" />
                                   <input 
-                                    id="reg-principal-email"
+                                    id="reg-owner-email"
                                     type="email"
                                     required
-                                    value={formData.principalEmail}
-                                    onChange={(e) => handleInputChange('principalEmail', e.target.value)}
-                                    placeholder="principal@academy.edu"
-                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 transition-all outline-none"
+                                    value={formData.ownerEmail}
+                                    onChange={(e) => handleInputChange('ownerEmail', e.target.value)}
+                                    onBlur={() => handleMarkTouched('ownerEmail')}
+                                    placeholder="owner@school.com"
+                                    className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-xl text-slate-800 text-xs font-medium focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 transition-all outline-none ${
+                                      touchedFields.ownerEmail && !validateEmail(formData.ownerEmail) ? 'border-rose-300' : 'border-slate-200'
+                                    }`}
                                   />
                                 </div>
                               </div>
+
                               <div className="space-y-1.5">
-                                <label htmlFor="reg-principal-phone" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Contact Number *</label>
+                                <label htmlFor="reg-owner-mobile" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Verified Mobile *</label>
                                 <div className="relative flex items-center">
                                   <Phone className="absolute left-3 w-4 h-4 text-slate-400" />
                                   <input 
-                                    id="reg-principal-phone"
+                                    id="reg-owner-mobile"
                                     type="tel"
                                     required
-                                    value={formData.principalPhone}
-                                    onChange={(e) => handleInputChange('principalPhone', e.target.value)}
-                                    placeholder="+91 98765 43210"
-                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 transition-all outline-none"
+                                    value={formData.ownerMobile}
+                                    onChange={(e) => handleInputChange('ownerMobile', e.target.value)}
+                                    onBlur={() => handleMarkTouched('ownerMobile')}
+                                    placeholder="e.g. +91 98765 43210"
+                                    className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-xl text-slate-800 text-xs font-medium focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 transition-all outline-none ${
+                                      touchedFields.ownerMobile && !validatePhone(formData.ownerMobile) ? 'border-rose-300' : 'border-slate-200'
+                                    }`}
                                   />
                                 </div>
                               </div>
@@ -1021,63 +1481,42 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                           </div>
                         </div>
 
-                        {/* Admin Persona Box */}
-                        <div className="bg-slate-50/60 p-5 border border-slate-100 rounded-2xl space-y-4">
+                        <div className="bg-slate-50/60 p-4 border border-slate-100 rounded-xl space-y-3">
                           <div className="flex items-center gap-2">
-                            <ShieldCheck className="w-4.5 h-4.5 text-indigo-600" />
-                            <h4 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">2. Primary System Administrator Credentials</h4>
+                            <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                            <h4 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">System Master Credentials</h4>
                           </div>
 
-                          <div className="space-y-3.5">
-                            <div className="space-y-1.5">
-                              <label htmlFor="reg-admin-name" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Administrator Full Name *</label>
-                              <input 
-                                id="reg-admin-name"
-                                type="text"
-                                required
-                                value={formData.adminName}
-                                onChange={(e) => handleInputChange('adminName', e.target.value)}
-                                placeholder="e.g. Sarah Jenkins"
-                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 transition-all outline-none"
-                              />
-                            </div>
-
+                          <div className="space-y-3">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="space-y-1.5">
-                                <label htmlFor="reg-admin-email" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sign In Email (Admin ID) *</label>
-                                <div className="relative flex items-center">
-                                  <Mail className="absolute left-3 w-4 h-4 text-slate-400" />
-                                  <input 
-                                    id="reg-admin-email"
-                                    type="email"
-                                    required
-                                    value={formData.adminEmail}
-                                    onChange={(e) => handleInputChange('adminEmail', e.target.value)}
-                                    placeholder="admin@academy.edu"
-                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 transition-all outline-none"
-                                  />
-                                </div>
+                                <label htmlFor="reg-admin-name" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Admin Name (Optional)</label>
+                                <input 
+                                  id="reg-admin-name"
+                                  type="text"
+                                  value={formData.administratorName}
+                                  onChange={(e) => handleInputChange('administratorName', e.target.value)}
+                                  placeholder="Owner is Admin"
+                                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 outline-none"
+                                />
                               </div>
+
                               <div className="space-y-1.5">
-                                <label htmlFor="reg-admin-phone" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">System Alert Phone *</label>
-                                <div className="relative flex items-center">
-                                  <Phone className="absolute left-3 w-4 h-4 text-slate-400" />
-                                  <input 
-                                    id="reg-admin-phone"
-                                    type="tel"
-                                    required
-                                    value={formData.adminPhone}
-                                    onChange={(e) => handleInputChange('adminPhone', e.target.value)}
-                                    placeholder="+91 91234 56789"
-                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 transition-all outline-none"
-                                  />
-                                </div>
+                                <label htmlFor="reg-admin-designation" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Designation / Role *</label>
+                                <input 
+                                  id="reg-admin-designation"
+                                  type="text"
+                                  required
+                                  value={formData.administratorDesignation}
+                                  onChange={(e) => handleInputChange('administratorDesignation', e.target.value)}
+                                  placeholder="e.g. Principal / Director"
+                                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 outline-none"
+                                />
                               </div>
                             </div>
 
-                            {/* Password input + dynamic strength meter */}
                             <div className="space-y-1.5">
-                              <label htmlFor="reg-password" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Create Administrative Security Password *</label>
+                              <label htmlFor="reg-password" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Administrative Master Password *</label>
                               <div className="relative flex items-center">
                                 <Lock className="absolute left-3 w-4 h-4 text-slate-400" />
                                 <input 
@@ -1086,8 +1525,8 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                                   required
                                   value={password}
                                   onChange={(e) => handlePasswordChange(e.target.value)}
-                                  placeholder="Establish unbreakable root password"
-                                  className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 transition-all outline-none"
+                                  placeholder="Enter secure master password"
+                                  className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 outline-none font-mono"
                                 />
                                 <button
                                   type="button"
@@ -1097,184 +1536,103 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                               </div>
-
-                              {/* PASSWORD STRENGTH METERS */}
-                              {password && (
-                                <div className="space-y-1 pt-1.5">
-                                  <div className="flex items-center justify-between text-[10px] font-bold">
-                                    <span className="text-slate-400">PASSWORD STRENGTH:</span>
-                                    <span className={`${pwdStrength.text} uppercase tracking-wider`}>{pwdStrength.label}</span>
-                                  </div>
-                                  <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
-                                    <div 
-                                      className={`h-full transition-all duration-300 ${pwdStrength.color}`}
-                                      style={{ width: `${pwdStrength.score}%` }}
-                                    ></div>
-                                  </div>
-                                  <span className="text-[9px] text-slate-400 block leading-tight">Must possess at least 8 characters including mixed casing, numeric digits, and special characters.</span>
-                                </div>
-                              )}
                             </div>
-                          </div>
-                        </div>
 
-                        {/* Demographics Estimates */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1.5">
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Estimated Student Count</label>
-                            <select 
-                              value={formData.totalStudents}
-                              onChange={(e) => handleInputChange('totalStudents', e.target.value)}
-                              className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all outline-none cursor-pointer"
-                            >
-                              <option value="150">1 - 250 students</option>
-                              <option value="500">251 - 500 students</option>
-                              <option value="1200">501 - 1,500 students</option>
-                              <option value="3000">1,501 - 5,000 students</option>
-                              <option value="8000">5000+ Enterprise scale</option>
-                            </select>
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Estimated Teacher Count</label>
-                            <select 
-                              value={formData.totalTeachers}
-                              onChange={(e) => handleInputChange('totalTeachers', e.target.value)}
-                              className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 transition-all outline-none cursor-pointer"
-                            >
-                              <option value="15">1 - 25 teachers</option>
-                              <option value="40">26 - 50 teachers</option>
-                              <option value="65">51 - 100 teachers</option>
-                              <option value="150">101 - 200 teachers</option>
-                              <option value="400">200+ Enterprise scale</option>
-                            </select>
-                          </div>
-                        </div>
-
-                      </div>
-                    )}
-
-                    {/* STEP 3 FIELDS */}
-                    {currentPage === 3 && (
-                      <div className="space-y-6">
-                        
-                        {/* Billing Cycle Selector Toggle */}
-                        <div className="flex justify-center">
-                          <div className="bg-slate-100 p-1 rounded-xl inline-flex items-center gap-1 border border-slate-200/50">
-                            <button
-                              type="button"
-                              onClick={() => handleInputChange('billingCycle', 'Monthly')}
-                              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-                                formData.billingCycle === 'Monthly' 
-                                  ? 'bg-white text-indigo-600 shadow-sm' 
-                                  : 'text-slate-500 hover:text-slate-800'
-                              }`}
-                            >
-                              Monthly Billing
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleInputChange('billingCycle', 'Annual')}
-                              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-                                formData.billingCycle === 'Annual' 
-                                  ? 'bg-white text-indigo-600 shadow-sm' 
-                                  : 'text-slate-500 hover:text-slate-800'
-                              }`}
-                            >
-                              Annual Billing 
-                              <span className="text-[8px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-black">SAVE 15%</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* License pricing cards */}
-                        <div className="space-y-3">
-                          {[
-                            { 
-                              name: 'Starter Suite', 
-                              annPrice: '₹24,999/yr', 
-                              monPrice: '₹2,499/mo',
-                              desc: 'Built for smaller campus groups. Includes student directories, core marks, basic portals, and online UPI fee desks.',
-                              limit: 'Up to 250 Students'
-                            },
-                            { 
-                              name: 'Standard ERP', 
-                              annPrice: '₹49,999/yr', 
-                              monPrice: '₹4,999/mo',
-                              desc: 'The complete digital operating system. Includes CCTV security alerts, parent SMS integration, and face check-ins.',
-                              limit: 'Up to 1,500 Students',
-                              popular: true
-                            },
-                            { 
-                              name: 'Enterprise Cloud', 
-                              annPrice: '₹99,999/yr', 
-                              monPrice: '₹9,999/mo',
-                              desc: 'Infinite scaling with multi-campus synchronization node capabilities. 24/7 dedicated deployment engineer support.',
-                              limit: 'Unlimited Campus Scale'
-                            }
-                          ].map((plan) => {
-                            const isSelected = formData.selectedPlan === plan.name;
-                            const priceString = formData.billingCycle === 'Annual' ? plan.annPrice : plan.monPrice;
-                            
-                            return (
-                              <div
-                                key={plan.name}
-                                onClick={() => handleInputChange('selectedPlan', plan.name)}
-                                className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${
-                                  isSelected
-                                    ? 'border-indigo-600 bg-indigo-50/30 shadow-md ring-4 ring-indigo-50'
-                                    : 'border-slate-200 bg-white hover:bg-slate-50/50 hover:border-slate-300'
-                                }`}
-                              >
-                                <div className="space-y-1.5 max-w-sm">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-display font-extrabold text-sm text-slate-900">{plan.name}</span>
-                                    {plan.popular && <span className="text-[8px] bg-indigo-600 text-white font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">POPULAR choice</span>}
-                                  </div>
-                                  <p className="text-[11px] text-slate-500 leading-relaxed">{plan.desc}</p>
-                                  <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full inline-block">{plan.limit}</span>
+                            {password && (
+                              <div className="space-y-1 pt-1">
+                                <div className="flex items-center justify-between text-[9px] font-bold">
+                                  <span className="text-slate-400">STRENGTH:</span>
+                                  <span className={`${pwdStrength.text} uppercase`}>{pwdStrength.label}</span>
                                 </div>
-                                <div className="sm:text-right flex-shrink-0">
-                                  <span className="text-lg font-black text-slate-900 tracking-tight block">{priceString}</span>
-                                  <span className="text-[9px] font-bold text-slate-400 tracking-wider uppercase block">Billed {formData.billingCycle}</span>
+                                <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                                  <div 
+                                    className={`h-full transition-all duration-300 ${pwdStrength.color}`}
+                                    style={{ width: `${pwdStrength.score}%` }}
+                                  ></div>
                                 </div>
                               </div>
-                            );
-                          })}
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
 
-                    {/* STEP 4 FIELDS */}
+                    {/* STEP 4 FIELDS (Branding & Identity) */}
                     {currentPage === 4 && (
-                      <div className="space-y-5">
-                        
-                        <div className="space-y-1.5">
-                          <label htmlFor="reg-logo-url" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Institutional Logo URL (Optional)
-                          </label>
-                          <div className="relative flex items-center">
-                            <Globe className="absolute left-3 w-4 h-4 text-slate-400" />
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label htmlFor="reg-short-name" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                              Institution Abbreviation (Short Name)
+                            </label>
+                            <input 
+                              id="reg-short-name"
+                              type="text"
+                              value={formData.shortName}
+                              onChange={(e) => handleInputChange('shortName', e.target.value)}
+                              placeholder="e.g. GPS"
+                              maxLength={10}
+                              className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label htmlFor="reg-logo-url" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                              Institutional Logo URL (Optional)
+                            </label>
                             <input 
                               id="reg-logo-url"
                               type="url"
                               value={formData.logoUrl}
                               onChange={(e) => handleInputChange('logoUrl', e.target.value)}
-                              placeholder="e.g. https://domain.edu/assets/logo.png"
-                              className="w-full pl-10 pr-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-600 transition-all outline-none"
+                              placeholder="e.g. https://domain.edu/logo.png"
+                              className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 outline-none"
                             />
                           </div>
                         </div>
 
-                        {/* Interactive Drag and Drop Upload Zone */}
-                        <div className="space-y-2">
-                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            Verification & Affiliation Documents
-                          </label>
+                        <div className="bg-slate-50/60 p-4 border border-slate-100 rounded-xl space-y-3.5">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-indigo-600" />
+                            <h4 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">Institution Portal Theme</h4>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <label className="block text-[9px] font-bold text-slate-400 uppercase">Primary Brand Color</label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                  type="color"
+                                  value={formData.primaryBrandColor}
+                                  onChange={(e) => handleInputChange('primaryBrandColor', e.target.value)}
+                                  className="w-8 h-8 rounded border border-slate-200 cursor-pointer overflow-hidden p-0"
+                                />
+                                <span className="font-mono text-xs font-bold text-slate-700">{formData.primaryBrandColor}</span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="block text-[9px] font-bold text-slate-400 uppercase">Secondary Brand Color</label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                  type="color"
+                                  value={formData.secondaryBrandColor}
+                                  onChange={(e) => handleInputChange('secondaryBrandColor', e.target.value)}
+                                  className="w-8 h-8 rounded border border-slate-200 cursor-pointer overflow-hidden p-0"
+                                />
+                                <span className="font-mono text-xs font-bold text-slate-700">{formData.secondaryBrandColor}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Affiliation Proof</label>
                           <div
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
-                            className={`p-8 border-2 border-dashed rounded-2xl text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                            className={`p-6 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all flex flex-col items-center justify-center ${
                               isDragging 
                                 ? 'border-indigo-600 bg-indigo-50/50' 
                                 : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300'
@@ -1285,108 +1643,280 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                               id="file-upload" 
                               className="hidden" 
                               onChange={handleFileChange}
-                              accept=".pdf,.png,.jpg,.jpeg,.xlsx"
+                              accept=".pdf,.png,.jpg,.jpeg"
                             />
                             <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center">
-                              <div className="w-11 h-11 bg-white border border-slate-200/80 rounded-xl flex items-center justify-center text-indigo-600 shadow-sm mb-3.5">
-                                <Upload className="w-5 h-5" />
-                              </div>
-                              <span className="text-xs font-bold text-slate-800">Drag Board Affiliation Certificate or spreadsheet</span>
-                              <span className="text-[10px] text-indigo-600 font-semibold mt-1">or browse dynamic files on disk</span>
-                              <span className="text-[9px] text-slate-400 mt-2">Supported Formats: PDF, PNG, JPG, EXCEL up to 10MB</span>
+                              <Upload className="w-5 h-5 text-indigo-600 mb-2" />
+                              <span className="text-xs font-bold text-slate-800">Drag & Drop Board Approval Certificate</span>
+                              <span className="text-[10px] text-indigo-600 font-semibold mt-0.5">or click to browse PDF / PNG files</span>
                             </label>
                           </div>
                         </div>
 
-                        {/* File Upload List with Real progress bar simulation */}
                         {uploadedFiles.length > 0 && (
-                          <div className="space-y-2">
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Artifact queue</span>
-                            <div className="space-y-2">
-                              {uploadedFiles.map((file, i) => (
-                                <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-4">
-                                  <div className="flex items-center gap-2.5 min-w-0">
-                                    <FileCheck className="w-5 h-5 text-indigo-600 flex-shrink-0" />
-                                    <div className="min-w-0">
-                                      <p className="text-xs font-bold text-slate-800 truncate">{file.name}</p>
-                                      <p className="text-[9px] text-slate-400">{file.size}</p>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-3">
-                                    {file.progress < 100 ? (
-                                      <div className="w-20 bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                                        <div className="bg-indigo-600 h-full transition-all duration-200" style={{ width: `${file.progress}%` }}></div>
-                                      </div>
-                                    ) : (
-                                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Uploaded</span>
-                                    )}
-                                  </div>
+                          <div className="space-y-1">
+                            {uploadedFiles.map((file, i) => (
+                              <div key={i} className="p-2 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-xs">
+                                  <FileCheck className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                                  <span className="font-semibold text-slate-800 truncate max-w-[200px]">{file.name}</span>
                                 </div>
-                              ))}
-                            </div>
+                                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Uploaded</span>
+                              </div>
+                            ))}
                           </div>
                         )}
+                      </div>
+                    )}
 
-                        <div className="p-4 bg-slate-50/80 border border-slate-150 rounded-xl text-[11px] text-slate-500 leading-relaxed flex gap-2.5">
-                          <Sparkles className="w-4.5 h-4.5 text-indigo-600 flex-shrink-0 mt-0.5" />
-                          <p>
-                            Uploading board approval credentials fast-tracks review locks. If unprovided, your node can proceed under a provisional review duration of 48 hours.
-                          </p>
+                    {/* STEP 5 FIELDS (Plans, Capacity Billing & Dynamic Checkout) */}
+                    {currentPage === 5 && (
+                      <div className="space-y-4">
+                        
+                        {/* 1. Pricing Plan Selectors */}
+                        <div className="grid grid-cols-3 gap-2.5">
+                          {[
+                            { id: 'silver', title: 'SILVER', rate: '₹30', desc: 'Standard administrative node' },
+                            { id: 'gold', title: 'GOLD', rate: '₹45', desc: 'SLA priority support + SMS' },
+                            { id: 'platinum', title: 'PLATINUM', rate: '₹60', desc: 'Galaxy AI + Smart Bus tracking' }
+                          ].map((plan) => (
+                            <div
+                              key={plan.id}
+                              onClick={() => setSelectedPlan(plan.id as any)}
+                              className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                                selectedPlan === plan.id 
+                                  ? 'border-indigo-600 bg-indigo-50/20' 
+                                  : 'border-slate-200 bg-white hover:bg-slate-50'
+                              }`}
+                            >
+                              <div>
+                                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Tier</span>
+                                <strong className="text-xs text-slate-900 block mt-0.5">{plan.title}</strong>
+                                <span className="text-[10px] text-indigo-600 font-extrabold mt-1 block">{plan.rate}<span className="text-[9px] text-slate-400 font-medium">/pupil</span></span>
+                              </div>
+                              <p className="text-[8px] text-slate-400 leading-tight mt-2">{plan.desc}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* 2. Student Capacity Selector & Billing Cycle Toggle */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student Capacity (Pupils)</label>
+                            <select 
+                              value={studentCapacity}
+                              onChange={(e) => setStudentCapacity(Number(e.target.value))}
+                              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-semibold focus:outline-none cursor-pointer"
+                            >
+                              {[100, 200, 500, 1000, 2000, 3000, 4000, 5000].map((cap) => (
+                                <option key={cap} value={cap}>{cap} Students</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Billing Cycle</label>
+                            <div className="flex bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                              <button
+                                type="button"
+                                onClick={() => setBillingCycle('monthly')}
+                                className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${
+                                  billingCycle === 'monthly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                                }`}
+                              >
+                                Monthly
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setBillingCycle('annual')}
+                                className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all relative ${
+                                  billingCycle === 'annual' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                                }`}
+                              >
+                                Annual
+                                <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white text-[7px] font-extrabold px-1 py-0.5 rounded-full uppercase scale-90 tracking-widest leading-none">2m Free</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 3. Dynamic Server-Synchronized Invoice Breakdown Card */}
+                        <div className="bg-slate-900 text-slate-100 rounded-2xl p-4 space-y-3 shadow-md">
+                          <div className="border-b border-slate-800 pb-2 flex justify-between items-center text-xs">
+                            <span className="font-bold text-[10px] text-indigo-400 uppercase tracking-wider">Dynamic SLA Cost Sheet</span>
+                            <span className="text-[9px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded uppercase">INR Currency Zone</span>
+                          </div>
+
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Subscription Fee:</span>
+                              <span>₹{pricing.baseAmount.toLocaleString('en-IN')}.00</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Institutional Setup Fee:</span>
+                              <span>₹{pricing.setupFee.toLocaleString('en-IN')}.00</span>
+                            </div>
+                            <div className="flex justify-between border-t border-slate-800 pt-1.5 font-bold text-slate-50 text-sm">
+                              <span>Total Contract Value:</span>
+                              <span>₹{pricing.totalAmount.toLocaleString('en-IN')}.00</span>
+                            </div>
+                            <div className="flex justify-between border-t border-dashed border-slate-800 pt-1.5 font-bold text-emerald-400 bg-emerald-950/40 p-2 rounded border border-emerald-900/40">
+                              <span className="flex items-center gap-1">Required Initial Payment (25%): <HelpCircle className="w-3 h-3 text-emerald-500" title="Galaxy requires a mandatory 25% setup fee & SLA pledge to trigger secure cloud provisioning." /></span>
+                              <span>₹{pricing.requiredInitialPayment.toLocaleString('en-IN')}.00</span>
+                            </div>
+                            <div className="flex justify-between text-[10px] text-slate-400 pt-1 leading-none">
+                              <span>Remaining Balance Due (75%):</span>
+                              <span>₹{pricing.remainingAmount.toLocaleString('en-IN')}.00</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
 
-                    {/* STEP 5 FIELDS */}
-                    {currentPage === 5 && (
-                      <div className="space-y-4">
-                        
-                        {/* Consolidated Review Cards */}
-                        <div className="bg-slate-50 rounded-2xl border border-slate-200/60 p-5 space-y-4 text-xs text-slate-700">
-                          <div className="border-b border-slate-200 pb-2.5 flex justify-between items-center">
-                            <span className="font-display font-bold text-slate-900 uppercase tracking-wide text-xs">Review registration</span>
-                            <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded font-mono">LOCKED</span>
+                    {/* STEP 6 FIELDS (Complete Review & Confirm) */}
+                    {currentPage === 6 && (
+                      <div className="space-y-6">
+                        {/* Summary of Institution Profile */}
+                        <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 relative text-left">
+                          <button 
+                            type="button" 
+                            onClick={() => { setDirection(-1); setCurrentPage(1); }} 
+                            className="absolute top-3.5 right-3.5 text-xs text-indigo-600 hover:text-indigo-800 font-bold"
+                          >
+                            Edit
+                          </button>
+                          <h4 className="text-xs font-bold text-slate-900 mb-2.5 uppercase tracking-wider flex items-center gap-1.5">
+                            <School className="w-3.5 h-3.5 text-slate-500" />
+                            Institution Details
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-xs text-slate-700">
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Name:</span> <strong className="text-slate-900">{formData.institutionName}</strong></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Type:</span> <span className="text-slate-900">{formData.institutionType}</span></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Category:</span> <span className="text-slate-900">{formData.schoolCategory}</span></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Board/Affiliation:</span> <span className="text-slate-900">{formData.boardType}</span></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Affiliation No:</span> <span className="text-slate-900 font-mono">{formData.affiliationNumber || 'N/A'}</span></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Establishment Year:</span> <span className="text-slate-900">{formData.establishmentYear}</span></div>
+                            <div className="col-span-1 sm:col-span-2"><span className="text-slate-400 font-semibold block">Official Website:</span> <span className="text-slate-900 truncate block">{formData.officialWebsite || 'N/A'}</span></div>
                           </div>
+                        </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3.5">
+                        {/* Summary of Institution Contact */}
+                        <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 relative text-left">
+                          <button 
+                            type="button" 
+                            onClick={() => { setDirection(-1); setCurrentPage(2); }} 
+                            className="absolute top-3.5 right-3.5 text-xs text-indigo-600 hover:text-indigo-800 font-bold"
+                          >
+                            Edit
+                          </button>
+                          <h4 className="text-xs font-bold text-slate-900 mb-2.5 uppercase tracking-wider flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                            Contact Details
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-xs text-slate-700">
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Email:</span> <span className="text-slate-900">{formData.officialEmail}</span></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Phone:</span> <span className="text-slate-900">{formData.officialPhone}</span></div>
+                            <div className="col-span-1 sm:col-span-2"><span className="text-slate-400 font-semibold block">Address:</span> <span className="text-slate-900 block">{formData.address}</span></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">City:</span> <span className="text-slate-900">{formData.city}</span></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">State:</span> <span className="text-slate-900">{formData.state}</span></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Country:</span> <span className="text-slate-900">{formData.country}</span></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">PIN Code:</span> <span className="text-slate-900 font-mono">{formData.postalCode}</span></div>
+                          </div>
+                        </div>
+
+                        {/* Summary of Owner/Admin Details */}
+                        <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 relative text-left">
+                          <button 
+                            type="button" 
+                            onClick={() => { setDirection(-1); setCurrentPage(3); }} 
+                            className="absolute top-3.5 right-3.5 text-xs text-indigo-600 hover:text-indigo-800 font-bold"
+                          >
+                            Edit
+                          </button>
+                          <h4 className="text-xs font-bold text-slate-900 mb-2.5 uppercase tracking-wider flex items-center gap-1.5">
+                            <User className="w-3.5 h-3.5 text-slate-500" />
+                            Owner & Administrator Details
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-xs text-slate-700">
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Owner Name:</span> <strong className="text-slate-900">{formData.ownerName}</strong></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Admin Name:</span> <span className="text-slate-900">{formData.administratorName || 'Owner is Admin'}</span></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Designation:</span> <span className="text-slate-900">{formData.administratorDesignation}</span></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Email (Gmail):</span> <span className="text-slate-900">{formData.ownerEmail}</span></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Mobile No:</span> <span className="text-slate-900 font-mono">{formData.ownerMobile}</span></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Password:</span> <span className="text-slate-900 font-mono">••••••••</span></div>
+                          </div>
+                        </div>
+
+                        {/* Summary of Branding */}
+                        <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 relative text-left">
+                          <button 
+                            type="button" 
+                            onClick={() => { setDirection(-1); setCurrentPage(4); }} 
+                            className="absolute top-3.5 right-3.5 text-xs text-indigo-600 hover:text-indigo-800 font-bold"
+                          >
+                            Edit
+                          </button>
+                          <h4 className="text-xs font-bold text-slate-900 mb-2.5 uppercase tracking-wider flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-slate-500" />
+                            Institution Branding
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-xs text-slate-700">
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Short Name:</span> <strong className="text-slate-900">{formData.shortName || 'N/A'}</strong></div>
                             <div>
-                              <span className="text-[10px] text-slate-400 font-bold uppercase block">Campus Unit Name</span>
-                              <strong className="text-slate-800 text-[13px]">{formData.schoolName}</strong>
+                              <span className="text-slate-400 font-semibold block sm:inline">Colors:</span> 
+                              <div className="flex gap-2 items-center mt-1 sm:mt-0 sm:inline-flex">
+                                <span className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block" style={{ backgroundColor: formData.primaryBrandColor }}></span>
+                                <span className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block ml-1" style={{ backgroundColor: formData.secondaryBrandColor }}></span>
+                              </div>
                             </div>
-                            <div>
-                              <span className="text-[10px] text-slate-400 font-bold uppercase block">Campus Code ID</span>
-                              <strong className="text-slate-800 text-[13px] font-mono">{formData.schoolCode}</strong>
-                            </div>
-                            <div>
-                              <span className="text-[10px] text-slate-400 font-bold uppercase block">Board / Campus Type</span>
-                              <strong className="text-slate-800">{formData.boardType} / {formData.schoolType}</strong>
-                            </div>
-                            <div>
-                              <span className="text-[10px] text-slate-400 font-bold uppercase block">Site Location</span>
-                              <strong className="text-slate-800">{formData.address}, {formData.city}, {formData.state} - {formData.pincode}</strong>
-                            </div>
-                            <div>
-                              <span className="text-[10px] text-slate-400 font-bold uppercase block">School Principal</span>
-                              <strong className="text-slate-800">{formData.principalName}</strong>
-                            </div>
-                            <div>
-                              <span className="text-[10px] text-slate-400 font-bold uppercase block">Administrator Email</span>
-                              <strong className="text-indigo-600 font-mono">{formData.adminEmail}</strong>
-                            </div>
-                            <div>
-                              <span className="text-[10px] text-slate-400 font-bold uppercase block">License Tier Selected</span>
-                              <strong className="text-slate-800">{formData.selectedPlan} ({formData.billingCycle})</strong>
-                            </div>
-                            <div>
-                              <span className="text-[10px] text-slate-400 font-bold uppercase block">Total Students / Staff</span>
-                              <strong className="text-slate-800">~{formData.totalStudents} Std / {formData.totalTeachers} Teachers</strong>
+                            <div className="col-span-1 sm:col-span-2 flex items-center gap-2 mt-1">
+                              <span className="text-slate-400 font-semibold">Logo Preview:</span>
+                              {formData.logoUrl ? (
+                                <img src={formData.logoUrl} alt="Logo preview" className="w-8 h-8 object-contain rounded border border-slate-200" referrerPolicy="no-referrer" />
+                              ) : (
+                                <span className="text-slate-500 italic text-[11px]">No custom logo uploaded</span>
+                              )}
                             </div>
                           </div>
                         </div>
 
-                        {/* Interactive custom Checkbox */}
+                        {/* Summary of Subscription */}
+                        <div className="bg-slate-950 text-slate-100 border border-slate-800 rounded-xl p-4 relative text-left">
+                          <button 
+                            type="button" 
+                            onClick={() => { setDirection(-1); setCurrentPage(5); }} 
+                            className="absolute top-3.5 right-3.5 text-xs text-indigo-400 hover:text-indigo-500 font-bold"
+                          >
+                            Edit
+                          </button>
+                          <h4 className="text-xs font-bold text-indigo-400 mb-2.5 uppercase tracking-wider flex items-center gap-1.5">
+                            <CreditCard className="w-3.5 h-3.5 text-indigo-400" />
+                            Subscription Details
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-xs text-slate-300">
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Selected Plan:</span> <strong className="text-slate-100 uppercase">{selectedPlan}</strong></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Capacity Limit:</span> <strong className="text-slate-100">{studentCapacity} Pupils</strong></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Billing Cycle:</span> <strong className="text-slate-100 uppercase">{billingCycle}</strong></div>
+                            <div><span className="text-slate-400 font-semibold block sm:inline">Setup Fee:</span> <strong className="text-slate-100">₹{pricing.setupFee.toLocaleString('en-IN')}.00</strong></div>
+                            <div className="col-span-1 sm:col-span-2 border-t border-slate-800 pt-2 flex justify-between items-center text-sm font-bold">
+                              <span className="text-slate-400">Total Contract Value:</span>
+                              <span className="text-slate-100">₹{pricing.totalAmount.toLocaleString('en-IN')}.00</span>
+                            </div>
+                            <div className="col-span-1 sm:col-span-2 bg-emerald-950/30 border border-emerald-900/50 p-2.5 rounded-lg flex justify-between items-center text-sm font-bold text-emerald-400">
+                              <span>Payable Now (25% Setup Pledge):</span>
+                              <span>₹{pricing.requiredInitialPayment.toLocaleString('en-IN')}.00</span>
+                            </div>
+                            <div className="col-span-1 sm:col-span-2 flex justify-between items-center text-[11px] text-slate-400">
+                              <span>Remaining Balance (75% due later):</span>
+                              <span>₹{pricing.remainingAmount.toLocaleString('en-IN')}.00</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Legal Agreement custom Checkbox */}
                         <div 
                           onClick={() => handleInputChange('agreeTerms', !formData.agreeTerms)}
-                          className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3 select-none ${
+                          className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3 select-none text-left ${
                             formData.agreeTerms 
                               ? 'border-indigo-600 bg-indigo-50/30' 
                               : 'border-slate-200 bg-white hover:bg-slate-50'
@@ -1400,19 +1930,18 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                             {formData.agreeTerms && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                           </div>
                           <div className="flex-1">
-                            <span className="text-xs font-bold text-slate-900 block mb-0.5">Authorize legal covenant & SLA guidelines</span>
-                            <p className="text-[10px] text-slate-500 leading-relaxed">
-                              I certify that I am the legally empowered organizational representative for this school unit. I consent to automatic cloud provisioning, AES-256 secure biometric scanning storage directives, and GALAXY ERP standard privacy covenants. *
+                            <span className="text-xs font-bold text-slate-900 block mb-0.5">I confirm that all information provided is correct.</span>
+                            <p className="text-[9px] text-slate-500 leading-normal">
+                              I certify that all statements above represent authentic institutional data. I consent to secure database provisioning, automated Tenant Unique ID allocation, and Galaxy Cloud services privacy protocols. *
                             </p>
                           </div>
                         </div>
-
                       </div>
                     )}
 
                   </div>
 
-                  {/* ERROR BANNER ACCENT */}
+                  {/* ERROR BANNER */}
                   {error && (
                     <motion.div
                       initial={{ opacity: 0, y: 5 }}
@@ -1424,7 +1953,7 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                     </motion.div>
                   )}
 
-                  {/* ACTIONS DOCK NAVIGATION */}
+                  {/* NAVIGATION DOCK */}
                   <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
                     {currentPage > 1 ? (
                       <button
@@ -1459,23 +1988,11 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                       <button
                         id="reg-submit-btn"
                         type="button"
-                        onClick={handleSubmit}
+                        onClick={handleInitiatePayment}
                         disabled={isSubmitting || !formData.agreeTerms}
                         className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center gap-2 shadow-sm transition-all shadow-emerald-100"
                       >
-                        {isSubmitting ? (
-                          <>
-                            <svg className="animate-spin -ml-1 mr-1 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Registering Node...
-                          </>
-                        ) : (
-                          <>
-                            Deploy School Instance <ArrowRight className="w-4 h-4" />
-                          </>
-                        )}
+                        Pay <ArrowRight className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -1488,6 +2005,571 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
         </div>
 
       </div>
+
+      {/* 4. MODAL OVERLAY: HIGH-FIDELITY SECURE SIMULATED PAYMENT GATEWAY */}
+      <AnimatePresence>
+        {isCheckoutOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-slate-200"
+            >
+              {/* Header */}
+              <div className="bg-slate-900 p-5 text-white flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 21l8.982-11.795H13.62l1.317-7.3H9L6 11.23H10.5l-1.688 4.674z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold tracking-wider uppercase leading-none">Galaxy Gateway Node</h4>
+                    <span className="text-[9px] text-indigo-400 font-bold uppercase mt-1 block">SANDBOX SIMULATION INTEGRATED</span>
+                  </div>
+                </div>
+                {['payment_methods', 'card_details', 'upi_details', 'upi_qr', 'net_banking', 'failed', 'cancelled', 'pending'].includes(checkoutStep) && (
+                  <button 
+                    onClick={() => setIsCheckoutOpen(false)}
+                    className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Checkout Progress States */}
+              <div className="p-6">
+                {checkoutStep === 'preparing_order' && (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                    <div className="w-10 h-10 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                    <div className="text-center space-y-1">
+                      <h4 className="font-bold text-slate-800 text-sm">Preparing Secure Order</h4>
+                      <p className="text-[10px] text-slate-400">Negotiating cryptographic gateway handshake with server...</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Billing Summary Box */}
+                {['payment_methods', 'card_details', 'upi_details', 'upi_qr', 'net_banking'].includes(checkoutStep) && (
+                  <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 mb-4 text-xs">
+                    <div className="flex justify-between font-bold text-slate-950 border-b border-slate-200 pb-1.5 mb-1 text-[11px]">
+                      <span>Mandatory Setup Deposit (25%)</span>
+                      <span className="text-indigo-700">₹{pricing.requiredInitialPayment.toLocaleString('en-IN')}.00</span>
+                    </div>
+                    <div className="text-slate-500 text-[10px] space-y-1">
+                      <div className="flex justify-between"><span>SLA Licensing Level:</span><strong>{selectedPlan.toUpperCase()} Plan</strong></div>
+                      <div className="flex justify-between"><span>User Account Created:</span><strong>{formData.ownerEmail}</strong></div>
+                      <div className="flex justify-between"><span>Gateway Order Token:</span><span className="font-mono text-[9px] font-bold text-indigo-600">{gatewayOrderId.substring(0, 16)}...</span></div>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP: SELECT PAYMENT METHOD */}
+                {checkoutStep === 'payment_methods' && (
+                  <div className="space-y-3">
+                    <h5 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-left mb-2">Select Payment Method</h5>
+                    
+                    <button
+                      type="button"
+                      onClick={() => { setPaymentMethodUsed('upi_qr'); setCheckoutStep('upi_qr'); }}
+                      className="w-full p-3.5 border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/20 rounded-2xl flex items-center gap-3.5 transition-all text-left"
+                    >
+                      <div className="w-9 h-9 bg-violet-50 text-violet-600 rounded-xl flex items-center justify-center font-bold">
+                        QR
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-xs font-bold text-slate-800">Scan UPI QR Code</div>
+                        <div className="text-[9px] text-slate-400">Instant setup using GPay, PhonePe, Paytm QR scanner</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setPaymentMethodUsed('upi'); setCheckoutStep('upi_details'); }}
+                      className="w-full p-3.5 border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/20 rounded-2xl flex items-center gap-3.5 transition-all text-left"
+                    >
+                      <div className="w-9 h-9 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-bold">
+                        @
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-xs font-bold text-slate-800">UPI ID / VPA Handles</div>
+                        <div className="text-[9px] text-slate-400">Pay using phone number or personalized UPI handles</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setPaymentMethodUsed('card'); setCheckoutStep('card_details'); }}
+                      className="w-full p-3.5 border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/20 rounded-2xl flex items-center gap-3.5 transition-all text-left"
+                    >
+                      <div className="w-9 h-9 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold">
+                        💳
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-xs font-bold text-slate-800">Credit / Debit Card</div>
+                        <div className="text-[9px] text-slate-400">Visa, Mastercard, RuPay cards supported</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setPaymentMethodUsed('netbanking'); setCheckoutStep('net_banking'); }}
+                      className="w-full p-3.5 border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/20 rounded-2xl flex items-center gap-3.5 transition-all text-left"
+                    >
+                      <div className="w-9 h-9 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center font-bold">
+                        🏛️
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-xs font-bold text-slate-800">Net Banking</div>
+                        <div className="text-[9px] text-slate-400">Secure gateway routing via major Indian banks</div>
+                      </div>
+                    </button>
+                  </div>
+                )}
+
+                {/* STEP: UPI ID */}
+                {checkoutStep === 'upi_details' && (
+                  <div className="space-y-4 text-left">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Enter UPI VPA ID</label>
+                      <input
+                        type="text"
+                        value={upiId}
+                        onChange={(e) => setUpiId(e.target.value)}
+                        placeholder="example@okaxis"
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                    </div>
+                    {/* Inline Simulator Action Controls */}
+                    <div className="space-y-2 mt-4 pt-4 border-t border-slate-100">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 text-center">
+                        Simulate Transaction Outcome (Mock Mode)
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockSuccessPayment}
+                          className="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" /> Test Success
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockFailedPayment}
+                          className="py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" /> Test Fail
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockCancelledPayment}
+                          className="py-2 px-3 bg-slate-500 hover:bg-slate-600 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" /> Test Cancel
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockPendingPayment}
+                          className="py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" /> Test Pending
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleRetryPayment}
+                        className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[10px] rounded-xl transition-all mt-2 flex items-center justify-center gap-1"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" /> Back to Payment Methods
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP: UPI QR CODE */}
+                {checkoutStep === 'upi_qr' && (
+                  <div className="space-y-4 flex flex-col items-center">
+                    <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-start gap-2.5 text-[10px] text-indigo-700 font-medium text-left">
+                      <ShieldCheck className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
+                      <p className="leading-relaxed">
+                        Scan the simulated sandbox QR below using any UPI application. Click on <strong>Test Success</strong> below to trigger immediate server-side verification and node compilation.
+                      </p>
+                    </div>
+
+                    {/* QR Code Graphic Representation */}
+                    <div className="w-40 h-40 bg-white border-2 border-dashed border-indigo-200 rounded-2xl p-2 flex items-center justify-center relative shadow-sm">
+                      <div className="absolute inset-0 bg-indigo-500/5 rounded-2xl animate-pulse"></div>
+                      <div className="w-full h-full border border-slate-200 rounded-xl p-2 bg-white flex flex-col items-center justify-center gap-1.5 z-10">
+                        {/* Mock QR lines representation */}
+                        <div className="grid grid-cols-5 gap-1.5 w-24 h-24">
+                          {[...Array(25)].map((_, i) => (
+                            <div 
+                              key={i} 
+                              className={`rounded-[2px] ${
+                                (i % 3 === 0 || i % 7 === 0 || i < 5 || i % 5 === 0 || i > 20) 
+                                  ? 'bg-slate-900' 
+                                  : 'bg-slate-200/30'
+                              }`}
+                            ></div>
+                          ))}
+                        </div>
+                        <span className="text-[7px] font-bold font-mono text-slate-400">GALAXY_ID_MOCK_QR</span>
+                      </div>
+                    </div>
+
+                    <p className="text-[10px] text-slate-500 font-bold">UPI ID: <span className="font-mono text-indigo-600">{upiId}</span></p>
+
+                    {/* Inline Simulator Action Controls */}
+                    <div className="space-y-2 mt-4 pt-4 border-t border-slate-100 w-full">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 text-center">
+                        Simulate Transaction Outcome (Mock Mode)
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockSuccessPayment}
+                          className="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" /> Test Success
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockFailedPayment}
+                          className="py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" /> Test Fail
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockCancelledPayment}
+                          className="py-2 px-3 bg-slate-500 hover:bg-slate-600 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" /> Test Cancel
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockPendingPayment}
+                          className="py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" /> Test Pending
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleRetryPayment}
+                        className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[10px] rounded-xl transition-all mt-2 flex items-center justify-center gap-1"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" /> Back to Payment Methods
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP: CARD DETAILS */}
+                {checkoutStep === 'card_details' && (
+                  <div className="space-y-4 text-left">
+                    <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-start gap-2.5 text-[10px] text-indigo-700 font-medium leading-relaxed">
+                      <ShieldCheck className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
+                      <p>
+                        This is an interface simulation. Input card credentials below then select a testing transaction state to process the server-side callback handlers.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-500 uppercase">Card Number</label>
+                        <input
+                          type="text"
+                          value={cardNumber}
+                          onChange={(e) => setCardNumber(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-slate-500 uppercase">Expiry Date</label>
+                          <input
+                            type="text"
+                            value={cardExpiry}
+                            onChange={(e) => setCardExpiry(e.target.value)}
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-slate-500 uppercase">CVV</label>
+                          <input
+                            type="password"
+                            value={cardCvv}
+                            onChange={(e) => setCardCvv(e.target.value)}
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-500 uppercase">Cardholder Name</label>
+                        <input
+                          type="text"
+                          value={cardName}
+                          onChange={(e) => setCardName(e.target.value)}
+                          placeholder="MR PRINCIPAL OWNER"
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs uppercase focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Inline Simulator Action Controls */}
+                    <div className="space-y-2 mt-4 pt-4 border-t border-slate-100">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 text-center">
+                        Simulate Transaction Outcome (Mock Mode)
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockSuccessPayment}
+                          className="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" /> Test Success
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockFailedPayment}
+                          className="py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" /> Test Fail
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockCancelledPayment}
+                          className="py-2 px-3 bg-slate-500 hover:bg-slate-600 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" /> Test Cancel
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockPendingPayment}
+                          className="py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" /> Test Pending
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleRetryPayment}
+                        className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[10px] rounded-xl transition-all mt-2 flex items-center justify-center gap-1"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" /> Back to Payment Methods
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP: NET BANKING */}
+                {checkoutStep === 'net_banking' && (
+                  <div className="space-y-4 text-left">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">Select Net Banking Institution</label>
+                      <select
+                        value={selectedBank}
+                        onChange={(e) => setSelectedBank(e.target.value)}
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      >
+                        <option>State Bank of India (SBI)</option>
+                        <option>HDFC Bank</option>
+                        <option>ICICI Bank</option>
+                        <option>Axis Bank</option>
+                        <option>Punjab National Bank (PNB)</option>
+                        <option>Bank of Baroda</option>
+                      </select>
+                    </div>
+
+                    {/* Inline Simulator Action Controls */}
+                    <div className="space-y-2 mt-4 pt-4 border-t border-slate-100">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 text-center">
+                        Simulate Transaction Outcome (Mock Mode)
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockSuccessPayment}
+                          className="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" /> Test Success
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockFailedPayment}
+                          className="py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" /> Test Fail
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockCancelledPayment}
+                          className="py-2 px-3 bg-slate-500 hover:bg-slate-600 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" /> Test Cancel
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleConfirmMockPendingPayment}
+                          className="py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" /> Test Pending
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleRetryPayment}
+                        className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[10px] rounded-xl transition-all mt-2 flex items-center justify-center gap-1"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" /> Back to Payment Methods
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {checkoutStep === 'processing' && (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                    <div className="w-10 h-10 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin"></div>
+                    <div className="text-center space-y-1">
+                      <h4 className="font-bold text-slate-800 text-sm">Processing Transaction</h4>
+                      <p className="text-[10px] text-slate-400">Capturing mock payment gateway tokens and compiling signatures...</p>
+                    </div>
+                  </div>
+                )}
+
+                {checkoutStep === 'verifying' && (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                    <div className="w-10 h-10 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                    <div className="text-center space-y-1">
+                      <h4 className="font-bold text-slate-800 text-sm">Deploying Institutional Node</h4>
+                      <p className="text-[10px] text-slate-400 font-medium">Creating secure PostgreSQL schemas, hashing password credentials, and provisioning tenant isolation parameters server-side...</p>
+                    </div>
+                  </div>
+                )}
+
+                {checkoutStep === 'success' && (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                    <div className="w-12 h-12 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center text-emerald-500">
+                      <CheckCircle className="w-7 h-7" />
+                    </div>
+                    <div className="text-center space-y-1">
+                      <h4 className="font-bold text-slate-800 text-sm">Transaction Cleared & Secured</h4>
+                      <p className="text-[10px] text-slate-400 font-mono text-emerald-600">ID: {gatewayPaymentId}</p>
+                    </div>
+                  </div>
+                )}
+
+                {checkoutStep === 'failed' && (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                    <div className="w-12 h-12 bg-rose-50 border border-rose-100 rounded-full flex items-center justify-center text-rose-500">
+                      <AlertCircle className="w-7 h-7" />
+                    </div>
+                    <div className="text-center space-y-1 px-4">
+                      <h4 className="font-bold text-slate-800 text-sm">Checkout Node Refused</h4>
+                      <p className="text-[10px] text-rose-600 leading-relaxed font-semibold">{error || 'Handshake rejected by cognitive server compliance.'}</p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-4 w-full">
+                      <button 
+                        onClick={handleRetryPayment}
+                        className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-850 text-white text-xs font-bold rounded-xl transition-colors border border-slate-900"
+                      >
+                        Retry Payment
+                      </button>
+                      <button 
+                        onClick={() => setIsCheckoutOpen(false)}
+                        className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors"
+                      >
+                        Close Checkout
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {checkoutStep === 'cancelled' && (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                    <div className="w-12 h-12 bg-amber-50 border border-amber-100 rounded-full flex items-center justify-center text-amber-500">
+                      <AlertCircle className="w-7 h-7" />
+                    </div>
+                    <div className="text-center space-y-1 px-4">
+                      <h4 className="font-bold text-slate-800 text-sm">Transaction Cancelled</h4>
+                      <p className="text-[10px] text-amber-600 leading-relaxed font-semibold">{error || 'Transaction aborted by the customer.'}</p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-4 w-full">
+                      <button 
+                        onClick={handleRetryPayment}
+                        className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-850 text-white text-xs font-bold rounded-xl transition-colors border border-slate-900"
+                      >
+                        Select New Method
+                      </button>
+                      <button 
+                        onClick={() => setIsCheckoutOpen(false)}
+                        className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors"
+                      >
+                        Close Checkout
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {checkoutStep === 'pending' && (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                    <div className="w-12 h-12 bg-orange-50 border border-orange-100 rounded-full flex items-center justify-center text-orange-500">
+                      <AlertCircle className="w-7 h-7" />
+                    </div>
+                    <div className="text-center space-y-1 px-4">
+                      <h4 className="font-bold text-slate-850 text-sm">Transaction Pending</h4>
+                      <p className="text-[10px] text-orange-600 leading-relaxed font-semibold">{error || 'The bank network has not confirmed settlement. Status is being refreshed.'}</p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-4 w-full">
+                      <button 
+                        onClick={handleRetryPayment}
+                        className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-850 text-white text-xs font-bold rounded-xl transition-colors border border-slate-900"
+                      >
+                        Try Again
+                      </button>
+                      <button 
+                        onClick={() => setIsCheckoutOpen(false)}
+                        className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors"
+                      >
+                        Close Checkout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <RegistrationCertificateModal
+        isOpen={isCertificateModalOpen}
+        onClose={() => setIsCertificateModalOpen(false)}
+        registrationId={registrationId || ""}
+      />
     </div>
   );
 };
