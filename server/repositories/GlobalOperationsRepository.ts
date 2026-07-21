@@ -1,0 +1,40 @@
+import { BaseRepository } from './BaseRepository.js';
+import * as Domain from '../entities/GlobalOperationsDomain.js';
+
+export class GlobalRegionRepository extends BaseRepository<Domain.GlobalRegion> { protected tableName = 'global_region'; }
+export class DeploymentClusterRepository extends BaseRepository<Domain.DeploymentCluster> { protected tableName = 'deployment_cluster'; }
+export class KubernetesClusterRepository extends BaseRepository<Domain.KubernetesCluster> { protected tableName = 'kubernetes_cluster'; }
+export class KubernetesNodeRepository extends BaseRepository<Domain.KubernetesNode> { protected tableName = 'kubernetes_node'; }
+export class DeploymentEnvironmentRepository extends BaseRepository<Domain.DeploymentEnvironment> { protected tableName = 'deployment_environment'; }
+export class DeploymentReleaseRepository extends BaseRepository<Domain.DeploymentRelease> { protected tableName = 'deployment_release'; }
+export class DeploymentVersionRepository extends BaseRepository<Domain.DeploymentVersion> { protected tableName = 'deployment_version'; }
+export class DeploymentStrategyRepository extends BaseRepository<Domain.DeploymentStrategy> { protected tableName = 'deployment_strategy'; }
+export class EdgeLocationRepository extends BaseRepository<Domain.EdgeLocation> { protected tableName = 'edge_location'; }
+export class EdgeCacheRepository extends BaseRepository<Domain.EdgeCache> { protected tableName = 'edge_cache'; }
+export class CDNConfigurationRepository extends BaseRepository<Domain.CDNConfiguration> { protected tableName = 'cdn_configuration'; }
+export class ServiceRegistryRepository extends BaseRepository<Domain.ServiceRegistry> { protected tableName = 'service_registry'; }
+export class ServiceDiscoveryRepository extends BaseRepository<Domain.ServiceDiscovery> { protected tableName = 'service_discovery'; }
+export class ServiceMeshRepository extends BaseRepository<Domain.ServiceMesh> { protected tableName = 'service_mesh'; }
+export class LoadBalancerRepository extends BaseRepository<Domain.LoadBalancer> { protected tableName = 'load_balancer'; }
+export class AutoscalingPolicyRepository extends BaseRepository<Domain.AutoscalingPolicy> { protected tableName = 'autoscaling_policy'; }
+export class GlobalConfigurationRepository extends BaseRepository<Domain.GlobalConfiguration> { protected tableName = 'global_configuration'; }
+export class TenantRegionMappingRepository extends BaseRepository<Domain.TenantRegionMapping> { protected tableName = 'tenant_region_mapping'; }
+export class ProductionEnvironmentRepository extends BaseRepository<Domain.ProductionEnvironment> { protected tableName = 'production_environment'; }
+export class MaintenanceScheduleRepository extends BaseRepository<Domain.MaintenanceSchedule> { protected tableName = 'maintenance_schedule'; }
+export class MaintenanceHistoryRepository extends BaseRepository<Domain.MaintenanceHistory> { protected tableName = 'maintenance_history'; }
+export class ReleaseNoteRepository extends BaseRepository<Domain.ReleaseNote> { protected tableName = 'release_note'; }
+export class ReleaseChannelRepository extends BaseRepository<Domain.ReleaseChannel> { protected tableName = 'release_channel'; }
+export class RolloutPolicyRepository extends BaseRepository<Domain.RolloutPolicy> { protected tableName = 'rollout_policy'; }
+export class RollbackHistoryRepository extends BaseRepository<Domain.RollbackHistory> { protected tableName = 'rollback_history'; }
+export class CommandCenterDashboardRepository extends BaseRepository<Domain.CommandCenterDashboard> { protected tableName = 'command_center_dashboard'; }
+export class CommandCenterWidgetRepository extends BaseRepository<Domain.CommandCenterWidget> { protected tableName = 'command_center_widget'; }
+export class GlobalOperationLogRepository extends BaseRepository<Domain.GlobalOperationLog> { protected tableName = 'global_operation_log'; }
+export class GlobalAlertRepository extends BaseRepository<Domain.GlobalAlert> { protected tableName = 'global_alert'; }
+export class CompliancePolicyRepository extends BaseRepository<Domain.CompliancePolicy> { protected tableName = 'compliance_policy'; }
+export class ComplianceAuditRepository extends BaseRepository<Domain.ComplianceAudit> { protected tableName = 'compliance_audit'; }
+export class DisasterStatusRepository extends BaseRepository<Domain.DisasterStatus> { protected tableName = 'disaster_status'; }
+export class SystemCapacityRepository extends BaseRepository<Domain.SystemCapacity> { protected tableName = 'system_capacity'; }
+export class InfrastructureCostRepository extends BaseRepository<Domain.InfrastructureCost> { protected tableName = 'infrastructure_cost'; }
+export class AIOrchestrationJobRepository extends BaseRepository<Domain.AIOrchestrationJob> { protected tableName = 'ai_orchestration_job'; }
+export class AIClusterRepository extends BaseRepository<Domain.AICluster> { protected tableName = 'ai_cluster'; }
+export class AIModelRegistryGlobalRepository extends BaseRepository<Domain.AIModelRegistryGlobal> { protected tableName = 'ai_model_registry_global'; }

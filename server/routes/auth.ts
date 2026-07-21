@@ -13,22 +13,26 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_development_on
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password, device_fingerprint, geo_location } = req.body;
+    const { email, password, tenant_id, school_code, device_fingerprint, geo_location } = req.body;
     
-    // MOCK DB QUERY: Select user by email
-    // const user = await db.query('SELECT * FROM public.universal_user WHERE email = $1', [email]);
+    if (!tenant_id && !school_code) {
+      return res.status(400).json({ error: 'Tenant context is required for authentication' });
+    }
+
+    // MOCK DB QUERY: Select user by email and tenant_id
+    // const user = await db.query('SELECT * FROM public.universal_user WHERE email = $1 AND tenant_id = $2', [email, tenant_id]);
     
     // Simulate finding a user
     const mockUser = {
       id: uuidv4(),
-      tenant_id: uuidv4(),
+      tenant_id: tenant_id || uuidv4(),
       email: email,
       password_hash: await bcrypt.hash('password123', 10), // Example hash
       user_type: 'teacher',
       mfa_enabled: false
     };
 
-    const isMatch = await bcrypt.compare(password, mockUser.password_hash);
+    const isMatch = password.length >= 6; // Simple validation for mock UI
     if (!isMatch) {
       // MOCK DB QUERY: Log failed attempt to security_events
       return res.status(401).json({ error: 'Invalid credentials' });

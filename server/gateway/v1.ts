@@ -27,9 +27,19 @@ import hostelRoutes from '../routes/hostel.js';
 import hrPayrollRoutes from '../routes/hr-payroll.js';
 import inventoryRoutes from '../routes/inventory.js';
 import timetableRoutes from '../routes/timetable.js';
+import assessmentRoutes from '../routes/assessment.js';
+import analyticsRoutes from '../routes/analytics.js';
+import workflowRoutes from '../routes/workflow.js';
+import integrationRoutes from '../routes/integration.js';
+import securityRoutes from '../routes/security.js';
+import monitoringRoutes from '../routes/monitoring.js';
+import backupRoutes from '../routes/backup.js';
+import aiAgentRoutes from '../routes/ai-agent.js';
+import developerPlatformRoutes from '../routes/developer-platform.js';
+import dataPlatformRoutes from '../routes/data-platform.js';
+import globalOperationsRoutes from '../routes/global-operations.js';
 
 export const v1Router = Router();
-
 
 v1Router.use('/auth', authRoutes);
 v1Router.use('/tenants', tenantRoutes);
@@ -50,6 +60,17 @@ v1Router.use('/hostel', hostelRoutes);
 v1Router.use('/hr-payroll', hrPayrollRoutes);
 v1Router.use('/inventory', inventoryRoutes);
 v1Router.use('/timetable', timetableRoutes);
+v1Router.use('/assessment', assessmentRoutes);
+v1Router.use('/analytics', analyticsRoutes);
+v1Router.use('/workflows', workflowRoutes);
+v1Router.use('/integrations', integrationRoutes);
+v1Router.use('/security', securityRoutes);
+v1Router.use('/monitoring', monitoringRoutes);
+v1Router.use('/backup', backupRoutes);
+v1Router.use('/ai-agent', aiAgentRoutes);
+v1Router.use('/developer', developerPlatformRoutes);
+v1Router.use('/data-platform', dataPlatformRoutes);
+v1Router.use('/global-operations', globalOperationsRoutes);
 v1Router.use('/attendance', attendanceRoutes);
 v1Router.use('/behaviour', behaviourRoutes);
 v1Router.use('/student-health', studentHealthRoutes);

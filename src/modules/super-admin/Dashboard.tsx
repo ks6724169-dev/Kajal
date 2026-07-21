@@ -156,6 +156,85 @@ export const Dashboard: React.FC<DashboardProps> = ({ tenant, onNavigate }) => {
         </div>
       </div>
 
+      {/* AI Operational & Compliance Recommendations Bento Cards */}
+      <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 space-y-4 shadow-xs">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
+              </span>
+              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Galaxy AI Operational Insights</h2>
+            </div>
+            <p className="text-xs text-slate-500">Continuous background diagnostic checks of multi-campus databases</p>
+          </div>
+          <span className="text-[10px] bg-indigo-100 text-indigo-700 font-extrabold px-3 py-1 rounded-full border border-indigo-200">
+            3 ACTIVE INSIGHTS
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              priority: "High Priority",
+              priorityColor: "bg-red-50 text-red-600 border-red-100",
+              title: "Route #4 Congestion Delay Alert",
+              desc: "Route #4 has been flagged with a systematic 12-minute transit delay due to municipal metro construction near Gate 12. AI recommends swapping routes with Reserve path Route #4-B to save fuel.",
+              action: "Reroute Fleet",
+              actionTab: "transport",
+              icon: "🚌"
+            },
+            {
+              priority: "Medium Priority",
+              priorityColor: "bg-amber-50 text-amber-600 border-amber-100",
+              title: "Fee Collection Anomalies Detected",
+              desc: "Three anomalous double-ledger transactions were recorded in Grade 12-A UPI payment callbacks. Double-entry checksum fails. Verify manual records.",
+              action: "Inspect Ledger",
+              actionTab: "fees",
+              icon: "💰"
+            },
+            {
+              priority: "Low Priority",
+              priorityColor: "bg-blue-50 text-blue-600 border-blue-100",
+              title: "Grade 11-B Attendance Drop Alert",
+              desc: "Attendance rate in senior wing 11-B dropped by 4.8% MoM. AI Principal recommends launching automatic WhatsApp/SMS notifications to parents.",
+              action: "Notify Parents",
+              actionTab: "attendance",
+              icon: "📈"
+            }
+          ].map((rec, rIdx) => (
+            <div 
+              key={rIdx}
+              className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-indigo-400 hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg">{rec.icon}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${rec.priorityColor}`}>
+                    {rec.priority}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 leading-snug">{rec.title}</h3>
+                  <p className="text-[11px] text-slate-500 leading-relaxed mt-1.5">{rec.desc}</p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 mt-4 flex justify-end">
+                <button
+                  onClick={() => onNavigate(rec.actionTab)}
+                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+                >
+                  <span>{rec.action}</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue vs Target */}

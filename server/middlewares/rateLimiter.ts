@@ -5,6 +5,7 @@ export const globalRateLimiter = rateLimit({
   max: 1000, // Limit each IP to 1000 requests per `window`
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   message: {
     success: false,
     error: {
@@ -19,6 +20,7 @@ export const authRateLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   message: {
     success: false,
     error: {

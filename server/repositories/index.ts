@@ -48,6 +48,22 @@ export * from './TransportRepository.js';
 export * from './HRPayrollRepository.js';
 export * from './InventoryRepository.js';
 export * from './TimetableRepository.js';
+export * from './AssessmentRepository.js';
+export * from './AnalyticsRepository.js';
+export * from './WorkflowRepository.js';
+export * from './IntegrationRepository.js';
+export * from './SecurityRepository.js';
+export * from './MonitoringRepository.js';
+export * from './BackupRepository.js';
+export * from './AIAgentRepository.js';
+export * from './DeveloperPlatformRepository.js';
 
 
+
+export * from './DataPlatformRepository.js';
+export * from './GlobalOperationsRepository.js';
+
+// Explicitly export conflicting repositories to resolve TS2308 ambiguity
+export { ArchivePolicyRepository, RetentionPolicyRepository } from './BackupRepository.js';
+export { ArchivePolicyRepository as DataPlatformArchivePolicyRepository, RetentionPolicyRepository as DataPlatformRetentionPolicyRepository } from './DataPlatformRepository.js';
 

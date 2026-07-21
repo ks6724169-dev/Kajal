@@ -34,6 +34,7 @@ export const navigationConfig: NavItem[] = [
   { id: 'library', label: 'Library & Inventory', icon: BookOpen, roles: ['super_admin', 'school_admin'] },
   { id: 'cctv', label: 'CCTV Security Feeds', icon: Video, roles: ['super_admin'] },
   { id: 'mobile_apps', label: 'Mobile App Previews', icon: Smartphone, roles: ['super_admin', 'school_admin'] },
+  { id: 'design_system', label: 'Design System Hub', icon: LayoutDashboard, badge: 'UX', roles: ['super_admin', 'school_admin', 'teacher'] },
   { id: 'settings', label: 'SaaS Settings & Audit', icon: Settings, roles: ['super_admin'] },
 ];
 

@@ -1,4 +1,23 @@
-export type Role = 'super_admin' | 'principal' | 'teacher' | 'student' | 'parent' | 'driver';
+export type Role = 
+  | 'super_admin' 
+  | 'organization_owner' 
+  | 'school_admin' 
+  | 'principal' 
+  | 'vice_principal'
+  | 'teacher' 
+  | 'class_teacher'
+  | 'student' 
+  | 'parent' 
+  | 'accountant' 
+  | 'librarian' 
+  | 'hr' 
+  | 'receptionist'
+  | 'hostel_manager' 
+  | 'transport_manager' 
+  | 'exam_controller'
+  | 'inventory_manager'
+  | 'guest'
+  | 'driver';
 
 export type Tenant = {
   id: string;
@@ -8,6 +27,9 @@ export type Tenant = {
   currency: string;
   academicYear: string;
   themeColor: string;
+  city?: string;
+  state?: string;
+  schoolCode?: string;
 };
 
 export type Student = {
@@ -94,3 +116,15 @@ export type AiChatMessage = {
   text: string;
   timestamp: string;
 };
+
+export interface TenantContext {
+  tenantId: string;
+  schoolCode: string;
+  name: string;
+  logo: string;
+  themeColor: string;
+  type: string;
+  city?: string;
+  state?: string;
+  academicYear: string;
+}

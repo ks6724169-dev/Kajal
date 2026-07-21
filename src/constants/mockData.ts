@@ -8,7 +8,10 @@ export const TENANTS: Tenant[] = [
     logo: '🎓',
     currency: '₹',
     academicYear: '2026-2027',
-    themeColor: 'indigo'
+    themeColor: 'indigo',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    schoolCode: 'apex'
   },
   {
     id: 'galaxy_tech',
@@ -17,7 +20,10 @@ export const TENANTS: Tenant[] = [
     logo: '🚀',
     currency: '₹',
     academicYear: '2026-2027',
-    themeColor: 'violet'
+    themeColor: 'violet',
+    city: 'Pune',
+    state: 'Maharashtra',
+    schoolCode: 'galaxy'
   },
   {
     id: 'st_xaviers',
@@ -26,7 +32,10 @@ export const TENANTS: Tenant[] = [
     logo: '🏛️',
     currency: '₹',
     academicYear: '2026-2027',
-    themeColor: 'blue'
+    themeColor: 'blue',
+    city: 'New Delhi',
+    state: 'Delhi',
+    schoolCode: 'xavier'
   }
 ];
 

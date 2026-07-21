@@ -292,6 +292,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
         </div>
+
+        {/* User Account Menu */}
+        <div className="relative">
+          <button
+            onClick={() => setShowRoleMenu(false) || onSelectTab('sessions')}
+            className="p-1.5 bg-slate-800 hover:bg-slate-700/85 border border-slate-700 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+            title="Security Settings"
+          >
+            <span className="h-6 w-6 rounded-full bg-indigo-600/50 border border-indigo-400 flex items-center justify-center text-xs text-indigo-100">
+              👤
+            </span>
+            <span className="hidden lg:inline text-slate-200">Security</span>
+          </button>
+        </div>
       </div>
     </header>
   );
