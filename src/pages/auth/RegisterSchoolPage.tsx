@@ -556,7 +556,7 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
   /**
    * Action: Navigates to the dedicated payment page.
    */
-  const handleInitiatePayment = () => {
+  const handleInitiatePayment = async () => {
     const finalErrors = getStepValidationErrors(currentPage);
     if (finalErrors.length > 0) {
       setError(finalErrors[0]);
@@ -568,7 +568,25 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
       return;
     }
 
-    navigate(`/school-registration/${registrationId}/payment`);
+    setIsSubmitting(true);
+    
+    // Auto-save the final step details in the background
+    fetch(`/api/v1/school-registration/${registrationId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        selected_plan: formData.selectedPlan,
+        student_capacity: parseInt(formData.studentCapacity),
+        billing_cycle: formData.billingCycle,
+        current_step: 6
+      })
+    }).catch(err => console.error("Background save error:", err));
+
+    // Force navigation immediately
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('nav-to', { detail: `/school-registration/${registrationId}/payment` }));
+      navigate(`/school-registration/${registrationId}/payment`);
+    }, 50);
   };
 
   // Fake drag & drop logo upload logic
@@ -585,41 +603,49 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      simulateFileUpload(file.name, file.size);
+      processUploadedFile(e.dataTransfer.files[0]);
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      simulateFileUpload(file.name, file.size);
+      processUploadedFile(e.target.files[0]);
     }
   };
 
-  const simulateFileUpload = (name: string, rawSize: number) => {
-    const sizeInKb = (rawSize / 1024).toFixed(1) + ' KB';
-    const newFile = { name, size: sizeInKb, progress: 0 };
+  const processUploadedFile = (file: File) => {
+    const sizeInKb = (file.size / 1024).toFixed(1) + ' KB';
+    const newFile = { name: file.name, size: sizeInKb, progress: 20 };
     setUploadedFiles(prev => [...prev, newFile]);
 
-    const interval = setInterval(() => {
-      setUploadedFiles(prev => 
-        prev.map(f => {
-          if (f.name === name) {
-            const nextProg = f.progress + 25;
-            if (nextProg >= 100) {
-              clearInterval(interval);
-              if (/\.(jpe?g|png|gif|svg|webp)$/i.test(name)) {
-                handleInputChange('logoUrl', 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=128');
-              }
-              return { ...f, progress: 100 };
-            }
-            return { ...f, progress: nextProg };
-          }
-          return f;
-        })
-      );
-    }, 250);
+    if (file.type.startsWith('image/') || /\.(jpe?g|png|gif|svg|webp)$/i.test(file.name)) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        if (result) {
+          handleInputChange('logoUrl', result);
+          setUploadedFiles(prev => 
+            prev.map(f => f.name === file.name ? { ...f, progress: 100 } : f)
+          );
+        }
+      };
+      reader.readAsDataURL(file);
+    } else {
+      let progress = 20;
+      const interval = setInterval(() => {
+        progress += 40;
+        if (progress >= 100) {
+          clearInterval(interval);
+          setUploadedFiles(prev => 
+            prev.map(f => f.name === file.name ? { ...f, progress: 100 } : f)
+          );
+        } else {
+          setUploadedFiles(prev => 
+            prev.map(f => f.name === file.name ? { ...f, progress } : f)
+          );
+        }
+      }, 150);
+    }
   };
 
   return (
@@ -1445,16 +1471,40 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
 
                           <div className="space-y-1.5">
                             <label htmlFor="reg-logo-url" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                              Institutional Logo URL (Optional)
+                              Institutional Logo URL / Upload (Optional)
                             </label>
                             <input 
                               id="reg-logo-url"
                               type="url"
                               value={formData.logoUrl}
                               onChange={(e) => handleInputChange('logoUrl', e.target.value)}
-                              placeholder="e.g. https://domain.edu/logo.png"
+                              placeholder="e.g. https://domain.edu/logo.png or drag & drop below"
                               className="w-full px-4 py-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100/50 outline-none"
                             />
+                            {formData.logoUrl && (
+                              <div className="flex items-center gap-3 p-2.5 bg-indigo-50/70 border border-indigo-200/80 rounded-xl mt-2 shadow-2xs">
+                                <img 
+                                  src={formData.logoUrl} 
+                                  alt="School Logo Live Preview" 
+                                  className="w-10 h-10 rounded-lg object-cover bg-white border border-slate-200 p-0.5 shadow-xs"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] font-bold text-slate-900 truncate">Live Logo Preview Active</p>
+                                  <p className="text-[9px] text-indigo-700 font-medium">Will embed dynamically in Certificate &amp; Payment Invoice</p>
+                                </div>
+                                <button 
+                                  type="button" 
+                                  onClick={() => handleInputChange('logoUrl', '')} 
+                                  className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
+                                  title="Remove logo"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
 

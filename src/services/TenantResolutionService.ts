@@ -1,6 +1,6 @@
 import { Tenant } from '../types';
 import { TenantManager, TenantBranding } from './TenantManager';
-import { TENANTS } from '../constants/mockData';
+import { RealSchoolLookupService } from './RealSchoolLookupService';
 
 export interface TenantContext {
   tenantId: string;
@@ -33,7 +33,7 @@ export class TenantResolutionService {
     } catch (error) {
       console.error('Tenant resolution error:', error);
       
-      // Fallback to local mock discover if backend fails
+      // Fallback to local discover if backend fails
       const tenant = await TenantManager.discoverTenantFromSchoolCode(code);
       if (!tenant) return null;
 
@@ -84,19 +84,24 @@ export class TenantResolutionService {
   }
 
   /**
-   * Searches schools by multiple search criteria (code, name, city, state, board/type).
+   * Searches real registered institutions strictly from Supabase Database.
+   * Zero mock, demo or fake fallback data.
    */
-  static searchSchools(query: string): Tenant[] {
-    const cleanQuery = query.trim().toLowerCase();
-    if (!cleanQuery) return TENANTS;
-
-    return TENANTS.filter((t) => {
-      const matchCode = t.schoolCode?.toLowerCase().includes(cleanQuery);
-      const matchName = t.name.toLowerCase().includes(cleanQuery);
-      const matchCity = t.city?.toLowerCase().includes(cleanQuery);
-      const matchState = t.state?.toLowerCase().includes(cleanQuery);
-      const matchType = t.type.toLowerCase().includes(cleanQuery);
-      return matchCode || matchName || matchCity || matchState || matchType;
+  static async searchSchoolsAsync(query: string): Promise<Tenant[]> {
+    const realInstitutions = await RealSchoolLookupService.searchRealInstitutions({
+      searchTerm: query
     });
+
+    return realInstitutions.map((r) => ({
+      id: r.id,
+      name: r.name,
+      schoolCode: r.code,
+      type: r.type,
+      city: r.city || '',
+      state: r.state || '',
+      academicYear: '2026-2027',
+      themeColor: '#4f46e5',
+      logo: r.logoUrl || ''
+    }));
   }
 }

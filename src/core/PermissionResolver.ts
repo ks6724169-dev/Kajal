@@ -1,30 +1,9 @@
 import { Role } from '../types';
+import { getPermissionsForRole } from './rbac';
 
 export class PermissionResolver {
-  private static ROLE_PERMISSIONS: Record<Role, string[]> = {
-    super_admin: ['manage_all', 'configure_system', 'edit_finance', 'view_reports', 'delete_records'],
-    organization_owner: ['manage_all', 'configure_system', 'edit_finance', 'view_reports', 'delete_records'],
-    school_admin: ['manage_tenant', 'edit_academic', 'view_reports', 'manage_users', 'view_students'],
-    principal: ['manage_tenant', 'edit_academic', 'view_reports', 'manage_users', 'view_students', 'view_teachers'],
-    vice_principal: ['edit_academic', 'view_reports', 'view_students', 'view_teachers', 'take_attendance'],
-    teacher: ['edit_academic', 'take_attendance', 'view_students', 'grade_exams'],
-    class_teacher: ['edit_academic', 'take_attendance', 'view_students', 'grade_exams', 'counsel_students'],
-    accountant: ['edit_finance', 'view_fees', 'generate_invoices'],
-    hr: ['manage_payroll', 'edit_employees', 'view_staff'],
-    receptionist: ['view_visitors', 'manage_visitors', 'take_queries'],
-    transport_manager: ['manage_transport', 'view_transport', 'track_buses'],
-    hostel_manager: ['manage_hostel', 'view_hostel', 'manage_residents'],
-    librarian: ['manage_library', 'view_books', 'issue_books'],
-    student: ['view_own_dashboard', 'view_academic_reports', 'view_fees'],
-    parent: ['view_own_dashboard', 'view_academic_reports', 'view_fees', 'pay_fees', 'track_bus_ward'],
-    driver: ['track_buses', 'view_bus_route'],
-    exam_controller: ['manage_exams', 'grade_exams', 'view_students'],
-    inventory_manager: ['manage_inventory', 'view_inventory'],
-    guest: ['view_sandbox']
-  };
-
   static getPermissionsForRole(role: Role): string[] {
-    return this.ROLE_PERMISSIONS[role] || [];
+    return getPermissionsForRole(role);
   }
 
   static hasPermission(role: Role, userPermissions: string[], requiredPermissions: string[]): boolean {
@@ -35,7 +14,7 @@ export class PermissionResolver {
     const roleSpecificPerms = this.getPermissionsForRole(role);
     const combinedPerms = new Set([...userPermissions, ...roleSpecificPerms]);
 
-    if (combinedPerms.has('manage_all')) {
+    if (combinedPerms.has('*') || combinedPerms.has('manage_all')) {
       return true;
     }
 

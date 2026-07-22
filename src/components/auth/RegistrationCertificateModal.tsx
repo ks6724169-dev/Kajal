@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
@@ -17,12 +18,13 @@ import {
   CreditCard,
   Receipt,
   FileCheck,
-  Briefcase
+  Briefcase,
+  Loader2
 } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 import QRCode from 'react-qr-code';
 
-// Helper functions for OKLCH to RGB conversion to ensure html2canvas compatibility
+// Helper functions for OKLCH and OKLAB to RGB conversion to ensure html2canvas compatibility
 function oklchToRgb(l_val: string, c_val: string, h_val: string, alpha_val: number = 1): string {
   const L = parseFloat(l_val);
   const C = parseFloat(c_val);
@@ -57,7 +59,72 @@ function oklchToRgb(l_val: string, c_val: string, h_val: string, alpha_val: numb
   return `rgb(${R}, ${G}, ${B})`;
 }
 
-const oklchRegex = /oklch\((?:[^()]*|\([^()]*\))*\)/g;
+function oklabToRgb(l_val: string, a_val: string, b_val: string, alpha_val: number = 1): string {
+  let L = parseFloat(l_val);
+  if (l_val.endsWith('%')) L = L / 100;
+  let a = parseFloat(a_val);
+  let b = parseFloat(b_val);
+
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+
+  const l = l_ * l_ * l_;
+  const m = m_ * m_ * m_;
+  const s = s_ * s_ * s_;
+
+  const r = +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+  const g = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+  const b_rgb = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
+
+  const transform = (val: number) => {
+    return val <= 0.0031308 ? 12.92 * val : 1.055 * Math.pow(val, 1 / 2.4) - 0.055;
+  };
+
+  const R = Math.round(Math.max(0, Math.min(1, transform(r))) * 255);
+  const G = Math.round(Math.max(0, Math.min(1, transform(g))) * 255);
+  const B = Math.round(Math.max(0, Math.min(1, transform(b_rgb))) * 255);
+
+  if (alpha_val !== undefined && alpha_val !== null && alpha_val !== 1) {
+    return `rgba(${R}, ${G}, ${B}, ${alpha_val})`;
+  }
+  return `rgb(${R}, ${G}, ${B})`;
+}
+
+const modernColorRegex = /(?:oklch|oklab|color)\((?:[^()]*|\([^()]*\))*\)/gi;
+
+const convertModernColorToRgb = (colorStr: string): string => {
+  const lower = colorStr.toLowerCase().trim();
+  if (lower.startsWith('oklab')) {
+    try {
+      const content = lower.replace(/^oklab\(/, '').replace(/\)$/, '').trim();
+      const parts = content.split('/');
+      const labPart = parts[0].trim();
+      const alphaPart = parts[1] ? parts[1].trim() : null;
+      const labValues = labPart.split(/\s+/).filter(Boolean);
+      if (labValues.length < 3) return 'rgb(99, 102, 241)';
+      let alpha = 1;
+      if (alphaPart) {
+        if (alphaPart.includes('var(')) {
+          const match = alphaPart.match(/,\s*([\d.%]+)\)/);
+          if (match) {
+            const fb = match[1];
+            alpha = fb.endsWith('%') ? parseFloat(fb) / 100 : parseFloat(fb);
+          }
+        } else {
+          alpha = alphaPart.endsWith('%') ? parseFloat(alphaPart) / 100 : parseFloat(alphaPart);
+        }
+      }
+      if (isNaN(alpha)) alpha = 1;
+      return oklabToRgb(labValues[0], labValues[1], labValues[2], alpha);
+    } catch {
+      return 'rgb(99, 102, 241)';
+    }
+  } else if (lower.startsWith('oklch')) {
+    return oklchToRgbString(lower);
+  }
+  return 'rgb(99, 102, 241)';
+};
 
 const oklchToRgbString = (oklchStr: string): string => {
   try {
@@ -109,14 +176,14 @@ const rewriteOklchInStyleSheets = () => {
       
       for (let i = rules.length - 1; i >= 0; i--) {
         const rule = rules[i];
-        if (rule.cssText && rule.cssText.includes('oklch')) {
+        if (rule.cssText && (rule.cssText.includes('oklch') || rule.cssText.includes('oklab'))) {
           backups.push({
             sheet,
             ruleText: rule.cssText,
             index: i
           });
           
-          const newRuleText = rule.cssText.replace(oklchRegex, (m) => oklchToRgbString(m));
+          const newRuleText = rule.cssText.replace(modernColorRegex, (m) => convertModernColorToRgb(m));
           sheet.deleteRule(i);
           try {
             sheet.insertRule(newRuleText, i);
@@ -145,8 +212,8 @@ const rewriteOklchInStyleSheets = () => {
   }));
 
   styleTags.forEach(tag => {
-    if (tag.textContent && tag.textContent.includes('oklch')) {
-      tag.textContent = tag.textContent.replace(oklchRegex, (m) => oklchToRgbString(m));
+    if (tag.textContent && (tag.textContent.includes('oklch') || tag.textContent.includes('oklab'))) {
+      tag.textContent = tag.textContent.replace(modernColorRegex, (m) => convertModernColorToRgb(m));
     }
   });
 
@@ -174,20 +241,26 @@ interface RegistrationCertificateModalProps {
   isOpen: boolean;
   onClose: () => void;
   registrationId: string;
+  initialTab?: 'certificate' | 'receipt';
 }
 
-export function RegistrationCertificateModal({ isOpen, onClose, registrationId }: RegistrationCertificateModalProps) {
+export function RegistrationCertificateModal({ isOpen, onClose, registrationId, initialTab }: RegistrationCertificateModalProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [data, setData] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'certificate' | 'receipt'>('certificate');
+  const [activeTab, setActiveTab] = useState<'certificate' | 'receipt'>(initialTab || 'certificate');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const documentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen && registrationId) {
+      if (initialTab) {
+        setActiveTab(initialTab);
+      }
       fetchRegistrationData();
     }
-  }, [isOpen, registrationId]);
+  }, [isOpen, registrationId, initialTab]);
 
   const fetchRegistrationData = async () => {
     setLoading(true);
@@ -204,64 +277,142 @@ export function RegistrationCertificateModal({ isOpen, onClose, registrationId }
     }
   };
 
-  const handleDownloadPdf = () => {
-    if (!documentRef.current || !data) return;
-    const element = documentRef.current;
-    
-    const opt = {
-      margin: 0,
-      filename: activeTab === 'certificate'
+  const handleDownloadPdf = async () => {
+    if (!documentRef.current || !data || isDownloading) return;
+    setIsDownloading(true);
+
+    let restoreStylesheets: (() => void) | null = null;
+    let restoreGetComputedStyle: (() => void) | null = null;
+
+    try {
+      const element = documentRef.current;
+      const fileName = activeTab === 'certificate'
         ? `GALAXY-ERP-School-Registration-${data.school_unique_id || 'Certificate'}.pdf`
-        : `GALAXY-ERP-Payment-Receipt-${data.school_unique_id || 'Receipt'}.pdf`,
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+        : `GALAXY-ERP-Payment-Receipt-${data.school_unique_id || 'Receipt'}.pdf`;
 
-    const originalGetComputedStyle = window.getComputedStyle;
-    window.getComputedStyle = function (elt, pseudoElt) {
-      const style = originalGetComputedStyle(elt, pseudoElt);
-      return new Proxy(style, {
-        get(target, prop, receiver) {
-          const val = Reflect.get(target, prop, receiver);
-          if (typeof val === 'string' && val.includes('oklch')) {
-            return val.replace(oklchRegex, (m) => oklchToRgbString(m));
-          }
-          if (typeof val === 'function') {
-            if (prop === 'getPropertyValue') {
-              return function(propertyName: string) {
-                const originalVal = target.getPropertyValue(propertyName);
-                if (typeof originalVal === 'string' && originalVal.includes('oklch')) {
-                  return originalVal.replace(oklchRegex, (m) => oklchToRgbString(m));
-                }
-                return originalVal;
-              };
+      // Safely access html2pdf library function
+      const pdfConverter = typeof html2pdf === 'function' 
+        ? html2pdf 
+        : (html2pdf as any)?.default || (window as any)?.html2pdf;
+
+      if (typeof pdfConverter !== 'function') {
+        throw new Error('PDF conversion library is unavailable. Please use the Print / Save as PDF button instead.');
+      }
+
+      // Proxy window.getComputedStyle so html2canvas never receives oklab / oklch / color() values from computed styles
+      const originalGetComputedStyle = window.getComputedStyle;
+      window.getComputedStyle = function (elt: Element, pseudoElt?: string | null) {
+        const style = originalGetComputedStyle(elt, pseudoElt);
+        return new Proxy(style, {
+          get(target, prop, receiver) {
+            const val = Reflect.get(target, prop, receiver);
+            if (typeof val === 'string' && (val.includes('oklch') || val.includes('oklab') || val.includes('color('))) {
+              return convertModernColorToRgb(val);
             }
-            return val.bind(target);
+            if (typeof val === 'function') {
+              if (prop === 'getPropertyValue') {
+                return function(propertyName: string) {
+                  const originalVal = target.getPropertyValue(propertyName);
+                  if (typeof originalVal === 'string' && (originalVal.includes('oklch') || originalVal.includes('oklab') || originalVal.includes('color('))) {
+                    return convertModernColorToRgb(originalVal);
+                  }
+                  return originalVal;
+                };
+              }
+              return val.bind(target);
+            }
+            return val;
           }
-          return val;
-        }
-      });
-    };
+        });
+      };
 
-    const restoreStylesheets = rewriteOklchInStyleSheets();
-    const restoreAll = () => {
-      window.getComputedStyle = originalGetComputedStyle;
-      restoreStylesheets();
-    };
+      restoreGetComputedStyle = () => {
+        window.getComputedStyle = originalGetComputedStyle;
+      };
 
-    (html2pdf as any)().set(opt).from(element).save()
-      .then(() => {
-        setTimeout(restoreAll, 500);
-      })
-      .catch((err: any) => {
-        console.error('PDF generation failed:', err);
-        restoreAll();
-      });
+      try {
+        restoreStylesheets = rewriteOklchInStyleSheets();
+      } catch (e) {
+        console.warn('CSS rewrite notice:', e);
+      }
+
+      const opt = {
+        margin: 0,
+        filename: fileName,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          allowTaint: false,
+          logging: false,
+          onclone: (clonedDoc: Document) => {
+            try {
+              const styleTags = clonedDoc.querySelectorAll('style');
+              styleTags.forEach(tag => {
+                if (tag.textContent && (tag.textContent.includes('oklch') || tag.textContent.includes('oklab') || tag.textContent.includes('color('))) {
+                  tag.textContent = tag.textContent.replace(modernColorRegex, (m) => convertModernColorToRgb(m));
+                }
+              });
+
+              const allElements = clonedDoc.querySelectorAll('*');
+              allElements.forEach((el) => {
+                const htmlEl = el as HTMLElement;
+                if (htmlEl.style && htmlEl.style.cssText) {
+                  if (htmlEl.style.cssText.includes('oklch') || htmlEl.style.cssText.includes('oklab') || htmlEl.style.cssText.includes('color(')) {
+                    htmlEl.style.cssText = htmlEl.style.cssText.replace(modernColorRegex, (m) => convertModernColorToRgb(m));
+                  }
+                }
+              });
+            } catch (e) {
+              console.warn('onclone style rewrite warning:', e);
+            }
+          }
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      const worker = pdfConverter().set(opt).from(element);
+      await worker.save();
+    } catch (err: any) {
+      console.error('PDF download error:', err);
+      alert(err.message || 'PDF Generation failed. Please try "Print / Save as PDF" instead.');
+    } finally {
+      if (restoreGetComputedStyle) {
+        try { restoreGetComputedStyle(); } catch (e) {}
+      }
+      if (restoreStylesheets) {
+        try { restoreStylesheets(); } catch (e) {}
+      }
+      setIsDownloading(false);
+    }
   };
 
   const handlePrint = () => {
-    window.print();
+    if (isPrinting || isDownloading) return;
+    setIsPrinting(true);
+    
+    const handleAfterPrint = () => {
+      setIsPrinting(false);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+    window.addEventListener('afterprint', handleAfterPrint);
+
+    try {
+      window.focus();
+      setTimeout(() => {
+        try {
+          window.print();
+        } catch (err) {
+          console.error('Window print execution failed:', err);
+        } finally {
+          setTimeout(() => setIsPrinting(false), 500);
+        }
+      }, 150);
+    } catch (err) {
+      console.error('Print focus failed:', err);
+      setIsPrinting(false);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    }
   };
 
   if (!isOpen) return null;
@@ -276,14 +427,41 @@ export function RegistrationCertificateModal({ isOpen, onClose, registrationId }
   const paidAmount = Number(data?.paid_amount || requiredInitialPayment || 0);
   const remainingAmount = Number(data?.remaining_amount || (totalAmount - paidAmount) || 0);
 
-  return (
+  const schoolLogo = data ? (
+    data.logo_url || 
+    data.logoUrl || 
+    data.logo_base64 || 
+    data.logoBase64 || 
+    data.school_logo || 
+    data.schoolLogo || 
+    (data.metadata && (data.metadata.logo_url || data.metadata.logoUrl || data.metadata.logo_base64 || data.metadata.logoBase64))
+  ) : null;
+
+  return createPortal(
     <AnimatePresence>
-      <div id="print-modal-root" className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm print:bg-white print:p-0 print:block">
+      <div id="print-modal-root" className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-6 print:bg-white print:p-0 print:block antialiased text-slate-900">
+        {/* Crisp Backdrop Overlay - Separated to prevent backdrop-blur from bleeding raster blur into child document */}
+        <div 
+          className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm print:hidden" 
+          onClick={onClose}
+        />
+
         <style dangerouslySetInnerHTML={{ __html: `
+          #print-modal-root * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+          }
+          #print-document-target img {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+          }
           @media print {
             body {
               background: white !important;
               color: black !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
             }
             body > *:not(#print-modal-root) {
               display: none !important;
@@ -299,24 +477,43 @@ export function RegistrationCertificateModal({ isOpen, onClose, registrationId }
               display: block !important;
               padding: 0 !important;
               margin: 0 !important;
+              filter: none !important;
+              backdrop-filter: none !important;
+              transform: none !important;
+              z-index: 999999 !important;
             }
             #print-document-target {
               box-shadow: none !important;
               border: none !important;
               margin: 0 auto !important;
-              padding: 10mm !important;
-              width: 100% !important;
+              padding: 0 !important;
+              width: 210mm !important;
               height: auto !important;
+              filter: none !important;
+              backdrop-filter: none !important;
+              transform: none !important;
+            }
+            #print-document-target .a4-page-node {
+              width: 210mm !important;
+              min-height: 297mm !important;
+              padding: 16mm 20mm !important;
+              border: none !important;
+              filter: none !important;
+              backdrop-filter: none !important;
+              transform: none !important;
               page-break-after: avoid !important;
               page-break-before: avoid !important;
             }
           }
         `}} />
+
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="bg-slate-100 w-full max-w-4xl h-[92vh] max-h-[92vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden print:w-full print:max-w-none print:shadow-none print:h-auto print:max-h-none print:rounded-none print:bg-white"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 8 }}
+          transition={{ duration: 0.15 }}
+          style={{ transform: 'none', filter: 'none' }}
+          className="relative z-10 bg-slate-100 w-full max-w-4xl h-[92vh] max-h-[92vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden print:w-full print:max-w-none print:shadow-none print:h-auto print:max-h-none print:rounded-none print:bg-white"
         >
           {/* Header Controls - Hidden when printing */}
           <div className="px-6 py-4 bg-white border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between print:hidden gap-3 shrink-0">
@@ -356,19 +553,29 @@ export function RegistrationCertificateModal({ isOpen, onClose, registrationId }
             <div className="flex items-center gap-2 self-end sm:self-center">
               <button
                 onClick={handlePrint}
-                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5"
-                disabled={loading || !!error}
+                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                disabled={loading || !!error || isPrinting || isDownloading}
+                title="Open browser print / Save as PDF dialog"
               >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Print</span>
+                {isPrinting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Printer className="w-3.5 h-3.5" />
+                )}
+                <span>{isPrinting ? 'Opening Print...' : 'Print / Save as PDF'}</span>
               </button>
               <button
                 onClick={handleDownloadPdf}
-                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
-                disabled={loading || !!error}
+                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                disabled={loading || !!error || isPrinting || isDownloading}
+                title="Download direct PDF file"
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>Download PDF</span>
+                {isDownloading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+                <span>{isDownloading ? 'Generating PDF...' : 'Download PDF'}</span>
               </button>
               <div className="w-px h-6 bg-slate-200 mx-1"></div>
               <button
@@ -402,9 +609,8 @@ export function RegistrationCertificateModal({ isOpen, onClose, registrationId }
               <div 
                 ref={documentRef}
                 id="print-document-target"
-                className="bg-white mx-auto relative shadow-sm print:shadow-none overflow-visible print:w-full print:h-full"
+                className="bg-white mx-auto relative shadow-sm print:shadow-none overflow-visible w-full max-w-[210mm] print:w-full print:h-full antialiased"
                 style={{
-                  width: '210mm',
                   boxSizing: 'border-box',
                   padding: 0
                 }}
@@ -415,13 +621,7 @@ export function RegistrationCertificateModal({ isOpen, onClose, registrationId }
                     
                     {/* PAGE 1: OFFICIAL COVENANT OF REGISTRATION */}
                     <div 
-                      className="relative bg-white border-[8px] border-slate-50 border-double flex flex-col justify-between print:border-none"
-                      style={{
-                        width: '210mm',
-                        minHeight: '297mm',
-                        padding: '16mm 20mm',
-                        boxSizing: 'border-box'
-                      }}
+                      className="a4-page-node relative bg-white border-[8px] border-slate-50 border-double flex flex-col justify-between print:border-none w-full max-w-[210mm] min-h-[297mm] p-4 sm:p-8 md:p-[16mm] box-border mx-auto antialiased"
                     >
                       {/* Decorative inner border */}
                       <div className="absolute inset-0 border border-slate-200 m-2 pointer-events-none"></div>
@@ -434,9 +634,11 @@ export function RegistrationCertificateModal({ isOpen, onClose, registrationId }
                           {/* Branding Header */}
                           <div className="flex justify-between items-start">
                             <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
-                                <Sparkles className="w-6 h-6 text-white" />
-                              </div>
+                              {schoolLogo ? (
+                                <img src={schoolLogo} alt="School Logo" className="w-12 h-12 rounded-xl object-contain border border-slate-200 shadow-sm bg-white p-0.5" />
+                              ) : (
+                                <img src="/galaxy-logo.png" alt="Galaxy ERP Logo" className="w-12 h-12 rounded-xl object-contain border border-slate-200 shadow-sm bg-white p-0.5" />
+                              )}
                               <div>
                                 <h1 className="font-display font-extrabold text-xl tracking-tight text-slate-950 leading-none">GALAXY</h1>
                                 <p className="text-[9px] font-bold text-indigo-600 tracking-[0.2em] uppercase mt-1">Enterprise ERP</p>
@@ -597,13 +799,7 @@ export function RegistrationCertificateModal({ isOpen, onClose, registrationId }
 
                     {/* PAGE 2: SUPPLEMENTAL SERVICE SPECIFICATIONS & SLA AGREEMENT */}
                     <div 
-                      className="relative bg-white border-[8px] border-slate-50 border-double flex flex-col justify-between print:border-none"
-                      style={{
-                        width: '210mm',
-                        minHeight: '297mm',
-                        padding: '16mm 20mm',
-                        boxSizing: 'border-box'
-                      }}
+                      className="a4-page-node relative bg-white border-[8px] border-slate-50 border-double flex flex-col justify-between print:border-none w-full max-w-[210mm] min-h-[297mm] p-4 sm:p-8 md:p-[16mm] box-border mx-auto antialiased"
                     >
                       {/* Decorative inner border */}
                       <div className="absolute inset-0 border border-slate-200 m-2 pointer-events-none"></div>
@@ -801,13 +997,7 @@ export function RegistrationCertificateModal({ isOpen, onClose, registrationId }
                 ) : (
                   // TAB 2: INVOICE & PAYMENT RECEIPT (Perfect Single A4 Page)
                   <div 
-                    className="relative bg-white border-[8px] border-slate-50 border-double flex flex-col justify-between print:border-none"
-                    style={{
-                      width: '210mm',
-                      minHeight: '297mm',
-                      padding: '16mm 20mm',
-                      boxSizing: 'border-box'
-                    }}
+                    className="a4-page-node relative bg-white border-[8px] border-slate-50 border-double flex flex-col justify-between print:border-none w-full max-w-[210mm] min-h-[297mm] p-4 sm:p-8 md:p-[16mm] box-border mx-auto antialiased"
                   >
                     {/* Decorative inner border */}
                     <div className="absolute inset-0 border border-slate-200 m-2 pointer-events-none"></div>
@@ -820,9 +1010,11 @@ export function RegistrationCertificateModal({ isOpen, onClose, registrationId }
                         {/* Branding Header */}
                         <div className="flex justify-between items-start mb-8">
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl flex items-center justify-center shadow-md">
-                              <Receipt className="w-6 h-6 text-white" />
-                            </div>
+                            {schoolLogo ? (
+                              <img src={schoolLogo} alt="School Logo" className="w-12 h-12 rounded-xl object-contain border border-slate-200 shadow-sm bg-white p-0.5" />
+                            ) : (
+                              <img src="/galaxy-logo.png" alt="Galaxy ERP Logo" className="w-12 h-12 rounded-xl object-contain border border-slate-200 shadow-sm bg-white p-0.5" />
+                            )}
                             <div>
                               <h1 className="font-display font-extrabold text-xl tracking-tight text-slate-950 leading-none">GALAXY</h1>
                               <p className="text-[9px] font-bold text-emerald-600 tracking-[0.2em] uppercase mt-1">SLA Payment Node</p>
@@ -965,6 +1157,7 @@ export function RegistrationCertificateModal({ isOpen, onClose, registrationId }
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

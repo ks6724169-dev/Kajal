@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ShieldCheck, Sparkles, Cpu, Shield, Lock, CheckCircle, AlertCircle, RefreshCw, Layers, Database, Compass, Wifi } from 'lucide-react';
+import { GalaxyLogo } from '../components/common/GalaxyLogo';
 import { LoginPage as NewLoginPage } from '../pages/auth/LoginPage';
 import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage';
@@ -197,9 +198,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess, on
         {/* Left Side: Modern Enterprise ERP Visual Showcase Panel */}
         <div className="lg:col-span-6 hidden lg:flex flex-col justify-center space-y-8 pr-6 select-none">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-indigo-100 bg-indigo-50/50 text-indigo-700 text-xs font-semibold tracking-wide">
-              <Cpu className="w-4 h-4 text-indigo-600" />
-              <span>GALAXY Sovereign Operating Platform</span>
+            <div className="mb-2">
+              <GalaxyLogo size="lg" subtitle="GALAXY Sovereign Operating Platform" />
             </div>
             <h1 className="text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
               Next-Gen Academic <br />
@@ -285,11 +285,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess, on
           </div>
         </div>
 
-        {/* Right Side: Centered Premium Glassmorphic Credentials Wizard Card */}
-        <div className="col-span-1 lg:col-span-6 flex items-center justify-center">
-          <div className="w-full max-w-lg bg-white/70 border border-slate-200/80 rounded-[20px] p-6 md:p-8 backdrop-blur-md shadow-2xl shadow-indigo-100/50 relative overflow-hidden transition-all">
+        {/* Right Side: Clean High-Contrast Auth Panel */}
+        <div className="col-span-1 lg:col-span-6 flex items-center justify-center w-full">
+          <div className="w-full max-w-xl relative transition-all">
             {isOAuthSyncing && (
-              <div className="absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center space-y-4">
+              <div className="absolute inset-0 bg-white/95 z-50 flex flex-col items-center justify-center space-y-4 rounded-3xl p-6 shadow-xl border border-slate-200">
                 <RefreshCw className="h-8 w-8 text-indigo-600 animate-spin" />
                 <div className="text-center">
                   <h3 className="text-sm font-bold text-slate-800">Establishing Workspace Session</h3>

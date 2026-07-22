@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../../stores/StoreContext';
+import { GalaxyLogo } from '../../components/common/GalaxyLogo';
 import { getNavigationForRole } from '../../config/navigation';
 import { 
   Menu, 
@@ -55,16 +56,8 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({
         <aside className="hidden md:flex md:w-64 bg-slate-900 border-r border-slate-800 text-slate-300 flex-col justify-between shrink-0 h-auto">
           <div>
             {/* Header branding */}
-            <div className="p-5 border-b border-slate-800/80 flex items-center justify-between">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-base shadow-md font-bold">
-                  {currentTenant.logo}
-                </div>
-                <div>
-                  <span className="font-extrabold text-sm text-white tracking-tight uppercase block leading-none">Galaxy OS</span>
-                  <span className="text-[9px] text-slate-500 font-bold tracking-widest uppercase">Institution ERP</span>
-                </div>
-              </div>
+            <div className="p-4 border-b border-slate-800/80 flex items-center justify-between">
+              <GalaxyLogo size="sm" variant="dark" subtitle="Institution ERP" />
             </div>
 
             {/* Nav Menu */}
@@ -146,15 +139,7 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({
             <div className="relative w-72 bg-slate-900 text-slate-300 flex flex-col justify-between h-full p-5 shadow-2xl z-10 animate-slide-in">
               <div>
                 <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
-                  <div className="flex items-center space-x-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-base shadow-md font-bold">
-                      {currentTenant.logo}
-                    </div>
-                    <div>
-                      <span className="font-extrabold text-sm text-white tracking-tight uppercase block leading-none">Galaxy OS</span>
-                      <span className="text-[9px] text-slate-500 font-bold tracking-widest uppercase">Institution ERP</span>
-                    </div>
-                  </div>
+                  <GalaxyLogo size="sm" variant="dark" subtitle="Institution ERP" />
                   <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition">
                     <X className="w-5 h-5" />
                   </button>

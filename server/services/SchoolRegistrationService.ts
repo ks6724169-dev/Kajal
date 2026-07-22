@@ -118,12 +118,18 @@ export class SchoolRegistrationService {
       throw new Error('Failed to update registration draft with billing details');
     }
 
+    const keyId = order.keyId || process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder';
+
     return {
       success: true,
       orderId: order.id,
       amount: pricing.requiredInitialPayment,
       currency: pricing.currency,
-      pricing
+      keyId,
+      pricing: {
+        ...pricing,
+        keyId
+      }
     };
   }
 

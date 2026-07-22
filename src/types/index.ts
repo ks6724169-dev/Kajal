@@ -22,9 +22,9 @@ export type Role =
 export type Tenant = {
   id: string;
   name: string;
-  type: 'school' | 'college' | 'university' | 'k12';
+  type: 'school' | 'college' | 'university' | 'k12' | 'academy';
   logo: string;
-  currency: string;
+  currency?: string;
   academicYear: string;
   themeColor: string;
   city?: string;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Role, Tenant } from '../types';
+import { GalaxyLogo } from '../components/common/GalaxyLogo';
 import { TENANTS } from '../constants/mockData';
 import { getNavigationForRole } from '../config/navigation';
 import { 
@@ -75,18 +76,8 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Left: Logo & Tenant Switcher */}
       <div className="flex items-center space-x-3">
         <div className="flex items-center space-x-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-xl shadow-lg shadow-indigo-500/30">
-            {currentTenant.logo}
-          </div>
-          <div>
-            <div className="flex items-center space-x-1.5">
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent">
-                Galaxy ERP
-              </span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                SaaS Enterprise v4.5
-              </span>
-            </div>
+          <GalaxyLogo size="sm" variant="dark" subtitle="SaaS Enterprise" />
+        </div>
             
             {/* Tenant Dropdown */}
             <div className="relative">
@@ -129,8 +120,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
           </div>
-        </div>
-      </div>
 
       {/* Right Controls */}
       <div className="flex items-center space-x-3">

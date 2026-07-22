@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigation } from '../../hooks/useNavigation';
+import { GalaxyLogo } from '../common/GalaxyLogo';
 import { useRole } from '../../hooks/useRole';
 import { NavigationResolver } from '../../core/NavigationResolver';
 import { RoleResolver } from '../../core/RoleResolver';
@@ -70,23 +71,14 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
       }`}
     >
       {/* Brand Header */}
-      <div className="h-20 border-b border-slate-800 flex items-center justify-between px-5 relative">
-        <div className="flex items-center gap-3 overflow-hidden cursor-pointer" onClick={() => handleNavClick('dashboard')}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
-            <span className="text-xl">🌌</span>
-          </div>
-          {sidebarOpen && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-left leading-none"
-            >
-              <span className="font-extrabold text-sm tracking-tight text-white flex items-center gap-1">
-                GALAXY <span className="text-[10px] bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 px-1.5 py-0.5 rounded-full font-bold leading-none">ERP</span>
-              </span>
-              <span className="text-[9px] text-slate-500 font-extrabold uppercase tracking-wider leading-none block mt-1">SOVEREIGN OS</span>
-            </motion.div>
-          )}
+      <div className="h-20 border-b border-slate-800 flex items-center justify-between px-4 relative">
+        <div className="flex items-center overflow-hidden cursor-pointer" onClick={() => handleNavClick('dashboard')}>
+          <GalaxyLogo 
+            size={sidebarOpen ? "sm" : "xs"} 
+            showText={sidebarOpen} 
+            variant="dark"
+            subtitle="SOVEREIGN OS"
+          />
         </div>
 
         {/* Sidebar Toggle Trigger Button */}

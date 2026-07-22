@@ -1,5 +1,6 @@
 import { Tenant } from '../types';
 import { TENANTS } from '../constants/mockData';
+import { RealSchoolLookupService } from './RealSchoolLookupService';
 
 export interface TenantBranding {
   primaryColor: string;
@@ -34,9 +35,30 @@ export class TenantManager {
   }
 
   static async discoverTenantFromSchoolCode(code: string): Promise<Tenant | null> {
-    const tenants = await this.getTenants();
     const cleanCode = code.trim().toLowerCase();
     
+    // First: Check live Supabase Database Registry
+    try {
+      const realSchools = await RealSchoolLookupService.searchRealInstitutions({ searchTerm: cleanCode });
+      if (realSchools.length > 0) {
+        const match = realSchools.find((s) => s.code.toLowerCase() === cleanCode || s.id.toLowerCase() === cleanCode) || realSchools[0];
+        return {
+          id: match.id,
+          name: match.name,
+          schoolCode: match.code,
+          type: match.type,
+          city: match.city || '',
+          state: match.state || '',
+          academicYear: '2026-2027',
+          themeColor: '#4f46e5',
+          logo: match.logoUrl || ''
+        };
+      }
+    } catch (err) {
+      console.warn('Live database lookup error in TenantManager:', err);
+    }
+
+    const tenants = await this.getTenants();
     if (cleanCode === 'apex' || cleanCode === 'apex12' || cleanCode === 'apex_k12') {
       return tenants[0];
     } else if (cleanCode === 'galaxy' || cleanCode === 'git' || cleanCode === 'galaxy_tech') {

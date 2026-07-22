@@ -1,4 +1,5 @@
 import { Role } from '../types';
+import { getPermissionsForRole } from '../core/rbac';
 
 export interface AuthState {
   user: { 
@@ -129,25 +130,7 @@ class AuthStore {
   }
 
   private getDefaultPermissionsForRole(role: Role): string[] {
-    switch (role) {
-      case 'super_admin':
-      case 'organization_owner':
-        return ['manage_all', 'configure_system', 'edit_finance', 'view_reports', 'delete_records'];
-      case 'school_admin':
-      case 'principal':
-        return ['manage_tenant', 'edit_academic', 'view_reports', 'manage_users'];
-      case 'teacher':
-        return ['edit_academic', 'take_attendance', 'view_students', 'grade_exams'];
-      case 'accountant':
-        return ['edit_finance', 'view_fees', 'generate_invoices'];
-      case 'librarian':
-        return ['manage_library', 'view_books'];
-      case 'student':
-      case 'parent':
-        return ['view_own_dashboard', 'view_academic_reports', 'view_fees'];
-      default:
-        return ['view_own_dashboard'];
-    }
+    return getPermissionsForRole(role);
   }
 }
 

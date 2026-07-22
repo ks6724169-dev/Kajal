@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Lock, Eye, EyeOff, RefreshCw, CheckCircle, ShieldAlert } from 'lucide-react';
 import { AuthService } from '../../services/AuthService';
 import { PasswordStrength } from '../../components/auth/PasswordStrength';
+import { supabase } from '../../services/supabase';
 
 interface ResetPasswordPageProps {
   navigate: (path: string) => void;
@@ -15,6 +16,26 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ navigate }
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [hasRecoverySession, setHasRecoverySession] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Check if user has an active recovery session or authenticated session
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) {
+        setHasRecoverySession(true);
+      } else {
+        // Look for hash fragments or query tokens from Supabase reset email
+        const hash = window.location.hash;
+        if (hash.includes('access_token=') || hash.includes('type=recovery')) {
+          setHasRecoverySession(true);
+        } else {
+          setHasRecoverySession(false);
+        }
+      }
+    };
+    checkSession();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,18 +54,17 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ navigate }
 
     setIsLoading(true);
     try {
-      // Simulate ticket resolution from url
-      const ok = await AuthService.confirmPasswordReset('ticket_reset_123', password);
+      const ok = await AuthService.confirmPasswordReset('supabase_recovery_token', password);
       if (ok) {
         setIsSuccess(true);
         setTimeout(() => {
           navigate('/auth/login');
         }, 2000);
       } else {
-        setError('Verification ticket expired or rejected.');
+        setError('Recovery link expired or session invalid. Please request a new password reset email.');
       }
     } catch (err) {
-      setError('Connection failure.');
+      setError('Connection failure. Please retry.');
     } finally {
       setIsLoading(false);
     }

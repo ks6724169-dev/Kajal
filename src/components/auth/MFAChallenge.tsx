@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Mail, ShieldAlert, KeyRound, RefreshCw, Key, Landmark } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, KeyRound, RefreshCw, Key } from 'lucide-react';
 import { MFAService } from '../../services/MFAService';
 
 interface MFAChallengeProps {
-  ticket: string;
-  type: 'otp_email' | 'otp_sms' | 'totp';
+  factorId?: string;
+  ticket?: string;
+  type?: 'totp' | 'backup';
   onSuccess: (mfaToken: string) => void;
   onCancel: () => void;
 }
 
 export const MFAChallenge: React.FC<MFAChallengeProps> = ({
-  ticket,
-  type,
+  factorId: propFactorId,
   onSuccess,
   onCancel
 }) => {
@@ -19,17 +19,36 @@ export const MFAChallenge: React.FC<MFAChallengeProps> = ({
   const [useBackupCode, setUseBackupCode] = useState(false);
   const [backupCode, setBackupCode] = useState('');
   const [error, setError] = useState('');
-  const [timer, setTimer] = useState(60);
+  const [activeFactorId, setActiveFactorId] = useState<string>(propFactorId || '');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isLoadingFactor, setIsLoadingFactor] = useState(!propFactorId);
 
-  // Verification timer countdown
+  // Auto-discover enrolled factor if factorId not passed in props
   useEffect(() => {
-    if (timer <= 0 || useBackupCode) return;
-    const interval = setInterval(() => {
-      setTimer((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [timer, useBackupCode]);
+    if (propFactorId) {
+      setActiveFactorId(propFactorId);
+      setIsLoadingFactor(false);
+      return;
+    }
+
+    const loadEnrolledFactor = async () => {
+      setIsLoadingFactor(true);
+      try {
+        const aal = await MFAService.getAssuranceLevel();
+        if (aal.enrolledFactors.length > 0) {
+          setActiveFactorId(aal.enrolledFactors[0].id);
+        } else {
+          setError('No enrolled TOTP MFA factor found for this account.');
+        }
+      } catch (err) {
+        setError('Failed to query enrolled MFA factors.');
+      } finally {
+        setIsLoadingFactor(false);
+      }
+    };
+
+    loadEnrolledFactor();
+  }, [propFactorId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,14 +61,24 @@ export const MFAChallenge: React.FC<MFAChallengeProps> = ({
         if (ok) {
           onSuccess(`backup_bypass_${Math.random().toString(36).substring(2)}`);
         } else {
-          setError('Invalid backup recovery code.');
+          setError('Invalid 8-digit emergency recovery code.');
         }
       } else {
-        const res = await MFAService.verifyChallenge(ticket, code, type);
-        if (res.success && res.token) {
-          onSuccess(res.token);
+        if (!activeFactorId) {
+          // If no active factor ID, try with fallback identifier
+          const res = await MFAService.challengeAndVerify('default_totp_factor', code);
+          if (res.success && res.token) {
+            onSuccess(res.token);
+          } else {
+            setError(res.error || 'Verification failed. Please retry.');
+          }
         } else {
-          setError(res.error || 'Invalid code.');
+          const res = await MFAService.challengeAndVerify(activeFactorId, code);
+          if (res.success && res.token) {
+            onSuccess(res.token);
+          } else {
+            setError(res.error || 'Invalid code.');
+          }
         }
       }
     } catch (err) {
@@ -59,16 +88,14 @@ export const MFAChallenge: React.FC<MFAChallengeProps> = ({
     }
   };
 
-  const handleResend = async () => {
-    if (timer > 0) return;
-    setError('');
-    const ok = await MFAService.requestCodeResend(ticket, type === 'otp_sms' ? 'sms' : 'email');
-    if (ok) {
-      setTimer(60);
-    } else {
-      setError('Failed to resend code.');
-    }
-  };
+  if (isLoadingFactor) {
+    return (
+      <div className="py-8 text-center space-y-2">
+        <RefreshCw className="h-6 w-6 text-indigo-600 animate-spin mx-auto" />
+        <p className="text-xs text-slate-400 font-semibold">Locating Authenticator MFA Challenge...</p>
+      </div>
+    );
+  }
 
   return (
     <div id="mfa-challenge-component" className="space-y-4">
@@ -77,16 +104,12 @@ export const MFAChallenge: React.FC<MFAChallengeProps> = ({
           <ShieldCheck className="h-6 w-6" />
         </div>
         <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-          {useBackupCode ? 'Use Backup Recovery Code' : 'Two-Factor Authentication'}
+          {useBackupCode ? 'Use Emergency Recovery Code' : 'Two-Factor Authentication'}
         </h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           {useBackupCode
             ? 'Enter one of your 8-digit emergency recovery codes.'
-            : type === 'totp'
-            ? 'Enter the 6-digit code from your Authenticator App.'
-            : `Enter the verification code sent to your registered ${
-                type === 'otp_sms' ? 'mobile device' : 'email address'
-              }.`}
+            : 'Enter the 6-digit verification code from your Authenticator App (Google Authenticator / Authy).'}
         </p>
       </div>
 
@@ -112,7 +135,7 @@ export const MFAChallenge: React.FC<MFAChallengeProps> = ({
         ) : (
           <div className="space-y-1">
             <label htmlFor="mfa-code" className="block text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              6-Digit Verification Code
+              6-Digit Authenticator Code
             </label>
             <div className="relative">
               <KeyRound className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -124,6 +147,7 @@ export const MFAChallenge: React.FC<MFAChallengeProps> = ({
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                 placeholder="000000"
                 className="w-full pl-9 pr-3 py-2 text-center text-sm tracking-[0.75em] font-mono font-bold rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                autoFocus
               />
             </div>
           </div>
@@ -131,7 +155,7 @@ export const MFAChallenge: React.FC<MFAChallengeProps> = ({
 
         {error && (
           <p id="mfa-error" className="text-[11px] text-red-500 font-medium text-center flex items-center gap-1 justify-center">
-            <ShieldAlert className="h-3 w-3" />
+            <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
             {error}
           </p>
         )}
@@ -143,7 +167,7 @@ export const MFAChallenge: React.FC<MFAChallengeProps> = ({
             onClick={onCancel}
             className="flex-1 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-150"
           >
-            Go Back
+            Cancel
           </button>
           <button
             id="mfa-submit-btn"
@@ -157,48 +181,33 @@ export const MFAChallenge: React.FC<MFAChallengeProps> = ({
                 Verifying...
               </>
             ) : (
-              'Verify & Sign In'
+              'Verify & Grant Access'
             )}
           </button>
         </div>
       </form>
 
-      {!useBackupCode && (
-        <div className="flex items-center justify-between text-[11px] pt-1">
-          <button
-            id="mfa-resend-btn"
-            type="button"
-            disabled={timer > 0}
-            onClick={handleResend}
-            className={`font-semibold ${
-              timer > 0 ? 'text-slate-400 cursor-not-allowed' : 'text-indigo-600 dark:text-indigo-400 hover:underline'
-            }`}
-          >
-            {timer > 0 ? `Resend code in ${timer}s` : 'Resend Verification Code'}
-          </button>
-          <button
-            id="mfa-toggle-backup-btn"
-            type="button"
-            onClick={() => setUseBackupCode(true)}
-            className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
-          >
-            Use Recovery Code
-          </button>
-        </div>
-      )}
-
-      {useBackupCode && (
-        <div className="text-center text-[11px]">
+      <div className="flex items-center justify-between text-[11px] pt-1">
+        {useBackupCode ? (
           <button
             id="mfa-toggle-normal-btn"
             type="button"
             onClick={() => setUseBackupCode(false)}
-            className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
+            className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold mx-auto"
           >
-            Return to Standard 2FA
+            Return to Authenticator App
           </button>
-        </div>
-      )}
+        ) : (
+          <button
+            id="mfa-toggle-backup-btn"
+            type="button"
+            onClick={() => setUseBackupCode(true)}
+            className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold mx-auto"
+          >
+            Use Emergency Recovery Code
+          </button>
+        )}
+      </div>
     </div>
   );
 };

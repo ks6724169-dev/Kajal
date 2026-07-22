@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   CreditCard, CheckCircle2, AlertTriangle, ArrowRight, Loader2, 
   ShieldCheck, RefreshCw, Calendar, Users, Award, ChevronRight, 
-  FileText, Download, Building, Check, ArrowLeft, Sparkles, Laptop, Smartphone, HelpCircle
+  FileText, Download, Building, Check, ArrowLeft, Sparkles, Laptop, Smartphone, HelpCircle,
+  Receipt, Printer
 } from 'lucide-react';
+import { RegistrationCertificateModal } from '../../components/auth/RegistrationCertificateModal';
 
 interface SchoolPaymentCheckoutPageProps {
   registrationId: string;
@@ -26,6 +28,10 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
   // Success details from backend
   const [activatedDetails, setActivatedDetails] = useState<any>(null);
 
+  // Document Modal state
+  const [docModalOpen, setDocModalOpen] = useState(false);
+  const [docModalTab, setDocModalTab] = useState<'certificate' | 'receipt'>('certificate');
+
   // Load Registration Details & Prepare Payment on mount
   useEffect(() => {
     let active = true;
@@ -46,8 +52,8 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
         }
         
         const draft = regData.data;
-        if (draft.status === 'COMPLETED' && draft.school_unique_id) {
-          // If already complete, skip checkout directly
+        // Verify payment status strictly before auto-passing to success
+        if (draft.status === 'COMPLETED' && draft.payment_status === 'PAID' && draft.school_unique_id) {
           setRegistration(draft);
           setActivatedDetails({
             schoolUniqueId: draft.school_unique_id,
@@ -114,9 +120,10 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
     script.async = true;
     
     script.onload = () => {
+      const razorpayKey = orderData.pricing?.keyId || orderData.keyId || (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder';
       const options: any = {
-        key: orderData.pricing?.keyId, // Public Key Id from backend
-        amount: Math.round(orderData.pricing?.requiredInitialPayment * 100), // in paise
+        key: razorpayKey, // Public Key Id from backend or environment
+        amount: Math.round((orderData.pricing?.requiredInitialPayment || orderData.amount || 0) * 100), // in paise
         currency: orderData.currency || 'INR',
         name: 'GALAXY ERP',
         description: `${registration?.selected_plan?.toUpperCase()} Subscription Deposit`,
@@ -601,19 +608,26 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
                   </div>
                 </div>
 
-                {/* Secure certificate downloads */}
-                <div className="border-t border-slate-100 pt-6 flex flex-col sm:flex-row gap-4 justify-center items-center">
+                {/* Secure certificate and receipt document viewers */}
+                <div className="border-t border-slate-100 pt-6 flex flex-col sm:flex-row gap-3 justify-center items-center">
                   <button 
-                    onClick={handleDownloadCertificate}
-                    className="flex items-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-2xl transition-all cursor-pointer shadow-sm"
+                    onClick={() => {
+                      setDocModalTab('certificate');
+                      setDocModalOpen(true);
+                    }}
+                    className="flex items-center gap-2 px-5 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-2xl transition-all cursor-pointer shadow-md shadow-indigo-600/15"
                   >
-                    <Download className="w-4 h-4 text-indigo-600" /> Download Certificate
+                    <FileText className="w-4 h-4 text-white" /> View Registration Certificate
                   </button>
+
                   <button 
-                    onClick={handleDownloadReceipt}
-                    className="flex items-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-2xl transition-all cursor-pointer shadow-sm"
+                    onClick={() => {
+                      setDocModalTab('receipt');
+                      setDocModalOpen(true);
+                    }}
+                    className="flex items-center gap-2 px-5 py-3.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-extrabold rounded-2xl transition-all cursor-pointer shadow-sm"
                   >
-                    <FileText className="w-4 h-4 text-indigo-600" /> Download Payment Receipt
+                    <Receipt className="w-4 h-4 text-emerald-600" /> View Payment Receipt &amp; Invoice
                   </button>
                 </div>
               </div>
@@ -637,6 +651,14 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
         </AnimatePresence>
 
       </div>
+
+      {/* Full-Page Document Viewer Modal for Certificate & Receipt */}
+      <RegistrationCertificateModal
+        isOpen={docModalOpen}
+        onClose={() => setDocModalOpen(false)}
+        registrationId={registrationId}
+        initialTab={docModalTab}
+      />
     </div>
   );
 }

@@ -15,25 +15,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
   };
 
   return (
-    <div id="login-page-container" className="w-full max-w-md mx-auto relative select-none">
+    <div id="login-page-container" className="w-full max-w-xl mx-auto relative select-none">
       {/* Language Header Toggle */}
-      <div className="absolute top-0 right-0 flex items-center gap-2 z-20">
+      <div className="flex justify-end mb-3">
         <button
           id="lang-toggle-btn"
           type="button"
           onClick={handleLanguageToggle}
-          className="flex items-center gap-1.5 text-xs text-slate-500 font-bold bg-white border border-slate-200 px-3 py-1.5 rounded-full shadow-xs hover:bg-slate-50 hover:shadow-sm transition-all duration-150 cursor-pointer"
+          className="flex items-center gap-1.5 text-xs text-slate-600 font-bold bg-white border border-slate-200 px-3.5 py-1.5 rounded-full shadow-xs hover:bg-slate-50 hover:shadow-sm transition-all duration-150 cursor-pointer"
         >
-          <Languages className="h-3.5 w-3.5 text-indigo-500" />
-          {lang === 'en' ? 'हिंदी' : 'English'}
+          <Languages className="h-4 w-4 text-indigo-600" />
+          <span>{lang === 'en' ? 'हिंदी में देखें' : 'Switch to English'}</span>
         </button>
       </div>
 
-      <div className="animate-in fade-in zoom-in duration-500">
+      <div className="animate-in fade-in duration-300">
         <LoginForm 
           language={lang} 
+          onNavigate={navigate}
           onSuccess={() => {
-            // Success is handled by authStore subscription in App.tsx
+            // Navigation handled by auth listener or router
+            navigate('/app');
           }} 
         />
       </div>

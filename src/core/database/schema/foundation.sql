@@ -14,7 +14,7 @@ $$ language 'plpgsql';
 CREATE TABLE IF NOT EXISTS organizations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE NOT NULL,
+    slug VARCHAR(255),
     logo_url TEXT,
     status VARCHAR(50) DEFAULT 'active',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -26,10 +26,17 @@ CREATE TABLE IF NOT EXISTS organizations (
     deleted_by UUID
 );
 
+-- Ensure all columns exist on organizations if created previously
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS slug VARCHAR(255);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS deleted_by UUID;
+
 -- Apply RLS
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
--- (Policies would be here for SuperAdmin to view all, and Tenant Admins to view their own)
 
+DROP TRIGGER IF EXISTS update_organizations_updated_at ON organizations;
 CREATE TRIGGER update_organizations_updated_at
     BEFORE UPDATE ON organizations
     FOR EACH ROW
@@ -38,9 +45,9 @@ CREATE TRIGGER update_organizations_updated_at
 -- School Table
 CREATE TABLE IF NOT EXISTS schools (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    code VARCHAR(50) NOT NULL,
+    code VARCHAR(50),
     address TEXT,
     contact_email VARCHAR(255),
     contact_phone VARCHAR(50),
@@ -53,10 +60,18 @@ CREATE TABLE IF NOT EXISTS schools (
     deleted_by UUID
 );
 
-CREATE INDEX idx_schools_org_id ON schools(organization_id);
+-- Ensure all columns exist on schools if created previously
+ALTER TABLE schools ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+ALTER TABLE schools ADD COLUMN IF NOT EXISTS code VARCHAR(50);
+ALTER TABLE schools ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
+ALTER TABLE schools ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE schools ADD COLUMN IF NOT EXISTS deleted_by UUID;
+
+CREATE INDEX IF NOT EXISTS idx_schools_org_id ON schools(organization_id);
 
 ALTER TABLE schools ENABLE ROW LEVEL SECURITY;
 
+DROP TRIGGER IF EXISTS update_schools_updated_at ON schools;
 CREATE TRIGGER update_schools_updated_at
     BEFORE UPDATE ON schools
     FOR EACH ROW
@@ -65,8 +80,8 @@ CREATE TRIGGER update_schools_updated_at
 -- Campus Table
 CREATE TABLE IF NOT EXISTS campuses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    school_id UUID NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
+    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     location TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -78,11 +93,17 @@ CREATE TABLE IF NOT EXISTS campuses (
     deleted_by UUID
 );
 
-CREATE INDEX idx_campuses_org_id ON campuses(organization_id);
-CREATE INDEX idx_campuses_school_id ON campuses(school_id);
+-- Ensure columns exist on campuses
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS school_id UUID REFERENCES schools(id) ON DELETE CASCADE;
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_campuses_org_id ON campuses(organization_id);
+CREATE INDEX IF NOT EXISTS idx_campuses_school_id ON campuses(school_id);
+
 ALTER TABLE campuses ENABLE ROW LEVEL SECURITY;
+
+DROP TRIGGER IF EXISTS update_campuses_updated_at ON campuses;
 CREATE TRIGGER update_campuses_updated_at BEFORE UPDATE ON campuses FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Other tables like AcademicSession, Department, Class, Section, Subject follow the same pattern:
--- organization_id UUID NOT NULL REFERENCES organizations(id), index on organization_id, etc.
 

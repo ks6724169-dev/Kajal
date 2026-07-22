@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, MapPin, School, Check, X, Building2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, MapPin, School, Check, X, Building2, RefreshCw } from 'lucide-react';
 import { TenantResolutionService } from '../../services/TenantResolutionService';
 import { Tenant } from '../../types';
 
@@ -11,14 +11,30 @@ interface SchoolSearchModalProps {
 
 export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({ isOpen, onClose, onSelect }) => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Tenant[]>(TenantResolutionService.searchSchools(''));
+  const [results, setResults] = useState<Tenant[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let isMounted = true;
+    
+    const fetchRealData = async () => {
+      setIsLoading(true);
+      try {
+        const res = await TenantResolutionService.searchSchoolsAsync(query);
+        if (isMounted) setResults(res);
+      } catch (err) {
+        if (isMounted) setResults([]);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    fetchRealData();
+    return () => { isMounted = false; };
+  }, [isOpen, query]);
 
   if (!isOpen) return null;
-
-  const handleSearch = (val: string) => {
-    setQuery(val);
-    setResults(TenantResolutionService.searchSchools(val));
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -55,13 +71,18 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({ isOpen, on
               placeholder="Search by school name, city, or school code..."
               className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-medium text-slate-900 shadow-sm"
               value={query}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setQuery(e.target.value)}
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {results.length > 0 ? (
+          {isLoading ? (
+            <div className="py-12 text-center">
+              <RefreshCw className="w-6 h-6 text-indigo-500 animate-spin mx-auto mb-2" />
+              <p className="text-xs text-slate-400 font-semibold">Searching Supabase database registry...</p>
+            </div>
+          ) : results.length > 0 ? (
             results.map((school) => (
               <button
                 key={school.id}
@@ -108,15 +129,15 @@ export const SchoolSearchModal: React.FC<SchoolSearchModalProps> = ({ isOpen, on
               <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-4">
                 <Search className="w-8 h-8" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900">No schools found</h3>
-              <p className="text-sm text-slate-500 mt-1">Try a different school name, city, or check the spelling.</p>
+              <h3 className="text-lg font-bold text-slate-900">कोई registered school या college नहीं मिला</h3>
+              <p className="text-sm text-slate-500 mt-1">No active registered institution matches your search criteria in the database.</p>
             </div>
           )}
         </div>
 
         <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-center">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-            Galaxy Enterprise Suite • Tenant Resolution Engine
+            Galaxy Enterprise Suite • Live Database Resolution Engine
           </p>
         </div>
       </div>

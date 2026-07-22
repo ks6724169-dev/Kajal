@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { GalaxyLogo } from '../components/common/GalaxyLogo';
 import { 
   ShieldCheck, 
   Smile, 
@@ -46,13 +47,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onOpenTeacher
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="font-bold text-2xl tracking-tight text-indigo-950">Galaxy</span>
-              <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest leading-none">School + College ERP</p>
-            </div>
+            <GalaxyLogo size="md" subtitle="School + College ERP" />
           </div>
           <div className="flex items-center gap-6">
             <button 

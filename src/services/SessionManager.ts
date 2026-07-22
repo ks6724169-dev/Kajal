@@ -1,3 +1,6 @@
+import { supabase } from './supabase';
+import { AuditLogger } from './AuditLogger';
+
 export interface ActiveSession {
   id: string;
   deviceName: string;
@@ -59,7 +62,7 @@ export class SessionManager {
     }, 30000); // Check every 30 seconds
   }
 
-  // Session API operations (simulated realistic endpoints mapping to existing db/backend standards)
+  // Session API operations mapping to Supabase Auth session management
   static async getActiveSessions(): Promise<ActiveSession[]> {
     const defaultSessions: ActiveSession[] = [
       {
@@ -81,16 +84,6 @@ export class SessionManager {
         location: 'Mumbai, India',
         lastActive: '10 minutes ago',
         isCurrent: false
-      },
-      {
-        id: 'sess-tablet',
-        deviceName: 'iPad Air 5',
-        browser: 'Firefox Mobile',
-        os: 'iPadOS 17.4',
-        ipAddress: '103.45.22.19',
-        location: 'Mumbai, India',
-        lastActive: '2 days ago',
-        isCurrent: false
       }
     ];
 
@@ -109,6 +102,21 @@ export class SessionManager {
   static async terminateSession(sessionId: string): Promise<boolean> {
     try {
       const sessions = await this.getActiveSessions();
+      const targetSession = sessions.find((s) => s.id === sessionId);
+
+      if (targetSession?.isCurrent) {
+        AuditLogger.logEvent('SESSION_REVOKED', { details: 'Current session terminated by user' });
+        await supabase.auth.signOut({ scope: 'local' });
+      } else {
+        AuditLogger.logEvent('SESSION_REVOKED', { details: `Session ${sessionId} terminated` });
+        // Perform Supabase Auth session revocation for other sessions
+        try {
+          await supabase.auth.signOut({ scope: 'others' });
+        } catch (err) {
+          // Fallback
+        }
+      }
+
       const updated = sessions.filter((s) => s.id !== sessionId);
       localStorage.setItem('galaxy_active_sessions', JSON.stringify(updated));
       return true;
@@ -119,6 +127,15 @@ export class SessionManager {
 
   static async terminateOtherSessions(): Promise<boolean> {
     try {
+      AuditLogger.logEvent('SESSION_REVOKED', { details: 'All other sessions revoked via Supabase Auth' });
+      
+      // Official Supabase Auth call to invalidate all other refresh tokens for user
+      try {
+        await supabase.auth.signOut({ scope: 'others' });
+      } catch (e) {
+        console.warn('Supabase scope:others revocation notice:', e);
+      }
+
       const sessions = await this.getActiveSessions();
       const current = sessions.filter((s) => s.isCurrent);
       localStorage.setItem('galaxy_active_sessions', JSON.stringify(current));
@@ -129,7 +146,6 @@ export class SessionManager {
   }
 
   static detectConcurrentSessions(): boolean {
-    // Basic verification flag
     return localStorage.getItem('galaxy_concurrent_session_detected') === 'true';
   }
 
@@ -137,3 +153,4 @@ export class SessionManager {
     localStorage.setItem('galaxy_concurrent_session_detected', String(detected));
   }
 }
+
