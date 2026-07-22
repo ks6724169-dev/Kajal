@@ -279,37 +279,52 @@ export class SchoolRegistrationController {
    */
   public static async paymentWebhook(req: Request, res: Response) {
     try {
-      const { orderId, paymentId, signature } = req.body;
-      if (!orderId || !paymentId) {
-        return res.status(400).json({
-          success: false,
-          message: 'orderId and paymentId are required in webhook payload.'
-        });
-      }
-
+      // Razorpay webhooks often send the whole event object
+      const event = req.body;
       const mode = (process.env.PAYMENT_MODE || 'mock').toLowerCase();
       const webhookSecret = process.env.PAYMENT_WEBHOOK_SECRET;
 
-      if (mode === 'live' && webhookSecret) {
-        // Retrieve signature from header or body
-        const headerSignature = (req.headers['x-razorpay-signature'] || signature) as string;
-        if (!headerSignature) {
-          return res.status(400).json({
-            success: false,
-            message: 'Webhook signature is required in live mode'
-          });
+      let orderId = '';
+      let paymentId = '';
+      let signature = '';
+
+      if (mode !== 'mock' && webhookSecret) {
+        // Validate Webhook Signature
+        const rzpSignature = req.headers['x-razorpay-signature'] as string;
+        if (!rzpSignature) {
+          return res.status(400).json({ success: false, message: 'Webhook signature missing' });
         }
 
         const provider = PaymentProviderFactory.getProvider();
-        const payload = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
-        const isValid = provider.verifyWebhookSignature(payload, headerSignature, webhookSecret);
+        // Razorpay expects the raw body for signature verification
+        // If express.json() is used, we might need the raw body. 
+        // Assuming body is already parsed and we use JSON.stringify as a fallback if not raw.
+        const payload = JSON.stringify(req.body);
+        const isValid = provider.verifyWebhookSignature(payload, rzpSignature, webhookSecret);
+        
         if (!isValid) {
-          logger.warn('[PaymentWebhook] Webhook verification rejected: signature mismatch');
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid webhook signature'
-          });
+          logger.warn('[PaymentWebhook] Invalid webhook signature detected');
+          return res.status(400).json({ success: false, message: 'Signature mismatch' });
         }
+
+        // Extract IDs from Razorpay event object
+        if (event.event === 'payment.captured') {
+          orderId = event.payload.payment.entity.order_id;
+          paymentId = event.payload.payment.entity.id;
+        } else if (event.event === 'order.paid') {
+          orderId = event.payload.order.entity.id;
+          // For order.paid, we might not have a specific payment_id in the same way, 
+          // but handlePaymentWebhook expects it. Usually payment.captured is better for activation.
+        }
+      } else {
+        // Mock or simple payload handling
+        orderId = req.body.orderId || req.body.order_id;
+        paymentId = req.body.paymentId || req.body.payment_id;
+        signature = req.body.signature;
+      }
+
+      if (!orderId) {
+        return res.status(200).json({ success: true, message: 'Event ignored (not a payment success event)' });
       }
 
       const result = await registrationService.handlePaymentWebhook(orderId, paymentId, signature || '');

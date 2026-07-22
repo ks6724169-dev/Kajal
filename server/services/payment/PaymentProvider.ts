@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import Razorpay from 'razorpay';
 
 export interface PaymentOrder {
   id: string; // Razorpay Order ID
@@ -7,7 +8,7 @@ export interface PaymentOrder {
   status: string;
   receipt: string;
   keyId?: string; // Public API Key ID for Razorpay checkout.js
-  paymentMode: 'mock' | 'live';
+  paymentMode: 'mock' | 'test' | 'live';
 }
 
 export interface PaymentVerificationResult {
@@ -70,62 +71,61 @@ export class MockPaymentProvider implements PaymentProvider {
   }
 }
 
-export class LivePaymentProvider implements PaymentProvider {
-  private keyId: string | undefined;
-  private keySecret: string | undefined;
+export class RazorpayPaymentProvider implements PaymentProvider {
+  private rzp: Razorpay;
+  private keyId: string;
+  private keySecret: string;
+  private mode: 'test' | 'live';
 
   constructor() {
-    this.keyId = process.env.PAYMENT_GATEWAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
-    this.keySecret = process.env.PAYMENT_GATEWAY_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET;
+    this.keyId = (process.env.RAZORPAY_KEY_ID || process.env.PAYMENT_GATEWAY_KEY_ID || '').trim();
+    this.keySecret = (process.env.RAZORPAY_KEY_SECRET || process.env.PAYMENT_GATEWAY_KEY_SECRET || '').trim();
+    this.mode = (process.env.PAYMENT_MODE || 'test').toLowerCase() as 'test' | 'live';
+
+    if (!this.keyId || !this.keySecret) {
+      // In production/live, we MUST have keys. In dev/test, we might be using mock, 
+      // but if we are in this class, it means we requested real Razorpay.
+      console.warn('[RazorpayPaymentProvider] Warning: Razorpay Key ID or Secret is missing in environment variables.');
+    }
+
+    this.rzp = new Razorpay({
+      key_id: this.keyId,
+      key_secret: this.keySecret,
+    });
   }
 
   public async createOrder(registrationId: string, amount: number, currency: string): Promise<PaymentOrder> {
     if (!this.keyId || !this.keySecret) {
-      throw new Error("PAYMENT_GATEWAY_CONFIG_PENDING: Live Payment Gateway keys are not configured. Please define PAYMENT_GATEWAY_KEY_ID and PAYMENT_GATEWAY_KEY_SECRET in server environment variables.");
+      throw new Error("RAZORPAY_CONFIG_MISSING: Razorpay keys are not configured. Please define RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.");
     }
-    
-    console.log(`[LivePaymentProvider] Creating authentic Razorpay order for amount: ${amount} ${currency}`);
     
     // Convert to lowest denomination (paise for INR)
     const amountInPaise = Math.round(amount * 100);
-    const auth = Buffer.from(`${this.keyId}:${this.keySecret}`).toString('base64');
 
     try {
-      const res = await fetch('https://api.razorpay.com/v1/orders', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${auth}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          amount: amountInPaise,
-          currency: currency || 'INR',
-          receipt: `receipt_reg_${registrationId}`,
-          notes: {
-            registrationId,
-            system: 'galaxy_erp'
-          }
-        })
+      const order = await this.rzp.orders.create({
+        amount: amountInPaise,
+        currency: currency || 'INR',
+        receipt: `receipt_reg_${registrationId}`,
+        notes: {
+          registrationId,
+          paymentMode: this.mode,
+          system: 'galaxy_erp'
+        }
       });
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Razorpay API responded with status ${res.status}: ${errText}`);
-      }
-
-      const orderData = await res.json();
       return {
-        id: orderData.id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        status: orderData.status,
-        receipt: orderData.receipt,
+        id: order.id,
+        amount: Number(order.amount),
+        currency: order.currency as string,
+        status: order.status as string,
+        receipt: order.receipt as string,
         keyId: this.keyId,
-        paymentMode: 'live'
+        paymentMode: this.mode
       };
     } catch (err: any) {
-      console.error('[LivePaymentProvider] Failed to create order via Razorpay REST API:', err);
-      throw new Error(`Failed to create Live Gateway Order: ${err.message}`);
+      console.error('[RazorpayPaymentProvider] Failed to create order:', err);
+      throw new Error(`Razorpay Order Creation Failed: ${err.message || 'Unknown error'}`);
     }
   }
 
@@ -135,14 +135,8 @@ export class LivePaymentProvider implements PaymentProvider {
     signature: string,
     expectedAmount: number
   ): Promise<PaymentVerificationResult> {
-    if (!this.keyId || !this.keySecret) {
-      return {
-        success: false,
-        orderId,
-        paymentId,
-        amountPaid: 0,
-        message: 'Live environment credentials not configured for signature verification'
-      };
+    if (!this.keySecret) {
+      throw new Error('RAZORPAY_KEY_SECRET missing for signature verification');
     }
 
     try {
@@ -155,23 +149,21 @@ export class LivePaymentProvider implements PaymentProvider {
         .digest('hex');
 
       if (expectedSignature === signature) {
-        console.log(`[LivePaymentProvider] Signature verified successfully for Order: ${orderId}, Payment: ${paymentId}`);
         return {
           success: true,
           orderId,
           paymentId,
           signature,
           amountPaid: expectedAmount,
-          message: 'Live payment signature verified successfully via HMAC-SHA256'
+          message: `Razorpay payment verified successfully (${this.mode.toUpperCase()} MODE)`
         };
       } else {
-        console.warn(`[LivePaymentProvider] Signature verification failed. Expected: ${expectedSignature}, Received: ${signature}`);
         return {
           success: false,
           orderId,
           paymentId,
           amountPaid: 0,
-          message: 'Signature verification mismatch'
+          message: 'Razorpay signature verification failed'
         };
       }
     } catch (err: any) {
@@ -180,7 +172,7 @@ export class LivePaymentProvider implements PaymentProvider {
         orderId,
         paymentId,
         amountPaid: 0,
-        message: `Signature verification exception: ${err.message}`
+        message: `Verification exception: ${err.message}`
       };
     }
   }
@@ -194,7 +186,7 @@ export class LivePaymentProvider implements PaymentProvider {
         .digest('hex');
       return expectedSignature === signature;
     } catch (err) {
-      console.error('[LivePaymentProvider] Error verifying webhook signature:', err);
+      console.error('[RazorpayPaymentProvider] Webhook verification error:', err);
       return false;
     }
   }
@@ -203,8 +195,8 @@ export class LivePaymentProvider implements PaymentProvider {
 export class PaymentProviderFactory {
   public static getProvider(): PaymentProvider {
     const mode = (process.env.PAYMENT_MODE || 'mock').toLowerCase();
-    if (mode === 'live') {
-      return new LivePaymentProvider();
+    if (mode === 'live' || mode === 'test' || mode === 'razorpay') {
+      return new RazorpayPaymentProvider();
     }
     return new MockPaymentProvider();
   }

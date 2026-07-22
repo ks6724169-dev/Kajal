@@ -18,7 +18,7 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
   const [orderData, setOrderData] = useState<any>(null);
   
   // Payment state
-  const [paymentMode, setPaymentMode] = useState<'mock' | 'live'>('mock');
+  const [paymentMode, setPaymentMode] = useState<'test' | 'live'>('test');
   const [checkoutStep, setCheckoutStep] = useState<'init' | 'processing' | 'verifying' | 'success' | 'failed'>('init');
   const [processingMessage, setProcessingMessage] = useState('Initiating cryptographic gateway handshake...');
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card' | 'netbanking'>('upi');
@@ -75,19 +75,19 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
 
         const prepData = await prepRes.json();
         if (!prepRes.ok || !prepData.success) {
-          // Handle dynamic configuration pending warning
-          if (prepData.message && prepData.message.includes('PAYMENT_GATEWAY_CONFIG_PENDING')) {
-            throw new Error('PAYMENT_GATEWAY_CONFIG_PENDING');
+          // Handle configuration pending warning
+          if (prepData.message && (prepData.message.includes('CONFIG_PENDING') || prepData.message.includes('CONFIG_MISSING'))) {
+            throw new Error('RAZORPAY_CONFIG_PENDING');
           }
           throw new Error(prepData.message || 'Handshake failed with payment controller.');
         }
 
         if (!active) return;
         setOrderData(prepData);
-        setPaymentMode(prepData.pricing?.paymentMode || 'mock');
+        setPaymentMode(prepData.pricing?.paymentMode || 'test');
       } catch (err: any) {
         if (active) {
-          if (err.message === 'PAYMENT_GATEWAY_CONFIG_PENDING') {
+          if (err.message === 'RAZORPAY_CONFIG_PENDING') {
             setError('LIVE_CONFIG_PENDING');
           } else {
             setError(err.message || 'An error occurred during payment setup.');
@@ -105,35 +105,43 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
   }, [registrationId]);
 
   // Razorpay Dynamic Integration Loader
-  const handleProceedLivePayment = () => {
+  const handleProceedPayment = (preferredMethod?: string) => {
     if (!orderData) return;
     
-    // Load script dynamically
+    // Load Razorpay script dynamically
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
     
     script.onload = () => {
-      const options = {
+      const options: any = {
         key: orderData.pricing?.keyId, // Public Key Id from backend
         amount: Math.round(orderData.pricing?.requiredInitialPayment * 100), // in paise
         currency: orderData.currency || 'INR',
         name: 'GALAXY ERP',
         description: `${registration?.selected_plan?.toUpperCase()} Subscription Deposit`,
+        image: '/logo.png', // Optional
         order_id: orderData.orderId,
         handler: async function (response: any) {
+          setCheckoutStep('verifying');
+          setProcessingMessage('Verifying payment signature with GALAXY security node...');
+          
           // Trigger backend verification
           await handleBackendVerify({
             orderId: orderData.orderId,
             paymentId: response.razorpay_payment_id,
             signature: response.razorpay_signature,
-            paymentMethod: 'razorpay-live'
+            paymentMethod: 'razorpay'
           });
         },
         prefill: {
           name: registration?.owner_name || '',
           email: registration?.owner_email || '',
           contact: registration?.owner_mobile || ''
+        },
+        notes: {
+          registration_id: registrationId,
+          school_name: registration?.school_name
         },
         theme: {
           color: '#4f46e5'
@@ -144,8 +152,17 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
           }
         }
       };
+
+      if (preferredMethod) {
+        options.prefill.method = preferredMethod;
+      }
       
       const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        console.error('Payment Failed:', response.error);
+        setError(`Payment failed: ${response.error.description}`);
+        setCheckoutStep('failed');
+      });
       rzp.open();
     };
 
@@ -154,41 +171,6 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
     };
 
     document.body.appendChild(script);
-  };
-
-  // Secure Sandbox Payment Verification
-  const handleProceedMockPayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setCheckoutStep('processing');
-    setProcessingMessage('Establishing secure sandbox transaction pipeline...');
-    
-    // Progressive feedback steps
-    const steps = [
-      { text: 'Securing network handshake with GALAXY payment node...', delay: 600 },
-      { text: 'Generating verified HMAC-SHA256 checksum audit hashes...', delay: 1200 },
-      { text: 'Finalizing server-authoritative ledger updates...', delay: 1800 }
-    ];
-
-    steps.forEach((s) => {
-      setTimeout(() => {
-        setProcessingMessage(s.text);
-      }, s.delay);
-    });
-
-    setTimeout(async () => {
-      setCheckoutStep('verifying');
-      const mockPaymentId = 'pay_sandbox_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-      const mockSignature = 'sig_sandbox_' + Math.random().toString(36).substring(2, 15).toUpperCase();
-
-      await handleBackendVerify({
-        orderId: orderData?.orderId || `order_mock_${Math.random().toString(36).substring(2, 8)}`,
-        paymentId: mockPaymentId,
-        signature: mockSignature,
-        paymentMethod: paymentMethod === 'upi' ? 'sandbox-upi-qr' : paymentMethod === 'card' ? 'sandbox-card' : 'sandbox-netbanking',
-        transactionReference: paymentMethod === 'upi' ? `UPI-QR-TXN-${Math.random().toString(36).substring(2, 8).toUpperCase()}` : `CARD-AUTH-XXXX-XXXX-XXXX-${Math.floor(1000 + Math.random() * 9000)}`
-      });
-    }, 2400);
   };
 
   // Common Verify call to Backend controller
@@ -223,7 +205,7 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
 
   const handleDownloadCertificate = async () => {
     try {
-      const response = await fetch(`/api/v1/school-registration/certificate/${registrationId}`);
+      const response = await fetch(`/api/v1/school-registration/${registrationId}/certificate`);
       const data = await response.json();
       if (data.success) {
         const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
@@ -241,7 +223,7 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
 
   const handleDownloadReceipt = async () => {
     try {
-      const response = await fetch(`/api/v1/school-registration/receipt/${registrationId}`);
+      const response = await fetch(`/api/v1/school-registration/${registrationId}/receipt`);
       const data = await response.json();
       if (data.success) {
         const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
@@ -257,17 +239,6 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
     }
   };
 
-  // Generate real dynamic UPI deep link URI and QR code
-  const getDynamicUPIUri = () => {
-    const payeeAddress = 'finance@galaxyerp.com';
-    const payeeName = 'GALAXY ERP';
-    const amount = Number(registration?.required_initial_payment) || 0;
-    const orderId = orderData?.orderId || 'order_mock';
-    return `upi://pay?pa=${payeeAddress}&pn=${encodeURIComponent(payeeName)}&tr=${orderId}&am=${amount}&cu=INR&tn=${encodeURIComponent('GALAXY ERP Subscription Deposit')}`;
-  };
-
-  const dynamicUPIUri = getDynamicUPIUri();
-  const dynamicQRCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=${encodeURIComponent(dynamicUPIUri)}`;
 
   if (loading) {
     return (
@@ -333,7 +304,7 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-left space-y-2">
                 <h5 className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Troubleshooting steps:</h5>
                 <p className="text-[10px] text-slate-500 leading-normal">
-                  1. Set <code>PAYMENT_MODE=mock</code> in your <code>.env</code> file for sandbox testing.
+                  1. Set <code>PAYMENT_MODE=test</code> in your <code>.env</code> file for sandbox testing.
                 </p>
                 <p className="text-[10px] text-slate-500 leading-normal">
                   2. Or provide valid Razorpay keys in environment variables to run live gateway transactions.
@@ -454,188 +425,86 @@ export function SchoolPaymentCheckoutPage({ registrationId, navigate }: SchoolPa
 
               {/* RIGHT COLUMN: Realistic/Production Payment Selection Grid */}
               <div className="lg:col-span-7">
-                <div className="bg-white border border-slate-200 rounded-3xl p-8 space-y-6 shadow-sm text-left h-full flex flex-col justify-between">
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-lg font-display font-bold tracking-tight text-slate-900">Secure Payment Gateway</h3>
-                      <p className="text-xs text-slate-500">Choose your secure payment route to complete registration and deploy your GALAXY system.</p>
-                    </div>
-
-                    {/* LIVE MODE - INTEGRATES WITH RAZORPAY STANDARD POPUP */}
-                    {paymentMode === 'live' ? (
-                      <div className="space-y-6 py-6 flex-1 flex flex-col justify-center">
-                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center space-y-3">
-                          <CreditCard className="w-10 h-10 text-indigo-600 mx-auto" />
-                          <div className="space-y-1">
-                            <h4 className="text-sm font-bold text-slate-900">Razorpay Live Gateway Initialized</h4>
-                            <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-                              Ready to connect with <strong>Razorpay secure gateway</strong>. Click below to verify 25% subscription deposit and activate.
-                            </p>
-                          </div>
-                        </div>
-
-                        <button 
-                          onClick={handleProceedLivePayment}
-                          className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/10 hover:shadow-indigo-600/25"
-                        >
-                          <ShieldCheck className="w-4.5 h-4.5" /> Pay ₹{Number(registration?.required_initial_payment).toLocaleString('en-IN')}.00 Securely
-                        </button>
-                      </div>
-                    ) : (
-                      /* SANDBOX / MOCK MODE - INTEGRATES WITH TRANSACTION-LINKED DYNAMIC QR AND SIMULATED FLOW */
-                      <form onSubmit={handleProceedMockPayment} className="space-y-6">
-                        {/* Selector Tabs */}
-                        <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMethod('upi')}
-                            className={`flex-1 py-2.5 text-[10px] uppercase font-extrabold rounded-lg tracking-wider transition-all ${
-                              paymentMethod === 'upi' 
-                                ? 'bg-white text-slate-900 shadow-sm font-black' 
-                                : 'text-slate-500 hover:text-slate-900'
-                            }`}
-                          >
-                            UPI / Dynamic QR
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMethod('card')}
-                            className={`flex-1 py-2.5 text-[10px] uppercase font-extrabold rounded-lg tracking-wider transition-all ${
-                              paymentMethod === 'card' 
-                                ? 'bg-white text-slate-900 shadow-sm font-black' 
-                                : 'text-slate-500 hover:text-slate-900'
-                            }`}
-                          >
-                            Card Payment
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMethod('netbanking')}
-                            className={`flex-1 py-2.5 text-[10px] uppercase font-extrabold rounded-lg tracking-wider transition-all ${
-                              paymentMethod === 'netbanking' 
-                                ? 'bg-white text-slate-900 shadow-sm font-black' 
-                                : 'text-slate-500 hover:text-slate-900'
-                            }`}
-                          >
-                            Net Banking / Net
-                          </button>
-                        </div>
-
-                        <AnimatePresence mode="wait">
-                          {/* TAB: UPI / DYNAMIC QR */}
-                          {paymentMethod === 'upi' && (
-                            <motion.div 
-                              key="upi-pane"
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              className="space-y-4"
-                            >
-                              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col items-center text-center space-y-4">
-                                <span className="text-[9px] uppercase tracking-widest text-slate-400 font-extrabold">One-Time Dynamic Transaction QR</span>
-                                
-                                {/* Dynamic QR Code container */}
-                                <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-inner relative overflow-hidden">
-                                  <img 
-                                    src={dynamicQRCodeUrl} 
-                                    alt="Transaction QR" 
-                                    className="w-44 h-44 object-contain"
-                                    referrerPolicy="no-referrer"
-                                  />
-                                  {/* Scanning bar effect */}
-                                  <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-500/60 blur-[2px] animate-pulse"></div>
-                                </div>
-
-                                <div className="space-y-1.5 text-slate-500 text-xs">
-                                  <p className="font-extrabold text-slate-900">
-                                    Payable: <span className="text-indigo-600">₹{Number(registration?.required_initial_payment).toLocaleString('en-IN')}.00</span>
-                                  </p>
-                                  <p className="text-[10px] leading-relaxed max-w-sm">
-                                    Scan this dynamic UPI QR using Google Pay, PhonePe, Paytm, or BHIM. The reference and amount are dynamically linked.
-                                  </p>
-                                </div>
-                              </div>
-                              
-                              <p className="text-[10px] text-slate-400 text-center leading-relaxed">
-                                Note: Once payment is processed in your UPI app, click <strong>Sync Payment Registry</strong> below to securely verify the transaction with GALAXY nodes.
-                              </p>
-
-                              <button 
-                                type="submit"
-                                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/10 hover:shadow-indigo-600/25"
-                              >
-                                <ShieldCheck className="w-4.5 h-4.5" /> Sync Payment Registry & Deploy Node
-                              </button>
-                            </motion.div>
-                          )}
-
-                          {/* TAB: SECURE CARD PAY */}
-                          {paymentMethod === 'card' && (
-                            <motion.div 
-                              key="card-pane"
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              className="space-y-4"
-                            >
-                              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center space-y-4">
-                                <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center mx-auto">
-                                  <CreditCard className="w-6 h-6 text-indigo-600" />
-                                </div>
-                                <div className="space-y-1.5">
-                                  <h4 className="text-sm font-bold text-slate-900">Secure PCI-DSS Card Verification</h4>
-                                  <p className="text-[11px] text-slate-500 leading-relaxed max-w-md mx-auto">
-                                    Our production gateways utilize bank-grade encryption to secure card transactions. Sandbox mode will simulate complete credit card gateway authorizations without processing real funds.
-                                  </p>
-                                </div>
-                              </div>
-
-                              <button 
-                                type="submit"
-                                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/10 hover:shadow-indigo-600/25"
-                              >
-                                <ShieldCheck className="w-4.5 h-4.5" /> Authorize Card Transaction (₹{Number(registration?.required_initial_payment).toLocaleString('en-IN')}.00)
-                              </button>
-                            </motion.div>
-                          )}
-
-                          {/* TAB: NET BANKING */}
-                          {paymentMethod === 'netbanking' && (
-                            <motion.div 
-                              key="netbanking-pane"
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              className="space-y-4"
-                            >
-                              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center space-y-4">
-                                <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center mx-auto">
-                                  <Building className="w-6 h-6 text-indigo-600" />
-                                </div>
-                                <div className="space-y-1.5">
-                                  <h4 className="text-sm font-bold text-slate-900">Direct Net Banking Tunnel</h4>
-                                  <p className="text-[11px] text-slate-500 leading-relaxed max-w-md mx-auto">
-                                    Connects directly with netbanking modules of all major financial institutions. Our sandbox server will initiate verification logic instantly.
-                                  </p>
-                                </div>
-                              </div>
-
-                              <button 
-                                type="submit"
-                                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/10 hover:shadow-indigo-600/25"
-                              >
-                                <ShieldCheck className="w-4.5 h-4.5" /> Launch Net Banking Checkout
-                              </button>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </form>
-                    )}
+                <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col h-full">
+                  <div className="space-y-2 mb-8">
+                    <h3 className="text-xl font-display font-extrabold tracking-tight text-slate-900">Select Payment Method</h3>
+                    <p className="text-xs text-slate-500 font-medium">
+                      All transactions are secured with 256-bit AES encryption via Razorpay.
+                    </p>
                   </div>
 
-                  {/* Safety compliance notice */}
-                  <div className="text-[10px] text-slate-400 text-center leading-normal mt-6 border-t border-slate-100 pt-4 font-medium flex items-center justify-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Authorized under GALAXY Educational Operating System frameworks.
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 content-start">
+                    
+                    {/* UPI */}
+                    <button
+                      onClick={() => handleProceedPayment('upi')}
+                      className="group p-5 bg-white border border-slate-200 hover:border-indigo-400 hover:shadow-md hover:shadow-indigo-100 rounded-2xl text-left transition-all flex flex-col items-start gap-4"
+                    >
+                      <div className="w-12 h-12 bg-slate-50 border border-slate-100 group-hover:bg-indigo-50 group-hover:border-indigo-100 rounded-xl flex items-center justify-center transition-colors">
+                        <Smartphone className="w-6 h-6 text-slate-600 group-hover:text-indigo-600 transition-colors" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-indigo-900">UPI / QR</h4>
+                        <p className="text-[10px] text-slate-500 mt-1">GPay, PhonePe, Paytm & more</p>
+                      </div>
+                    </button>
+
+                    {/* CARD */}
+                    <button
+                      onClick={() => handleProceedPayment('card')}
+                      className="group p-5 bg-white border border-slate-200 hover:border-indigo-400 hover:shadow-md hover:shadow-indigo-100 rounded-2xl text-left transition-all flex flex-col items-start gap-4"
+                    >
+                      <div className="w-12 h-12 bg-slate-50 border border-slate-100 group-hover:bg-indigo-50 group-hover:border-indigo-100 rounded-xl flex items-center justify-center transition-colors">
+                        <CreditCard className="w-6 h-6 text-slate-600 group-hover:text-indigo-600 transition-colors" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-indigo-900">Credit / Debit Card</h4>
+                        <p className="text-[10px] text-slate-500 mt-1">Visa, Mastercard, RuPay, Maestro</p>
+                      </div>
+                    </button>
+
+                    {/* NET BANKING */}
+                    <button
+                      onClick={() => handleProceedPayment('netbanking')}
+                      className="group p-5 bg-white border border-slate-200 hover:border-indigo-400 hover:shadow-md hover:shadow-indigo-100 rounded-2xl text-left transition-all flex flex-col items-start gap-4"
+                    >
+                      <div className="w-12 h-12 bg-slate-50 border border-slate-100 group-hover:bg-indigo-50 group-hover:border-indigo-100 rounded-xl flex items-center justify-center transition-colors">
+                        <Building className="w-6 h-6 text-slate-600 group-hover:text-indigo-600 transition-colors" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-indigo-900">Net Banking</h4>
+                        <p className="text-[10px] text-slate-500 mt-1">All major Indian banks supported</p>
+                      </div>
+                    </button>
+
+                    {/* EMI */}
+                    <button
+                      onClick={() => handleProceedPayment('emi')}
+                      className="group p-5 bg-white border border-slate-200 hover:border-indigo-400 hover:shadow-md hover:shadow-indigo-100 rounded-2xl text-left transition-all flex flex-col items-start gap-4"
+                    >
+                      <div className="w-12 h-12 bg-slate-50 border border-slate-100 group-hover:bg-indigo-50 group-hover:border-indigo-100 rounded-xl flex items-center justify-center transition-colors">
+                        <Calendar className="w-6 h-6 text-slate-600 group-hover:text-indigo-600 transition-colors" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-indigo-900">EMI</h4>
+                        <p className="text-[10px] text-slate-500 mt-1">Credit/Debit Card & Cardless EMI</p>
+                      </div>
+                    </button>
+                  </div>
+
+                  <div className="mt-8 pt-6 border-t border-slate-100">
+                    <button 
+                      onClick={() => handleProceedPayment()}
+                      className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/10 hover:shadow-indigo-600/25"
+                    >
+                      <ShieldCheck className="w-4.5 h-4.5" /> 
+                      Pay ₹{Number(registration?.required_initial_payment).toLocaleString('en-IN')}.00 Securely
+                    </button>
+                    
+                    {/* Safety compliance notice */}
+                    <div className="text-[10px] text-slate-400 text-center leading-normal mt-5 font-medium flex items-center justify-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Authorized under GALAXY Educational Operating System frameworks.
+                    </div>
                   </div>
                 </div>
               </div>
