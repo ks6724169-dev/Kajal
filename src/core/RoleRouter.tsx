@@ -43,7 +43,8 @@ export const RoleRouter: React.FC<RoleRouterProps> = ({
       '/ai-features',
       '/pricing',
       '/docs',
-      '/contact'
+      '/contact',
+      '/login-help'
     ];
 
     const isPublic = publicRoutes.includes(route) || route.startsWith('/auth/') || route.startsWith('/school-registration/');

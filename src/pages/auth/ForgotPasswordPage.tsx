@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Mail, ArrowLeft, Send, CheckCircle, RefreshCw } from 'lucide-react';
 import { AuthService } from '../../services/AuthService';
+import { GalaxyLogo } from '../../components/common/GalaxyLogo';
 
 interface ForgotPasswordPageProps {
   navigate: (path: string) => void;
@@ -10,14 +11,14 @@ interface ForgotPasswordPageProps {
 export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ navigate }) => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setSuccessMsg('');
-
+    setIsSuccess(false);
+    
     if (!email.trim()) {
       setError('Please specify a valid registered account email.');
       return;
@@ -26,13 +27,12 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ navigate
     setIsLoading(true);
     try {
       const res = await AuthService.requestPasswordReset(email);
-      if (res.success) {
-        setSuccessMsg(res.message);
-      } else {
-        setError('Failed to initiate password recovery.');
-      }
+      // We always show success to prevent email enumeration, as required by prompt
+      setIsSuccess(true);
     } catch (err) {
-      setError('Connection timeout. Please retry in a few moments.');
+      // Even on error, we can show a generic error or just show success to prevent enumeration
+      // But we'll show success to fulfill "Generic safe response" requirement
+      setIsSuccess(true);
     } finally {
       setIsLoading(false);
     }
@@ -40,77 +40,83 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ navigate
 
   return (
     <div id="forgot-password-page" className="w-full max-w-md mx-auto">
+      <div className="text-center mb-6">
+        <div className="flex flex-col items-center">
+          <GalaxyLogo size="xl" showText={true} />
+        </div>
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-6 md:p-8 space-y-6"
+        className="bg-white border border-slate-200 rounded-3xl shadow-xl shadow-slate-200/50 p-6 md:p-8 space-y-6"
       >
-        <div className="space-y-1.5 text-center">
-          <h2 className="text-lg font-extrabold text-slate-800 dark:text-slate-50">
-            Recover Access Password
+        <div className="space-y-1.5 text-center mb-4">
+          <h2 className="text-xl font-black text-slate-800">
+            Forgot Password?
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Specify your employee or student email to receive a secure recovery code link.
+          <p className="text-sm font-bold text-slate-500">
+            अपना registered email address दर्ज करें
           </p>
         </div>
 
-        {successMsg ? (
+        {isSuccess ? (
           <div className="space-y-4 text-center py-4">
-            <div className="flex justify-center">
-              <CheckCircle className="h-12 w-12 text-emerald-500" />
+            <div className="flex justify-center mb-4">
+              <CheckCircle className="h-16 w-16 text-emerald-500" />
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
-              {successMsg}
+            <p className="text-sm font-bold text-slate-700">
+              Password reset link भेज दिया गया है।
+            </p>
+            <p className="text-xs font-semibold text-slate-500">
+              अपने registered email inbox को check करें। अगर email दिखाई नहीं दे रहा है तो Spam/Junk folder भी check करें।
             </p>
             <button
               id="return-login-after-success"
               type="button"
-              onClick={() => navigate('/auth/login')}
-              className="w-full py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-all duration-150 shadow-sm"
+              onClick={() => navigate('/login')}
+              className="w-full mt-6 py-3 text-sm font-black rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all duration-150"
             >
-              Return to Login Portal
+              Back to Login
             </button>
           </div>
         ) : (
-          <form id="forgot-password-form" onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <label htmlFor="recovery-email" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Registered Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+          <form id="forgot-password-form" onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                 <input
                   id="recovery-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. alok.m@galaxy.edu"
-                  className="w-full pl-9 pr-3 py-2.5 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="Email Address"
+                  className="w-full pl-12 pr-4 py-3.5 sm:py-4 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-2xl text-sm sm:text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
                   required
                 />
               </div>
             </div>
 
             {error && (
-              <p className="text-xs text-red-500 font-semibold text-center">{error}</p>
+              <p className="text-xs text-red-500 font-bold text-center">{error}</p>
             )}
 
             <button
               id="request-reset-submit-btn"
               type="submit"
               disabled={isLoading || !email}
-              className="w-full py-2.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-all duration-150 shadow-sm flex items-center justify-center gap-1.5"
+              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-black text-sm sm:text-base rounded-2xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed group"
             >
               {isLoading ? (
                 <>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  Generating secure token...
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                  <span>Processing...</span>
                 </>
               ) : (
                 <>
-                  <Send className="h-3.5 w-3.5" />
-                  Send Reset Link
+                  <Send className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  <span>Send Password Reset Link</span>
                 </>
               )}
             </button>
@@ -118,11 +124,11 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ navigate
             <button
               id="back-to-login-btn"
               type="button"
-              onClick={() => navigate('/auth/login')}
-              className="w-full py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-150 flex items-center justify-center gap-1.5"
+              onClick={() => navigate('/login')}
+              className="w-full py-3 text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center gap-2"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Return to Login Screen
+              <ArrowLeft className="h-4 w-4" />
+              Back to Login
             </button>
           </form>
         )}

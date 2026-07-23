@@ -125,6 +125,145 @@ export class AuthService {
     }
   }
 
+  static async lookupInstitutionsByPhone(phone: string): Promise<any[]> {
+    try {
+      const cleanPhone = phone.trim();
+      const { data, error } = await supabase.rpc('lookup_institutions_by_phone', { p_phone: cleanPhone });
+      if (error) {
+        AuditLogger.logEvent('MOBILE_LOOKUP_FAILED', { details: JSON.stringify({ phone: cleanPhone, error: error.message }) });
+        return [];
+      }
+      
+      if (data && data.length > 0) {
+        AuditLogger.logEvent('MOBILE_LOOKUP_SUCCESS', { details: JSON.stringify({ phone: cleanPhone, count: data.length }) });
+        return data;
+      } else {
+        AuditLogger.logEvent('MOBILE_LOOKUP_FAILED', { details: JSON.stringify({ phone: cleanPhone, error: 'No active institutions found' }) });
+        return [];
+      }
+    } catch (err: any) {
+      console.error('Lookup by phone error:', err);
+      return [];
+    }
+  }
+
+  static async requestMobileOtp(phone: string, channel: 'sms' | 'whatsapp'): Promise<{ success: boolean; error?: string }> {
+    try {
+      const cleanPhone = phone.trim();
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: cleanPhone,
+        options: {
+          channel: channel,
+          // Prevent registration of new phone numbers through this flow
+          shouldCreateUser: false 
+        }
+      });
+      if (error) {
+        AuditLogger.logEvent('OTP_REQUEST_FAILED', { details: JSON.stringify({ phone: cleanPhone, channel, error: error.message }) });
+        return { success: false, error: error.message };
+      }
+      AuditLogger.logEvent(channel === 'sms' ? 'OTP_SMS_REQUESTED' : 'OTP_WHATSAPP_REQUESTED', { details: JSON.stringify({ phone: cleanPhone }) });
+      AuditLogger.logEvent('OTP_SENT', { details: JSON.stringify({ phone: cleanPhone, channel }) });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to request OTP' };
+    }
+  }
+
+  static async verifyMobileOtp(
+    phone: string, 
+    token: string, 
+    tenantContext: { tenantId: string; schoolCode: string; campus?: string },
+    rememberMe: boolean = false
+  ): Promise<AuthResponse> {
+    const cleanPhone = phone.trim();
+    const cleanSchoolId = (tenantContext?.schoolCode || tenantContext?.tenantId || '').trim().toUpperCase();
+    try {
+      const { data: authData, error: authError } = await supabase.auth.verifyOtp({
+        phone: cleanPhone,
+        token,
+        type: 'sms'
+      });
+
+      if (authError || !authData?.user) {
+        const errorMsg = authError?.message || 'Invalid or expired OTP.';
+        AuditLogger.logEvent('OTP_VERIFICATION_FAILED', { details: JSON.stringify({ phone: cleanPhone, error: errorMsg }) });
+        return { success: false, error: errorMsg };
+      }
+
+      AuditLogger.logEvent('OTP_VERIFICATION_SUCCESS', { userId: authData.user.id });
+
+      const verifiedUser = authData.user;
+
+      // 3. Check Authenticator Assurance Level (AAL) for MFA
+      const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      const currentLevel = aalData?.currentLevel || 'aal1';
+      const nextLevel = aalData?.nextLevel || 'aal1';
+
+      // 4. Database Tenant & Authoritative Role Resolution
+      const resolved = await resolveUserTenantAndRole(verifiedUser.id, verifiedUser.email || cleanPhone, cleanSchoolId);
+
+      if (!resolved.success || !resolved.data) {
+        await supabase.auth.signOut();
+        AuditLogger.logEvent('TENANT_RESOLUTION_FAILED', { details: JSON.stringify({ phone: cleanPhone, error: resolved.error || 'Tenant resolution failure' }) });
+        return {
+          success: false,
+          error: resolved.error || 'Authentication failed: school tenant or role resolution error.'
+        };
+      }
+
+      AuditLogger.logEvent('TENANT_RESOLUTION_SUCCESS', { userId: verifiedUser.id, details: JSON.stringify({ tenantId: resolved.data.tenantId }) });
+      AuditLogger.logEvent('ROLE_RESOLUTION_SUCCESS', { userId: verifiedUser.id, details: JSON.stringify({ role: resolved.data.role }) });
+
+      const resolvedData = resolved.data;
+
+      // Save token in tokenManager
+      const accessToken = authData.session?.access_token || '';
+      const refreshToken = authData.session?.refresh_token || '';
+      TokenManager.saveTokens(accessToken, refreshToken, rememberMe);
+
+      const userObj = {
+        id: resolvedData.id,
+        name: resolvedData.name,
+        role: resolvedData.role, // Authoritative role resolved from DB
+        email: verifiedUser.email || cleanPhone,
+        tenantId: resolvedData.tenantId,
+        schoolCode: resolvedData.schoolId,
+        campus: resolvedData.campus || tenantContext?.campus || 'Main Campus'
+      };
+
+      // If user has MFA enrolled on Supabase (nextLevel === 'aal2') but current session is aal1, challenge is required!
+      if (nextLevel === 'aal2' && currentLevel === 'aal1') {
+        AuditLogger.logEvent('MFA_REQUIRED', { userId: userObj.id, details: `AAL2 Required (Current: ${currentLevel}, Next: ${nextLevel})` });
+        return {
+          success: true,
+          mfaRequired: true,
+          mfaType: 'totp',
+          mfaTicket: accessToken,
+          user: userObj,
+          accessToken,
+          refreshToken
+        };
+      }
+
+      authStore.login(userObj, rememberMe);
+      AuditLogger.logEvent('MOBILE_LOGIN_SUCCESS', { userId: userObj.id, details: JSON.stringify({ role: userObj.role }) });
+      
+      return {
+        success: true,
+        user: userObj,
+        accessToken,
+        refreshToken
+      };
+    } catch (err: any) {
+      AuditLogger.logEvent('MOBILE_LOGIN_FAILED', { details: JSON.stringify({ phone: cleanPhone, error: err?.message || 'Unexpected exception' }) });
+      return {
+        success: false,
+        error: err.message || 'An unexpected error occurred during OTP verification.'
+      };
+    }
+  }
+
   // Handle password strength computation according to security constraints
   static checkPasswordStrength(password: string): {
     score: number; // 0 to 4

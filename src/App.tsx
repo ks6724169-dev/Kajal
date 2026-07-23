@@ -19,8 +19,8 @@ const RegisterSchoolPage = lazy(() => import('./pages/auth/RegisterSchoolPage').
 const SchoolPaymentCheckoutPage = lazy(() => import('./pages/auth/SchoolPaymentCheckoutPage').then(m => ({ default: m.SchoolPaymentCheckoutPage })));
 const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
-const VerifyOTPPage = lazy(() => import('./pages/auth/VerifyOTPPage').then(m => ({ default: m.VerifyOTPPage })));
 const SchoolLookupPage = lazy(() => import('./pages/auth/SchoolLookupPage').then(m => ({ default: m.SchoolLookupPage })));
+const LoginHelpPage = lazy(() => import('./pages/auth/LoginHelpPage').then(m => ({ default: m.LoginHelpPage })));
 const AIFeaturesPage = lazy(() => import('./pages/public/ai/AIFeaturesPage').then(m => ({ default: m.AIFeaturesPage })));
 const PricingPage = lazy(() => import('./pages/public/pricing/PricingPage').then(m => ({ default: m.PricingPage })));
 const DocumentationPage = lazy(() => import('./pages/public/docs/DocumentationPage').then(m => ({ default: m.DocumentationPage })));
@@ -63,7 +63,8 @@ export default function App() {
 
     // Initial Path Routing Verification
     const currentPath = window.location.pathname;
-    if (currentPath === '/dashboard' || currentPath === '/workspace' || currentPath === '/command-center') {
+    const initialRoutes = ['/dashboard', '/workspace', '/command-center', '/login', '/auth/login', '/register', '/school-lookup', '/forgot-password', '/auth/forgot-password', '/reset-password', '/auth/reset-password', '/pricing', '/docs', '/contact', '/login-help', '/auth/login-help'];
+    if (initialRoutes.includes(currentPath) || currentPath.startsWith('/school-registration/')) {
       navigate(currentPath);
     }
 
@@ -134,20 +135,20 @@ export default function App() {
       return <SchoolPaymentCheckoutPage registrationId={registrationId} navigate={navigate} />;
     }
 
-    if (route === '/verify-otp') {
-      return renderAuthLayout(<VerifyOTPPage navigate={navigate} />);
-    }
-
     if (route === '/school-lookup') {
       return renderAuthLayout(<SchoolLookupPage navigate={navigate} />);
     }
 
-    if (route === '/forgot-password') {
+    if (route === '/forgot-password' || route === '/auth/forgot-password') {
       return renderAuthLayout(<ForgotPasswordPage navigate={navigate} />);
     }
 
-    if (route === '/reset-password') {
+    if (route === '/reset-password' || route === '/auth/reset-password') {
       return renderAuthLayout(<ResetPasswordPage navigate={navigate} />);
+    }
+
+    if (route === '/login-help' || route === '/auth/login-help') {
+      return renderAuthLayout(<LoginHelpPage navigate={navigate} />);
     }
 
     if (route === '/ai' || route === '/ai-features') {

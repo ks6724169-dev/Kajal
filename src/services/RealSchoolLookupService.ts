@@ -34,6 +34,7 @@ export class RealSchoolLookupService {
           id,
           name,
           code,
+          school_unique_id,
           address,
           contact_email,
           contact_phone,
@@ -116,7 +117,7 @@ export class RealSchoolLookupService {
     return {
       id: s.id,
       name: s.name,
-      code: s.code || 'ERP/NODE',
+      code: s.code || s.school_unique_id || 'ERP/NODE',
       organizationName: org?.name || 'Galaxy Educational System',
       type,
       city: city || 'Registered Campus',

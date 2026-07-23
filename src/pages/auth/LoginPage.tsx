@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { LoginForm } from '../../components/auth/LoginForm';
+import { MobileLoginForm } from '../../components/auth/MobileLoginForm';
 import { Languages } from 'lucide-react';
 
 interface LoginPageProps {
@@ -9,6 +10,7 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
   const [lang, setLang] = useState<'en' | 'hi'>('en');
+  const [loginMode, setLoginMode] = useState<'mobile' | 'password'>('mobile');
 
   const handleLanguageToggle = () => {
     setLang((prev) => (prev === 'en' ? 'hi' : 'en'));
@@ -30,14 +32,31 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
       </div>
 
       <div className="animate-in fade-in duration-300">
-        <LoginForm 
-          language={lang} 
-          onNavigate={navigate}
-          onSuccess={() => {
-            // Navigation handled by auth listener or router
-            navigate('/app');
-          }} 
-        />
+        {loginMode === 'mobile' ? (
+          <MobileLoginForm
+            language={lang}
+            onNavigate={navigate}
+            onSuccess={() => navigate('/app')}
+            onSwitchToPassword={() => setLoginMode('password')}
+          />
+        ) : (
+          <div>
+            <LoginForm 
+              language={lang} 
+              onNavigate={navigate}
+              onSuccess={() => navigate('/app')} 
+            />
+            <div className="mt-4 px-6 sm:px-8 md:px-10 max-w-xl mx-auto">
+              <button
+                type="button"
+                onClick={() => setLoginMode('mobile')}
+                className="w-full py-3 bg-white hover:bg-slate-50 text-indigo-600 border border-slate-200 rounded-xl text-sm font-bold transition-colors cursor-pointer shadow-sm"
+              >
+                {lang === 'en' ? 'Login with Mobile OTP' : 'मोबाइल OTP से लॉगिन करें'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Global Portal Utility Actions */}
@@ -58,13 +77,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
             className="hover:text-indigo-600 hover:underline cursor-pointer transition"
           >
             {lang === 'en' ? 'Register' : 'पंजीकरण'}
-          </button>
-          <span className="text-slate-200">/</span>
-          <button 
-            onClick={() => navigate('verify-otp')}
-            className="hover:text-indigo-600 hover:underline cursor-pointer transition"
-          >
-            {lang === 'en' ? 'Verify OTP' : 'OTP'}
           </button>
         </div>
       </div>

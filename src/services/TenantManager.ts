@@ -13,7 +13,22 @@ export interface TenantBranding {
 
 export class TenantManager {
   static async getTenants(): Promise<Tenant[]> {
-    return TENANTS;
+    try {
+      const realSchools = await RealSchoolLookupService.searchRealInstitutions({});
+      return realSchools.map(s => ({
+        id: s.id,
+        name: s.name,
+        schoolCode: s.code,
+        type: s.type,
+        city: s.city || '',
+        state: s.state || '',
+        academicYear: '2026-2027',
+        themeColor: '#4f46e5',
+        logo: s.logoUrl || ''
+      }));
+    } catch (err) {
+      return TENANTS;
+    }
   }
 
   static async findTenantById(id: string): Promise<Tenant | null> {
@@ -22,15 +37,10 @@ export class TenantManager {
   }
 
   static async discoverTenantFromDomain(hostname: string): Promise<Tenant | null> {
-    // E.g. apex.galaxy.edu maps to apex_k12
-    const tenants = await this.getTenants();
-    if (hostname.includes('apex')) {
-      return tenants[0];
-    } else if (hostname.includes('tech') || hostname.includes('sciences')) {
-      return tenants[1];
-    } else if (hostname.includes('xavier')) {
-      return tenants[2];
-    }
+    // E.g. apex.galaxy.edu maps to a school from Supabase
+    // In a real scenario, we'd look up the domain in the database.
+    // For Phase 7, since we might not have custom domains setup in DB yet,
+    // we return null so the user is forced to enter the school code in login page.
     return null;
   }
 
@@ -46,7 +56,7 @@ export class TenantManager {
           id: match.id,
           name: match.name,
           schoolCode: match.code,
-          type: match.type,
+          type: match.type as 'school' | 'college' | 'university' | 'academy',
           city: match.city || '',
           state: match.state || '',
           academicYear: '2026-2027',
@@ -57,15 +67,7 @@ export class TenantManager {
     } catch (err) {
       console.warn('Live database lookup error in TenantManager:', err);
     }
-
-    const tenants = await this.getTenants();
-    if (cleanCode === 'apex' || cleanCode === 'apex12' || cleanCode === 'apex_k12') {
-      return tenants[0];
-    } else if (cleanCode === 'galaxy' || cleanCode === 'git' || cleanCode === 'galaxy_tech') {
-      return tenants[1];
-    } else if (cleanCode === 'xavier' || cleanCode === 'stx' || cleanCode === 'st_xaviers') {
-      return tenants[2];
-    }
+    
     return null;
   }
 

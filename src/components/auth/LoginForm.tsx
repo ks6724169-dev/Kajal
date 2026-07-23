@@ -306,7 +306,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
             <button
               type="button"
-              onClick={() => onNavigate ? onNavigate('/contact') : null}
+              onClick={() => onNavigate ? onNavigate('/login-help') : null}
               className="text-xs sm:text-sm font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1.5 transition cursor-pointer"
             >
               <HelpCircle className="w-4 h-4" />

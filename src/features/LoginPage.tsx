@@ -107,11 +107,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess, on
   }, [onLoginSuccess]);
 
   const handleNavigate = (path: string) => {
-    if (path === '/auth/login' || path === 'login') {
+    if (path === '/auth/login' || path === '/login' || path === 'login') {
       setAuthRoute('login');
-    } else if (path === '/auth/forgot-password' || path === 'forgot-password') {
+    } else if (path === '/auth/forgot-password' || path === '/forgot-password' || path === 'forgot-password') {
       setAuthRoute('forgot-password');
-    } else if (path === '/auth/reset-password' || path === 'reset-password') {
+    } else if (path === '/auth/reset-password' || path === '/reset-password' || path === 'reset-password') {
       setAuthRoute('reset-password');
     } else if (path === '/auth/sessions' || path === 'sessions') {
       setAuthRoute('sessions');
