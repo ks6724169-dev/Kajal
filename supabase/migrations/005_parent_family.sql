@@ -207,28 +207,28 @@ ALTER TABLE digital_consent ENABLE ROW LEVEL SECURITY;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_guardian') THEN
-        CREATE POLICY tenant_isolation_guardian ON guardian_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_guardian ON guardian_master; CREATE POLICY tenant_isolation_guardian ON guardian_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_student_parent_map') THEN
-        CREATE POLICY tenant_isolation_student_parent_map ON student_parent_map FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_student_parent_map ON student_parent_map; CREATE POLICY tenant_isolation_student_parent_map ON student_parent_map FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_pickup') THEN
-        CREATE POLICY tenant_isolation_pickup ON pickup_authorization FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_pickup ON pickup_authorization; CREATE POLICY tenant_isolation_pickup ON pickup_authorization FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_emergency') THEN
-        CREATE POLICY tenant_isolation_emergency ON emergency_contact FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_emergency ON emergency_contact; CREATE POLICY tenant_isolation_emergency ON emergency_contact FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_family_address') THEN
-        CREATE POLICY tenant_isolation_family_address ON family_address FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_family_address ON family_address; CREATE POLICY tenant_isolation_family_address ON family_address FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_household') THEN
-        CREATE POLICY tenant_isolation_household ON household_member FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_household ON household_member; CREATE POLICY tenant_isolation_household ON household_member FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_notif_pref') THEN
-        CREATE POLICY tenant_isolation_notif_pref ON notification_preference FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_notif_pref ON notification_preference; CREATE POLICY tenant_isolation_notif_pref ON notification_preference FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_consent') THEN
-        CREATE POLICY tenant_isolation_consent ON digital_consent FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_consent ON digital_consent; CREATE POLICY tenant_isolation_consent ON digital_consent FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
 END $$;
 

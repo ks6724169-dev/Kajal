@@ -1,5 +1,4 @@
 import React from 'react';
-import logoAsset from '../../assets/galaxy-logo.png';
 
 interface GalaxyLogoProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -33,27 +32,47 @@ export const GalaxyLogo: React.FC<GalaxyLogoProps> = ({
 
   const currentSize = sizeMap[size] || sizeMap.md;
 
-  const logoSrc = logoAsset || '/galaxy-logo.png';
-
   return (
     <div 
       className={`inline-flex items-center gap-2.5 select-none ${onClick ? 'cursor-pointer hover:opacity-95 transition-opacity' : ''} ${className}`}
       onClick={onClick}
     >
-      <div className={`relative shrink-0 flex items-center justify-center overflow-hidden rounded-2xl bg-white/90 shadow-md shadow-indigo-500/15 border border-slate-200/80 p-0.5 ${currentSize.img} ${imgClassName}`}>
-        <img 
-          src={logoSrc} 
-          alt="Galaxy ERP Logo" 
-          className="w-full h-full object-contain filter drop-shadow-sm transition-transform duration-300 hover:scale-105"
-          referrerPolicy="no-referrer"
-          onError={(e) => {
-            // Fallback to /galaxy-logo.png if asset import fails
-            const target = e.target as HTMLImageElement;
-            if (target.src !== '/galaxy-logo.png') {
-              target.src = '/galaxy-logo.png';
-            }
-          }}
-        />
+      <div className={`relative shrink-0 flex items-center justify-center overflow-hidden rounded-[1.25rem] bg-white shadow-sm border border-slate-200/50 p-1.5 ${currentSize.img} ${imgClassName}`}>
+        <svg 
+          viewBox="0 0 100 100" 
+          className="w-full h-full fill-none group-hover:scale-110 transition-transform duration-500"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#4F46E5" />
+              <stop offset="100%" stopColor="#7C3AED" />
+            </linearGradient>
+          </defs>
+          {/* Main Logo Mark */}
+          <circle cx="50" cy="50" r="40" stroke="url(#logo-gradient)" strokeWidth="12" strokeOpacity="0.1" />
+          <path 
+            d="M75 50C75 63.8071 63.8071 75 50 75C36.1929 75 25 63.8071 25 50C25 36.1929 36.1929 25 50 25C58.2843 25 65.7843 29.0294 70.4142 35.5" 
+            stroke="url(#logo-gradient)" 
+            strokeWidth="12" 
+            strokeLinecap="round"
+            className="drop-shadow-sm"
+          />
+          <path 
+            d="M75 50H55" 
+            stroke="url(#logo-gradient)" 
+            strokeWidth="12" 
+            strokeLinecap="round"
+          />
+          {/* Orbital Accent */}
+          <ellipse 
+            cx="50" cy="50" rx="45" ry="12" 
+            stroke="url(#logo-gradient)" 
+            strokeWidth="2" 
+            strokeOpacity="0.3"
+            transform="rotate(-30 50 50)"
+          />
+        </svg>
       </div>
 
       {showText && (

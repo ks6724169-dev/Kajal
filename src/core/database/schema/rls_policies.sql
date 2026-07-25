@@ -144,12 +144,35 @@ CREATE TABLE IF NOT EXISTS public.fees (
 ALTER TABLE IF EXISTS public.identities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.schools ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.organizations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.campuses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.classes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.attendance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.fees ENABLE ROW LEVEL SECURITY;
 
 -- 3. ROW LEVEL SECURITY POLICIES
+
+-- User Profiles RLS Policy
+DROP POLICY IF EXISTS "user_profiles_tenant_isolation_policy" ON public.user_profiles;
+CREATE POLICY "user_profiles_tenant_isolation_policy" ON public.user_profiles
+FOR SELECT
+TO authenticated
+USING (
+  tenant_id = public.get_auth_user_tenant_id()
+  OR public.get_auth_user_role() IN ('super_admin', 'organization_owner')
+);
+
+-- Campuses RLS Policy
+DROP POLICY IF EXISTS "campuses_tenant_isolation_policy" ON public.campuses;
+CREATE POLICY "campuses_tenant_isolation_policy" ON public.campuses
+FOR ALL
+TO authenticated
+USING (
+  tenant_id = public.get_auth_user_tenant_id()
+  OR organization_id = public.get_auth_user_tenant_id()
+  OR public.get_auth_user_role() IN ('super_admin', 'organization_owner')
+);
 
 -- Identities RLS Policy: Users can view their own profile; School Admins can view users in their school
 DROP POLICY IF EXISTS "identities_tenant_isolation_policy" ON public.identities;

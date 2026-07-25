@@ -167,7 +167,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
             type="button"
             onClick={() => {
               logout();
-              window.dispatchEvent(new CustomEvent('nav-to', { detail: '/landing' }));
+              window.dispatchEvent(new CustomEvent('nav-to', { detail: '/login' }));
             }}
             className={`p-2 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer shrink-0`}
             title={language === 'hi' ? 'लॉगआउट' : 'Sign Out'}

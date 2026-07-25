@@ -11,6 +11,7 @@ import { QuickLauncher } from '../components/navigation/QuickLauncher';
 import { RouteResolver } from './RouteResolver';
 import { BreadcrumbResolver } from './BreadcrumbResolver';
 import { Tenant } from '../types';
+import { OwnerDashboardPage } from '../pages/owner/OwnerDashboardPage';
 
 interface RoleWorkspaceProps {
   language: string;
@@ -45,6 +46,11 @@ export const RoleWorkspace: React.FC<RoleWorkspaceProps> = ({
   const handleNavigationChange = (path: string) => {
     setActivePath(path);
   };
+
+  // Render dedicated Owner Panel without sidebar
+  if (user?.role === 'organization_owner' || currentRole === 'organization_owner') {
+    return <OwnerDashboardPage tenant={currentTenant} activePath={activePath} onNavigate={handleNavigationChange} />;
+  }
 
   return (
     <div id="enterprise-role-workspace-root" className="min-h-screen bg-slate-50 flex font-sans text-slate-900 overflow-hidden">

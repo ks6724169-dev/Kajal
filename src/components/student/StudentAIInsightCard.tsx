@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, BrainCircuit, RefreshCw, Star, TrendingUp, Lightbulb } from 'lucide-react';
 import { ExtendedStudent } from '../../stores/studentStore';
 

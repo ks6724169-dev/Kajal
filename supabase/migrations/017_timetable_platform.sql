@@ -381,7 +381,7 @@ ALTER TABLE timetable_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE timetable_audit ENABLE ROW LEVEL SECURITY;
 
 -- Organization Isolation Policies (Simplified example)
-CREATE POLICY organization_isolation_academic_calendar ON academic_calendar FOR ALL USING (tenant_id = auth.uid());
+DROP POLICY IF EXISTS organization_isolation_academic_calendar ON academic_calendar; CREATE POLICY organization_isolation_academic_calendar ON academic_calendar FOR ALL USING (tenant_id = auth.uid());
 -- Repeat for all tables...
 
 -- Composite Indexes

@@ -68,19 +68,22 @@ CREATE TABLE IF NOT EXISTS student_master (
     status VARCHAR(50) DEFAULT 'ACTIVE'
 );
 
-CREATE UNIQUE INDEX idx_student_admission_no ON student_master(tenant_id, admission_number) WHERE deleted_at IS NULL;
-CREATE UNIQUE INDEX idx_student_id ON student_master(tenant_id, student_id) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_student_admission_no ON student_master(tenant_id, admission_number) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_student_id ON student_master(tenant_id, student_id) WHERE deleted_at IS NULL;
 
 -- Trigram search for fuzzy name matching (needs pg_trgm extension)
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE INDEX idx_student_name_trgm ON student_master USING GIN (first_name gin_trgm_ops, last_name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_student_name_trgm ON student_master USING GIN (first_name gin_trgm_ops, last_name gin_trgm_ops);
 
 -- RLS Policies
 ALTER TABLE family_master ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_family ON family_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_family ON family_master;
+DROP POLICY IF EXISTS tenant_isolation_family ON family_master; CREATE POLICY tenant_isolation_family ON family_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
 
 ALTER TABLE parent_master ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_parent ON parent_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_parent ON parent_master;
+DROP POLICY IF EXISTS tenant_isolation_parent ON parent_master; CREATE POLICY tenant_isolation_parent ON parent_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
 
 ALTER TABLE student_master ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_student ON student_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_student ON student_master;
+DROP POLICY IF EXISTS tenant_isolation_student ON student_master; CREATE POLICY tenant_isolation_student ON student_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);

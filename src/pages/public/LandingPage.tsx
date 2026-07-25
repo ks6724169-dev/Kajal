@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigation } from './landing/Navigation';
-import { HeroSection } from './landing/HeroSection';
+import { AppleHero } from './landing/AppleHero';
+import { BentoGrid } from './landing/BentoGrid';
 import { FooterSection } from './landing/FooterSection';
 import { ArrowUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -44,12 +45,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   };
 
   return (
-    <div id="galaxy-public-landing" className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-600 selection:text-white relative">
+    <div id="galaxy-public-landing" className="min-h-screen bg-white font-sans selection:bg-slate-900 selection:text-white relative">
       
       {/* Scroll Progress Bar */}
       <div className="fixed top-0 left-0 right-0 h-1 z-[100] bg-transparent">
         <div 
-          className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500"
+          className="h-full bg-slate-900"
           style={{ width: `${scrollProgress * 100}%` }}
         />
       </div>
@@ -57,15 +58,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <Navigation onNavigate={navigate} />
       
       <main>
-        <HeroSection onNavigate={navigate} />
+        <AppleHero onNavigate={navigate} />
+        <BentoGrid />
       </main>
 
       <FooterSection onNavigate={navigate} />
 
       {/* Floating Elements */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 group pointer-events-none">
-        {/* We keep the container for ScrollToTop but make it pointer-events-none so it doesn't block clicks. 
-            The actual button will have pointer-events-auto */}
+      <div className="fixed bottom-10 right-10 z-50 flex flex-col gap-3 group">
         <AnimatePresence>
           {showScrollTop && (
             <motion.button 
@@ -73,13 +73,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.5 }}
               onClick={scrollToTop}
-              className="w-14 h-14 rounded-full bg-white border border-slate-200 text-slate-600 flex items-center justify-center shadow-xl hover:bg-slate-50 transition-colors pointer-events-auto"
+              className="w-12 h-12 rounded-full bg-white border border-slate-200 text-slate-900 flex items-center justify-center shadow-2xl hover:bg-slate-50 transition-all active:scale-90"
             >
-              <ArrowUp className="w-6 h-6" />
+              <ArrowUp className="w-5 h-5" />
             </motion.button>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Admin Quick Entry - Subtle */}
+      <div className="fixed bottom-6 left-6 z-[100]">
+        <button 
+          onClick={() => {
+            import('../../store/authStore').then(({ authStore }) => {
+              authStore.login({ id: 'test-owner', name: 'Test Owner', role: 'organization_owner', email: 'owner@test.com' }, false);
+              if (onNavigate) onNavigate('/app');
+            });
+          }}
+          className="px-3 py-1.5 rounded-full bg-slate-100 text-[9px] font-bold text-slate-500 uppercase tracking-widest border border-slate-200 hover:bg-slate-200 transition-colors opacity-40 hover:opacity-100"
+        >
+          Dev Access
+        </button>
+      </div>
     </div>
   );
 };
+

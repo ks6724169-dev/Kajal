@@ -77,13 +77,13 @@ CREATE TABLE IF NOT EXISTS medical_visits (
 
 -- RLS Policies
 ALTER TABLE attendance_records ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_attendance ON attendance_records FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_attendance ON attendance_records; CREATE POLICY tenant_isolation_attendance ON attendance_records FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
 
 ALTER TABLE behaviour_records ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_behaviour ON behaviour_records FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_behaviour ON behaviour_records; CREATE POLICY tenant_isolation_behaviour ON behaviour_records FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
 
 ALTER TABLE health_records ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_health ON health_records FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_health ON health_records; CREATE POLICY tenant_isolation_health ON health_records FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
 
 ALTER TABLE medical_visits ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_medical_visits ON medical_visits FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_medical_visits ON medical_visits; CREATE POLICY tenant_isolation_medical_visits ON medical_visits FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);

@@ -1,27 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  StudentDashboard 
-} from './StudentDashboard';
-import { StudentList } from './StudentList';
-import { StudentProfile } from './StudentProfile';
-import { StudentAdmission } from './StudentAdmission';
-import { StudentAttendance } from './StudentAttendance';
-import { PeriodAttendance } from './PeriodAttendance';
-import { StudentBehaviour } from './StudentBehaviour';
-import { StudentDiscipline } from './StudentDiscipline';
-import { StudentCounselling } from './StudentCounselling';
-import { StudentHealth } from './StudentHealth';
-import { StudentPortfolio } from './StudentPortfolio';
-import { StudentProgress } from './StudentProgress';
-import { WeakStudents } from './WeakStudents';
-import { GiftedStudents } from './GiftedStudents';
-import { PromotionRecommendation } from './PromotionRecommendation';
-import { StudentActivities } from './StudentActivities';
-import { HouseManagement } from './HouseManagement';
-import { ClubManagement } from './ClubManagement';
-import { StudentDocuments } from './StudentDocuments';
-import { ParentInformation } from './ParentInformation';
-
+import { ComingSoonModule } from '../../components/common/ComingSoonModule';
 import { 
   LayoutDashboard, Users, User, UserPlus, Calendar, BookOpen, 
   Smile, ShieldAlert, Brain, Heart, Briefcase, TrendingUp, 
@@ -66,6 +44,8 @@ export const StudentsWrapper: React.FC = () => {
 
   const categories = ['Main', 'Attendance', 'Discipline & Care', 'Academics & Talent', 'Organization & Records'] as const;
 
+  const activeItem = menuItems.find(item => item.id === subView);
+
   return (
     <div className="flex flex-col lg:flex-row min-h-[calc(100vh-64px)] bg-slate-100 dark:bg-slate-950">
       {/* Sleek Sub-navigation Drawer Sidebar */}
@@ -104,28 +84,20 @@ export const StudentsWrapper: React.FC = () => {
         </nav>
       </aside>
 
-      {/* Primary Workspace Stage Panel */}
-      <main className="flex-1 p-5 md:p-6 overflow-y-auto">
-        {subView === 'dashboard' && <StudentDashboard onSelectTab={(tab) => setSubView(tab as any)} />}
-        {subView === 'list' && <StudentList onSelectStudent={() => setSubView('profile')} onOpenAdmission={() => setSubView('admission')} />}
-        {subView === 'profile' && <StudentProfile />}
-        {subView === 'admission' && <StudentAdmission onSuccess={() => setSubView('list')} />}
-        {subView === 'attendance' && <StudentAttendance />}
-        {subView === 'period' && <PeriodAttendance />}
-        {subView === 'behaviour' && <StudentBehaviour />}
-        {subView === 'discipline' && <StudentDiscipline />}
-        {subView === 'counselling' && <StudentCounselling />}
-        {subView === 'health' && <StudentHealth />}
-        {subView === 'portfolio' && <StudentPortfolio />}
-        {subView === 'progress' && <StudentProgress />}
-        {subView === 'weak' && <WeakStudents />}
-        {subView === 'gifted' && <GiftedStudents />}
-        {subView === 'promotion' && <PromotionRecommendation />}
-        {subView === 'activities' && <StudentActivities />}
-        {subView === 'house' && <HouseManagement />}
-        {subView === 'club' && <ClubManagement />}
-        {subView === 'documents' && <StudentDocuments />}
-        {subView === 'parent' && <ParentInformation />}
+      {/* Primary Workspace Stage Panel - Clean Coming Soon with Demo Data Purged */}
+      <main className="flex-1 p-5 md:p-6 overflow-y-auto flex items-center justify-center">
+        <ComingSoonModule 
+          title={activeItem ? activeItem.label : "Enterprise Student Experience Platform"}
+          subtitle={`The ${activeItem?.label || 'Student Experience'} module is undergoing backend database integration. All hardcoded demo data has been purged.`}
+          category={`ESMXP Suite • ${activeItem?.category || 'Student Domain'}`}
+          features={[
+            "Live Student Directory Sync",
+            "Biometric Attendance Telemetry",
+            "Guardian & Parent Index Integration",
+            "Discipline & Conduct Audit Logs",
+            "Automated Promotion & Report Cards"
+          ]}
+        />
       </main>
     </div>
   );

@@ -370,61 +370,61 @@ ALTER TABLE delivery_status ENABLE ROW LEVEL SECURITY;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_notification_master') THEN
-        CREATE POLICY tenant_isolation_notification_master ON notification_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_notification_master ON notification_master; CREATE POLICY tenant_isolation_notification_master ON notification_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_notification_template') THEN
-        CREATE POLICY tenant_isolation_notification_template ON notification_template FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_notification_template ON notification_template; CREATE POLICY tenant_isolation_notification_template ON notification_template FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_announcement_master') THEN
-        CREATE POLICY tenant_isolation_announcement_master ON announcement_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_announcement_master ON announcement_master; CREATE POLICY tenant_isolation_announcement_master ON announcement_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_circular_master') THEN
-        CREATE POLICY tenant_isolation_circular_master ON circular_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_circular_master ON circular_master; CREATE POLICY tenant_isolation_circular_master ON circular_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_conversation_master') THEN
-        CREATE POLICY tenant_isolation_conversation_master ON conversation_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_conversation_master ON conversation_master; CREATE POLICY tenant_isolation_conversation_master ON conversation_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_message_master') THEN
-        CREATE POLICY tenant_isolation_message_master ON message_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_message_master ON message_master; CREATE POLICY tenant_isolation_message_master ON message_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_attachment_master') THEN
-        CREATE POLICY tenant_isolation_attachment_master ON attachment_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_attachment_master ON attachment_master; CREATE POLICY tenant_isolation_attachment_master ON attachment_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_broadcast_master') THEN
-        CREATE POLICY tenant_isolation_broadcast_master ON broadcast_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_broadcast_master ON broadcast_master; CREATE POLICY tenant_isolation_broadcast_master ON broadcast_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_broadcast_recipient') THEN
-        CREATE POLICY tenant_isolation_broadcast_recipient ON broadcast_recipient FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_broadcast_recipient ON broadcast_recipient; CREATE POLICY tenant_isolation_broadcast_recipient ON broadcast_recipient FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_notification_log') THEN
-        CREATE POLICY tenant_isolation_notification_log ON notification_log FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_notification_log ON notification_log; CREATE POLICY tenant_isolation_notification_log ON notification_log FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_email_queue') THEN
-        CREATE POLICY tenant_isolation_email_queue ON email_queue FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_email_queue ON email_queue; CREATE POLICY tenant_isolation_email_queue ON email_queue FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_sms_queue') THEN
-        CREATE POLICY tenant_isolation_sms_queue ON sms_queue FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_sms_queue ON sms_queue; CREATE POLICY tenant_isolation_sms_queue ON sms_queue FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_whatsapp_queue') THEN
-        CREATE POLICY tenant_isolation_whatsapp_queue ON whatsapp_queue FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_whatsapp_queue ON whatsapp_queue; CREATE POLICY tenant_isolation_whatsapp_queue ON whatsapp_queue FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_push_queue') THEN
-        CREATE POLICY tenant_isolation_push_queue ON push_queue FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_push_queue ON push_queue; CREATE POLICY tenant_isolation_push_queue ON push_queue FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_reminder_master') THEN
-        CREATE POLICY tenant_isolation_reminder_master ON reminder_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_reminder_master ON reminder_master; CREATE POLICY tenant_isolation_reminder_master ON reminder_master FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_event_invitation') THEN
-        CREATE POLICY tenant_isolation_event_invitation ON event_invitation FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_event_invitation ON event_invitation; CREATE POLICY tenant_isolation_event_invitation ON event_invitation FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_notification_preference') THEN
-        CREATE POLICY tenant_isolation_notification_preference ON notification_preference FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_notification_preference ON notification_preference; CREATE POLICY tenant_isolation_notification_preference ON notification_preference FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_device_token') THEN
-        CREATE POLICY tenant_isolation_device_token ON device_token FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_device_token ON device_token; CREATE POLICY tenant_isolation_device_token ON device_token FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'tenant_isolation_delivery_status') THEN
-        CREATE POLICY tenant_isolation_delivery_status ON delivery_status FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+        DROP POLICY IF EXISTS tenant_isolation_delivery_status ON delivery_status; CREATE POLICY tenant_isolation_delivery_status ON delivery_status FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
     END IF;
 END $$;
 

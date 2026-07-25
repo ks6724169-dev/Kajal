@@ -96,24 +96,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   // Notifications State
-  const [notifications, setNotifications] = useState<AppNotification[]>([
-    {
-      id: 'n-1',
-      title: 'Database Replicated',
-      message: 'Global operational databases are synchronized successfully.',
-      type: 'success',
-      timestamp: new Date().toLocaleTimeString(),
-      read: false
-    },
-    {
-      id: 'n-2',
-      title: 'System Limit Alert',
-      message: 'Region AP-South node-02 CPU exceeded 85%. Autoscale triggered.',
-      type: 'warning',
-      timestamp: new Date().toLocaleTimeString(),
-      read: false
-    }
-  ]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   // Permissions State
   const [permissions, setPermissionsState] = useState<string[]>(['manage_all', 'edit_finance', 'view_reports', 'delete_records']);

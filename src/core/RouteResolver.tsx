@@ -12,7 +12,19 @@ import { InventoryLibraryHostel } from '../modules/super-admin/InventoryLibraryH
 import { CctvSecurity } from '../modules/super-admin/CctvSecurity';
 import { MobileAppSimulator } from '../modules/super-admin/MobileAppSimulator';
 import { FrontendExperiencePlatform } from '../pages/FrontendExperiencePlatform';
-import { SettingsModal } from '../modules/super-admin/SettingsModal';
+
+// Owner Specific Pages
+import { NotificationsCenter } from '../pages/owner/NotificationsCenter';
+import { OwnerProfilePage } from '../pages/owner/OwnerProfilePage';
+import { OwnerCommandMenu } from '../pages/owner/OwnerCommandMenu';
+import { OwnerSettingsPage } from '../pages/owner/OwnerSettingsPage';
+import { SecurityCenterPage } from '../pages/owner/SecurityCenterPage';
+import { GlobalSearchPage } from '../pages/owner/GlobalSearchPage';
+import { OwnerHelpSupportPage } from '../pages/owner/OwnerHelpSupportPage';
+import { CreateNewCampusPage } from '../pages/owner/CreateNewCampusPage';
+import { ModulesCataloguePage } from '../pages/owner/ModulesCataloguePage';
+import { ModuleComingSoonPage } from '../pages/owner/ModuleComingSoonPage';
+import { InstitutionManagementPage } from '../pages/owner/InstitutionManagementPage';
 
 export class RouteResolver {
   static renderRoute(
@@ -20,9 +32,31 @@ export class RouteResolver {
     tenant: Tenant, 
     onNavigate: (path: string) => void
   ): React.ReactNode {
+    if (path === 'module_institution' || path === '/owner/institution-organization' || path.startsWith('/owner/institution-organization/')) {
+      return <InstitutionManagementPage tenant={tenant} activePath={path} onNavigate={onNavigate} />;
+    }
+
     switch (path) {
       case 'dashboard':
         return <DashboardHome tenant={tenant} onNavigate={onNavigate} />;
+      case 'notifications':
+        return <NotificationsCenter onNavigate={onNavigate} />;
+      case 'profile':
+        return <OwnerProfilePage onNavigate={onNavigate} />;
+      case 'command_menu':
+        return <OwnerCommandMenu onNavigate={onNavigate} />;
+      case 'settings':
+        return <OwnerSettingsPage tenant={tenant} onNavigate={onNavigate} />;
+      case 'security':
+        return <SecurityCenterPage onNavigate={onNavigate} />;
+      case 'search':
+        return <GlobalSearchPage onNavigate={onNavigate} />;
+      case 'help':
+        return <OwnerHelpSupportPage onNavigate={onNavigate} />;
+      case 'create_campus':
+      case 'create-campus':
+        return <CreateNewCampusPage tenant={tenant} onNavigate={onNavigate} />;
+
       case 'ai_hub':
         return <AiHub />;
       case 'students':
@@ -45,9 +79,12 @@ export class RouteResolver {
         return <MobileAppSimulator />;
       case 'design_system':
         return <FrontendExperiencePlatform />;
-      case 'settings':
-        return <SettingsModal tenant={tenant} />;
+      case 'modules_catalogue':
+        return <ModulesCataloguePage onNavigate={onNavigate} />;
       default:
+        if (path.startsWith('module_')) {
+          return <ModuleComingSoonPage modulePath={path} onNavigate={onNavigate} />;
+        }
         return (
           <div className="p-8 flex flex-col items-center justify-center text-center space-y-4">
             <div className="text-4xl">🌌</div>

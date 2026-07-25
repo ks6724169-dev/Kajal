@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS master_references (
     status VARCHAR(50) DEFAULT 'ACTIVE'
 );
 
-CREATE INDEX idx_master_ref_tenant_type ON master_references(tenant_id, type);
+CREATE INDEX IF NOT EXISTS idx_master_ref_tenant_type ON master_references(tenant_id, type);
 
 CREATE TABLE IF NOT EXISTS organizations (
     id UUID PRIMARY KEY,
@@ -39,12 +39,14 @@ CREATE TABLE IF NOT EXISTS organizations (
     status VARCHAR(50) DEFAULT 'ACTIVE'
 );
 
-CREATE UNIQUE INDEX idx_org_code_tenant ON organizations(code, tenant_id) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_org_code_tenant ON organizations(code, tenant_id) WHERE deleted_at IS NULL;
 
 -- Audit Triggers (mocked for this phase)
 -- Security RLS
 ALTER TABLE master_references ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_master_ref ON master_references FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_master_ref ON master_references;
+DROP POLICY IF EXISTS tenant_isolation_master_ref ON master_references; CREATE POLICY tenant_isolation_master_ref ON master_references FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
 
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation_organizations ON organizations FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);
+DROP POLICY IF EXISTS tenant_isolation_organizations ON organizations;
+DROP POLICY IF EXISTS tenant_isolation_organizations ON organizations; CREATE POLICY tenant_isolation_organizations ON organizations FOR ALL USING (tenant_id = current_setting('app.current_tenant')::UUID);

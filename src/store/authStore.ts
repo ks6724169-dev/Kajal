@@ -97,6 +97,20 @@ class AuthStore {
     });
   }
 
+  updateProfile(updates: Partial<NonNullable<AuthState['user']>>) {
+    if (!this.state.user) return;
+    const updatedUser = { ...this.state.user, ...updates };
+    
+    if (localStorage.getItem('galaxy_user')) {
+      localStorage.setItem('galaxy_user', JSON.stringify(updatedUser));
+    }
+    if (sessionStorage.getItem('galaxy_user')) {
+      sessionStorage.setItem('galaxy_user', JSON.stringify(updatedUser));
+    }
+
+    this.setState({ user: updatedUser });
+  }
+
   logout() {
     localStorage.removeItem('galaxy_user');
     localStorage.removeItem('galaxy_auth');

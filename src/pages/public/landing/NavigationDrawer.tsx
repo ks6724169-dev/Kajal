@@ -20,12 +20,11 @@ interface NavigationDrawerProps {
 
 const mainLinks = [
   { icon: Home, label: 'Home', path: '/' },
-  { icon: Sparkles, label: 'Features', action: 'features' },
-  { icon: BrainCircuit, label: 'AI Features', path: '/ai' },
+  { icon: Sparkles, label: 'Features', path: '/features' },
+  { icon: BrainCircuit, label: 'Intelligence', path: '/intelligence' },
   { icon: IndianRupee, label: 'Pricing', path: '/pricing' },
   { icon: Play, label: 'Live Demo', path: '/demo' },
   { icon: BookOpen, label: 'Documentation', path: '/docs' },
-  { icon: HelpCircle, label: 'FAQ', path: '#faq' },
   { icon: Phone, label: 'Contact', path: '/contact' },
 ];
 
@@ -35,10 +34,6 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({ isOpen, onCl
   const { language, setLanguage } = useTranslation();
 
   const handleLinkClick = (link: any) => {
-    if (link.action === 'features') {
-      setShowMegaMenu(true);
-      return;
-    }
     if (link.path?.startsWith('/')) {
       onNavigate(link.path);
     } else if (link.path) {
@@ -104,9 +99,6 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({ isOpen, onCl
                         {link.label}
                       </span>
                     </div>
-                    {link.action === 'features' && (
-                      <ChevronRight className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-indigo-600 transition-colors" />
-                    )}
                   </button>
                 ))}
               </div>

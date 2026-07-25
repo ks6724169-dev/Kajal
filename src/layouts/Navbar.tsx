@@ -65,11 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'es', label: 'Español' }
   ];
 
-  const notifications = [
-    { id: 1, title: 'Fee Payment Received', desc: 'Aarav Sharma paid ₹45,000 via UPI GPay', time: '5m ago' },
-    { id: 2, title: 'Bus #4 On Time', desc: 'Route #4 reached Sector 12 checkpost', time: '12m ago' },
-    { id: 3, title: 'AI Principal Alert', desc: 'Attendance dropped by 1.2% in Grade 11-B', time: '1h ago' }
-  ];
+  const notifications: { id: number; title: string; desc: string; time: string }[] = [];
 
   return (
     <header className="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-40 px-4 py-2.5 flex items-center justify-between shadow-md">

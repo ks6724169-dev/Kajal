@@ -77,13 +77,38 @@ CREATE TRIGGER update_schools_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+-- User Profiles Table
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    avatar_url TEXT,
+    tenant_id UUID REFERENCES organizations(id),
+    role TEXT DEFAULT 'guest',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+
 -- Campus Table
 CREATE TABLE IF NOT EXISTS campuses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
     organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
     school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
+    code VARCHAR(50),
+    type VARCHAR(50),
+    address TEXT,
+    city VARCHAR(100),
+    state VARCHAR(100),
+    pincode VARCHAR(20),
+    phone VARCHAR(50),
+    email VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'ACTIVE',
     location TEXT,
+    principal_id UUID REFERENCES user_profiles(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_by UUID,
@@ -94,9 +119,17 @@ CREATE TABLE IF NOT EXISTS campuses (
 );
 
 -- Ensure columns exist on campuses
-ALTER TABLE campuses ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
-ALTER TABLE campuses ADD COLUMN IF NOT EXISTS school_id UUID REFERENCES schools(id) ON DELETE CASCADE;
-ALTER TABLE campuses ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS code VARCHAR(50);
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS type VARCHAR(50);
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS state VARCHAR(100);
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS pincode VARCHAR(20);
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'ACTIVE';
+ALTER TABLE campuses ADD COLUMN IF NOT EXISTS principal_id UUID REFERENCES user_profiles(id);
 
 CREATE INDEX IF NOT EXISTS idx_campuses_org_id ON campuses(organization_id);
 CREATE INDEX IF NOT EXISTS idx_campuses_school_id ON campuses(school_id);

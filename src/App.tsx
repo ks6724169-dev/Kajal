@@ -25,6 +25,16 @@ const AIFeaturesPage = lazy(() => import('./pages/public/ai/AIFeaturesPage').the
 const PricingPage = lazy(() => import('./pages/public/pricing/PricingPage').then(m => ({ default: m.PricingPage })));
 const DocumentationPage = lazy(() => import('./pages/public/docs/DocumentationPage').then(m => ({ default: m.DocumentationPage })));
 const ContactPage = lazy(() => import('./pages/public/contact/ContactPage').then(m => ({ default: m.ContactPage })));
+const FeaturesPage = lazy(() => import('./pages/public/features/FeaturesPage').then(m => ({ default: m.FeaturesPage })));
+const IntelligencePage = lazy(() => import('./pages/public/intelligence/IntelligencePage').then(m => ({ default: m.IntelligencePage })));
+const SecurityPage = lazy(() => import('./pages/public/security/SecurityPage').then(m => ({ default: m.SecurityPage })));
+const DemoPage = lazy(() => import('./pages/public/demo/DemoPage').then(m => ({ default: m.DemoPage })));
+const HelpCenterPage = lazy(() => import('./pages/public/help/HelpCenterPage').then(m => ({ default: m.HelpCenterPage })));
+const CommunityPage = lazy(() => import('./pages/public/community/CommunityPage').then(m => ({ default: m.CommunityPage })));
+const StatusPage = lazy(() => import('./pages/public/status/StatusPage').then(m => ({ default: m.StatusPage })));
+const AboutPage = lazy(() => import('./pages/public/about/AboutPage').then(m => ({ default: m.AboutPage })));
+const PrivacyPolicyPage = lazy(() => import('./pages/public/legal/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
+const TermsOfServicePage = lazy(() => import('./pages/public/legal/TermsOfServicePage').then(m => ({ default: m.TermsOfServicePage })));
 
 export default function App() {
   const [route, setRoute] = useState<string>('/');
@@ -38,6 +48,9 @@ export default function App() {
 
   const navigate = (path: string) => {
     setRoute(path);
+    if (window.location.pathname !== path && path.startsWith('/')) {
+      window.history.pushState({}, '', path);
+    }
     if (path === '/' || path === '/landing') {
       setCurrentView('landing');
     } else if (path === '/login' || path === '/auth/login') {
@@ -61,14 +74,26 @@ export default function App() {
     };
     window.addEventListener('nav-to', handleNav);
 
+    const handlePopState = () => {
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/owner/') || currentPath === '/app' || currentPath === '/dashboard') {
+        setRoute(currentPath);
+        setCurrentView('app');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+
     // Initial Path Routing Verification
     const currentPath = window.location.pathname;
-    const initialRoutes = ['/dashboard', '/workspace', '/command-center', '/login', '/auth/login', '/register', '/school-lookup', '/forgot-password', '/auth/forgot-password', '/reset-password', '/auth/reset-password', '/pricing', '/docs', '/contact', '/login-help', '/auth/login-help'];
-    if (initialRoutes.includes(currentPath) || currentPath.startsWith('/school-registration/')) {
+    const initialRoutes = ['/dashboard', '/workspace', '/command-center', '/login', '/auth/login', '/register', '/school-lookup', '/forgot-password', '/auth/forgot-password', '/reset-password', '/auth/reset-password', '/pricing', '/docs', '/contact', '/login-help', '/auth/login-help', '/features', '/intelligence', '/security', '/demo', '/help', '/community', '/status', '/about', '/privacy', '/terms'];
+    if (initialRoutes.includes(currentPath) || currentPath.startsWith('/school-registration/') || currentPath.startsWith('/owner/')) {
       navigate(currentPath);
     }
 
-    return () => window.removeEventListener('nav-to', handleNav);
+    return () => {
+      window.removeEventListener('nav-to', handleNav);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
   // Synchronize authenticated state with current view
@@ -79,7 +104,10 @@ export default function App() {
         setRoute('/app');
       }
     } else {
-      setCurrentView('landing');
+      setCurrentView('login');
+      if (route === '/app' || route === '/dashboard' || route === '/workspace' || route === '/command-center' || route === '/') {
+        setRoute('/login');
+      }
     }
   }, [isAuthenticated]);
 
@@ -167,7 +195,47 @@ export default function App() {
       return <ContactPage navigate={navigate} />;
     }
 
-    if (currentView === 'login') {
+    if (route === '/features') {
+      return <FeaturesPage navigate={navigate} />;
+    }
+
+    if (route === '/intelligence') {
+      return <IntelligencePage navigate={navigate} />;
+    }
+
+    if (route === '/security') {
+      return <SecurityPage navigate={navigate} />;
+    }
+
+    if (route === '/demo') {
+      return <DemoPage navigate={navigate} />;
+    }
+
+    if (route === '/help') {
+      return <HelpCenterPage navigate={navigate} />;
+    }
+
+    if (route === '/community') {
+      return <CommunityPage navigate={navigate} />;
+    }
+
+    if (route === '/status') {
+      return <StatusPage navigate={navigate} />;
+    }
+
+    if (route === '/about') {
+      return <AboutPage navigate={navigate} />;
+    }
+
+    if (route === '/privacy') {
+      return <PrivacyPolicyPage navigate={navigate} />;
+    }
+
+    if (route === '/terms') {
+      return <TermsOfServicePage navigate={navigate} />;
+    }
+
+    if (currentView === 'login' || !isAuthenticated) {
       return (
         <LoginPage 
           onBack={() => navigate('/')} 

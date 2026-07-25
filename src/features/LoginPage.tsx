@@ -125,6 +125,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess, on
       if (onNavigate) onNavigate('/register');
     } else if (path === 'verify-otp' || path === '/verify-otp') {
       if (onNavigate) onNavigate('/verify-otp');
+    } else if (path === 'contact' || path === '/contact' || path === 'login-help' || path === '/login-help' || path === '/auth/login-help') {
+      if (onNavigate) onNavigate('/login-help');
+    } else if (onNavigate) {
+      onNavigate(path);
     }
   };
 
@@ -133,12 +137,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess, on
       id="full-auth-system-portal" 
       className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans relative overflow-hidden selection:bg-indigo-600 selection:text-white"
     >
-      {/* Premium Ambient Background Spheres */}
-      <div className="absolute top-[-20%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-br from-indigo-200/40 via-blue-100/30 to-transparent blur-3xl pointer-events-none -z-10"></div>
-      <div className="absolute bottom-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-tr from-violet-200/40 via-indigo-100/30 to-transparent blur-3xl pointer-events-none -z-10"></div>
+      {/* Apple-style minimalist background */}
+      <div className="absolute inset-0 bg-[#F5F5F7] -z-10"></div>
+      <div className="absolute top-[-25%] left-[-10%] w-[70vw] h-[70vw] rounded-full bg-white blur-[120px] opacity-60 pointer-events-none -z-10"></div>
       
       {/* Global Toast Overlay Notifications */}
-      <div className="fixed top-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full">
+      <div className="fixed top-8 right-8 z-50 flex flex-col gap-3 max-w-sm w-full">
         <AnimatePresence>
           {toasts.map((t) => (
             <motion.div
@@ -146,29 +150,31 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess, on
               initial={{ opacity: 0, y: -20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9, y: -10 }}
-              className={`p-4 rounded-xl shadow-xl border flex items-start gap-3 backdrop-blur-md ${
+              className={`p-5 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] border flex items-start gap-4 backdrop-blur-xl ${
                 t.type === 'success' 
-                  ? 'bg-emerald-50/95 border-emerald-200 text-emerald-800' 
+                  ? 'bg-white/90 border-emerald-100 text-emerald-900' 
                   : t.type === 'error'
-                  ? 'bg-rose-50/95 border-rose-200 text-rose-800'
+                  ? 'bg-white/90 border-rose-100 text-rose-900'
                   : t.type === 'warning'
-                  ? 'bg-amber-50/95 border-amber-200 text-amber-800'
-                  : 'bg-indigo-50/95 border-indigo-200 text-indigo-800'
+                  ? 'bg-white/90 border-amber-100 text-amber-900'
+                  : 'bg-white/90 border-slate-100 text-slate-900'
               }`}
             >
-              {t.type === 'success' && <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600" />}
-              {t.type === 'error' && <AlertCircle className="h-5 w-5 shrink-0 text-rose-600" />}
-              {t.type === 'warning' && <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />}
-              {t.type === 'info' && <Sparkles className="h-5 w-5 shrink-0 text-indigo-600" />}
+              <div className="mt-0.5">
+                {t.type === 'success' && <CheckCircle className="h-5 w-5 shrink-0 text-emerald-500" />}
+                {t.type === 'error' && <AlertCircle className="h-5 w-5 shrink-0 text-rose-500" />}
+                {t.type === 'warning' && <AlertCircle className="h-5 w-5 shrink-0 text-amber-500" />}
+                {t.type === 'info' && <Sparkles className="h-5 w-5 shrink-0 text-indigo-500" />}
+              </div>
               
-              <div className="text-xs font-semibold">{t.text}</div>
+              <div className="text-sm font-semibold tracking-tight">{t.text}</div>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
 
-      {/* Navigation Header */}
-      <header className="w-full max-w-7xl mx-auto px-6 h-20 flex items-center justify-between z-10">
+      {/* Apple-style Top Navigation */}
+      <header className="w-full max-w-7xl mx-auto px-8 h-24 flex items-center justify-between z-10">
         <button 
           id="auth-global-back-btn"
           onClick={() => {
@@ -178,122 +184,81 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess, on
               onBack();
             }
           }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 font-bold text-xs rounded-full shadow-xs hover:shadow-sm transition cursor-pointer"
+          className="flex items-center gap-2.5 px-5 py-2.5 bg-white/70 hover:bg-white border border-slate-200/50 text-slate-900 font-bold text-[13px] rounded-full shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer backdrop-blur-sm"
         >
-          <ArrowLeft className="w-4 h-4 text-indigo-600" />
-          <span>{authRoute === 'login' ? 'Back to Marketing' : 'Return to Login'}</span>
+          <ArrowLeft className="w-4 h-4 text-slate-900" />
+          <span>{authRoute === 'login' ? 'Marketing' : 'Login'}</span>
         </button>
 
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-indigo-600 animate-pulse" />
-          <span className="text-[10px] bg-indigo-50 border border-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold uppercase tracking-wider">
-            SLA ACTIVE
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">
+            Network Secure
           </span>
         </div>
       </header>
 
-      {/* Main Dual-Panel Layout Container */}
-      <main className="max-w-7xl w-full mx-auto px-6 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center py-6 z-10">
+      {/* Main Container */}
+      <main className="max-w-7xl w-full mx-auto px-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center py-12 z-10">
         
-        {/* Left Side: Modern Enterprise ERP Visual Showcase Panel */}
-        <div className="lg:col-span-6 hidden lg:flex flex-col justify-center space-y-8 pr-6 select-none">
-          <div className="space-y-4">
-            <div className="mb-2">
-              <GalaxyLogo size="lg" subtitle="GALAXY Sovereign Operating Platform" />
-            </div>
-            <h1 className="text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-              Next-Gen Academic <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-blue-600 to-violet-600">
-                Enterprise Cloud OS
-              </span>
-            </h1>
-            <p className="text-sm text-slate-500 leading-relaxed max-w-lg">
-              Securely access your active academic tenant. Experience zero-trust protection over student information systems, payroll, financial catalogs, and administrative workflows.
-            </p>
+        {/* Left Side: Refined Typography & Visuals */}
+        <div className="lg:col-span-5 hidden lg:flex flex-col justify-center space-y-10 select-none">
+          <div className="space-y-6">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4"
+            >
+              <GalaxyLogo size="lg" />
+            </motion.div>
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-6xl font-bold text-slate-900 tracking-tight leading-[1.05]"
+            >
+              The power to <br />
+              <span className="text-indigo-600">transform</span> education.
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-lg text-slate-500 font-medium leading-relaxed max-w-md"
+            >
+              Securely access your institution's central intelligence hub. Engineered for precision, designed for humans.
+            </motion.p>
           </div>
 
-          {/* Interactive Live Service Dashboard Mockup */}
-          <div className="bg-white/80 border border-slate-200/80 rounded-2xl p-6 shadow-xl relative overflow-hidden backdrop-blur-md">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
-              <div className="flex items-center gap-2">
-                <Layers className="w-4.5 h-4.5 text-indigo-600" />
-                <span className="text-xs font-extrabold text-slate-800 tracking-wider uppercase">Active Module Gateway</span>
+          {/* Security & Trust Pills */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-wrap gap-3"
+          >
+            {[
+              { icon: Shield, label: 'SOC 2 compliant' },
+              { icon: Lock, label: 'End-to-end encrypted' },
+              { icon: Database, label: 'Data sovereignty' }
+            ].map((item, idx) => (
+              <div key={idx} className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-slate-200/60 rounded-full text-[11px] font-bold text-slate-600 backdrop-blur-sm shadow-sm">
+                <item.icon className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{item.label}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
-                <Wifi className="w-3 h-3 animate-pulse" />
-                <span>ALL SENSORS ONLINE</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3.5 bg-slate-50/50 border border-slate-150 rounded-xl flex items-center justify-between">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-slate-400 block">Biometric Gateway</span>
-                  <span className="text-xs font-extrabold text-slate-700">99.98% Handshake</span>
-                </div>
-                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></div>
-              </div>
-
-              <div className="p-3.5 bg-slate-50/50 border border-slate-150 rounded-xl flex items-center justify-between">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-slate-400 block">GPS Bus Telemetry</span>
-                  <span className="text-xs font-extrabold text-slate-700">42 Transits Active</span>
-                </div>
-                <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-              </div>
-
-              <div className="p-3.5 bg-slate-50/50 border border-slate-150 rounded-xl flex items-center justify-between">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-slate-400 block">Parent Comm Fabric</span>
-                  <span className="text-xs font-extrabold text-slate-700">2.4k Deliveries/min</span>
-                </div>
-                <div className="h-2 w-2 rounded-full bg-indigo-500"></div>
-              </div>
-
-              <div className="p-3.5 bg-slate-50/50 border border-slate-150 rounded-xl flex items-center justify-between">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-slate-400 block">Database Replication</span>
-                  <span className="text-xs font-extrabold text-slate-700">SSL Sync Complete</span>
-                </div>
-                <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Trusted Security Compliance Indicators */}
-          <div className="grid grid-cols-4 gap-4 pt-2">
-            <div className="p-3 bg-white/40 border border-slate-200/60 rounded-xl space-y-1 flex flex-col items-center text-center shadow-xs">
-              <Shield className="w-5 h-5 text-indigo-600" />
-              <h4 className="text-[10px] font-bold text-slate-700 uppercase leading-none mt-1">SOC 2 Type II</h4>
-              <p className="text-[9px] text-slate-400">Security Certified</p>
-            </div>
-            <div className="p-3 bg-white/40 border border-slate-200/60 rounded-xl space-y-1 flex flex-col items-center text-center shadow-xs">
-              <Lock className="w-5 h-5 text-violet-600" />
-              <h4 className="text-[10px] font-bold text-slate-700 uppercase leading-none mt-1">AES-256 Storage</h4>
-              <p className="text-[9px] text-slate-400">Secure Encryption</p>
-            </div>
-            <div className="p-3 bg-white/40 border border-slate-200/60 rounded-xl space-y-1 flex flex-col items-center text-center shadow-xs">
-              <ShieldCheck className="w-5 h-5 text-emerald-600" />
-              <h4 className="text-[10px] font-bold text-slate-700 uppercase leading-none mt-1">ISO 27001</h4>
-              <p className="text-[9px] text-slate-400">Process Audited</p>
-            </div>
-            <div className="p-3 bg-white/40 border border-slate-200/60 rounded-xl space-y-1 flex flex-col items-center text-center shadow-xs">
-              <Database className="w-5 h-5 text-blue-600" />
-              <h4 className="text-[10px] font-bold text-slate-700 uppercase leading-none mt-1">GDPR Standard</h4>
-              <p className="text-[9px] text-slate-400">Data Sovereignty</p>
-            </div>
-          </div>
+            ))}
+          </motion.div>
         </div>
 
-        {/* Right Side: Clean High-Contrast Auth Panel */}
-        <div className="col-span-1 lg:col-span-6 flex items-center justify-center w-full">
-          <div className="w-full max-w-xl relative transition-all">
+        {/* Right Side: Centered Auth Panel */}
+        <div className="col-span-1 lg:col-span-7 flex items-center justify-center w-full">
+          <div className="w-full max-w-lg relative">
             {isOAuthSyncing && (
-              <div className="absolute inset-0 bg-white/95 z-50 flex flex-col items-center justify-center space-y-4 rounded-3xl p-6 shadow-xl border border-slate-200">
-                <RefreshCw className="h-8 w-8 text-indigo-600 animate-spin" />
+              <div className="absolute inset-0 bg-white/95 z-50 flex flex-col items-center justify-center space-y-6 rounded-[2.5rem] p-10 shadow-2xl border border-slate-100">
+                <RefreshCw className="h-10 w-10 text-indigo-600 animate-spin" />
                 <div className="text-center">
-                  <h3 className="text-sm font-bold text-slate-800">Establishing Workspace Session</h3>
-                  <p className="text-xs text-slate-400 mt-1">Synchronizing institutional security tokens...</p>
+                  <h3 className="text-xl font-bold text-slate-900">Establishing Session</h3>
+                  <p className="text-sm text-slate-500 mt-2 font-medium">Synchronizing institutional security tokens...</p>
                 </div>
               </div>
             )}
@@ -301,10 +266,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess, on
             <AnimatePresence mode="wait">
               <motion.div
                 key={authRoute}
-                initial={{ opacity: 0, x: 15 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -15 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
                 className="w-full"
               >
                 {authRoute === 'login' && (
@@ -329,14 +294,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess, on
 
       </main>
 
-      {/* Modern High-Contrast Footer */}
-      <footer className="w-full bg-white border-t border-slate-200/60 py-6 text-xs text-slate-400 mt-auto z-10 shadow-xs">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 font-semibold">
-          <div className="flex items-center gap-2 text-slate-500">
-            <ShieldCheck className="h-4 w-4 text-indigo-600" />
-            <span>GALAXY SECURE INGRESS OS • ACTIVE WORKSPACE PROTOCOLS</span>
+      {/* Apple-style minimalist Footer */}
+      <footer className="w-full py-12 px-8 z-10 mt-auto">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 border-t border-slate-200 pt-8">
+          <div className="flex items-center gap-4 text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+            <span>Galaxy Ingress</span>
+            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+            <span>Version 4.2.0</span>
           </div>
-          <span className="text-[11px]">© 2026 GALAXY ERP SOLUTIONS INC. ALL RIGHTS RESERVED.</span>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+            © 2026 Galaxy ERP Solutions Inc.
+          </p>
         </div>
       </footer>
     </div>

@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   ShieldCheck
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { CentralAuthService } from '../../core/auth/auth.service';
 import { formatAuthError } from '../../core/auth/auth.errors';
 import { GalaxyLogo } from '../common/GalaxyLogo';
@@ -138,14 +139,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   return (
     <div id="galaxy-erp-login-card" className="w-full max-w-xl mx-auto">
       {/* Institution / Branding Header */}
-      <div className="text-center mb-6">
-        <div className="flex flex-col items-center">
-          <GalaxyLogo size="xl" showText={true} />
-        </div>
+      <div className="text-center mb-8">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center"
+        >
+          <GalaxyLogo size="xl" />
+        </motion.div>
       </div>
 
       {/* Main Login Form Container */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 md:p-10 shadow-xl shadow-slate-200/70 relative overflow-hidden">
+      <div className="bg-white rounded-[2.5rem] p-10 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden">
         
         {showMFAChallenge ? (
           <MFAChallenge
@@ -155,22 +160,25 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         ) : (
           <>
             {/* Security badge notice */}
-            <div className="mb-6 p-3 bg-slate-50 border border-slate-200/90 rounded-2xl flex items-center justify-between text-xs sm:text-sm text-slate-700 font-bold">
-              <span className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                {language === 'hi' ? 'सर्वर-प्रमाणित भूमिका पहुँच' : 'Server-Authoritative Role Verification'}
-              </span>
-              <span className="text-[11px] text-indigo-600 uppercase tracking-wider font-black bg-indigo-50 px-2.5 py-0.5 rounded-lg border border-indigo-100/80">SECURE V2</span>
+            <div className="mb-10 flex flex-col items-center text-center">
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">
+                Sign in
+              </h2>
+              <p className="text-[13px] text-slate-500 font-medium tracking-tight">
+                Enter your institutional credentials below.
+              </p>
             </div>
 
         {/* Global Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 p-4 bg-rose-50/50 border border-rose-100 rounded-2xl flex items-start gap-3"
+          >
             <XCircle className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-xs sm:text-sm font-bold text-rose-800">{error}</p>
-            </div>
-          </div>
+            <p className="text-[13px] font-bold text-rose-800">{error}</p>
+          </motion.div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
@@ -178,20 +186,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           {/* 1. School Unique ID */}
           <div>
             <div className="flex justify-between items-center mb-2 ml-1">
-              <label htmlFor="school-id-input" className="block text-xs sm:text-sm font-extrabold text-slate-700 uppercase tracking-wider">
-                {language === 'hi' ? 'स्कूल यूनिक आईडी' : 'School Unique ID'} <span className="text-rose-500">*</span>
+              <label htmlFor="school-id-input" className="block text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                {language === 'hi' ? 'स्कूल यूनिक आईडी' : 'School ID'}
               </label>
               <button
                 type="button"
                 onClick={() => setIsSearchOpen(true)}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 cursor-pointer transition"
+                className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
               >
-                <Search className="w-3.5 h-3.5" />
-                <span>{language === 'hi' ? 'स्कूल खोजें' : 'Lookup School'}</span>
+                {language === 'hi' ? 'स्कूल खोजें' : 'Lookup School'}
               </button>
             </div>
-            <div className="relative group">
-              <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+            <div className="relative">
               <input
                 id="school-id-input"
                 type="text"
@@ -202,66 +208,62 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                   if (fieldErrors.schoolId) setFieldErrors(prev => ({ ...prev, schoolId: '' }));
                 }}
                 onBlur={handleValidateSchoolCode}
-                className={`w-full pl-12 pr-24 py-3.5 sm:py-4 bg-slate-50 border ${
-                  fieldErrors.schoolId ? 'border-rose-400 focus:ring-rose-500/10' : 'border-slate-200 focus:border-indigo-500'
-                } rounded-2xl text-sm sm:text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase placeholder:normal-case placeholder:font-normal placeholder:text-slate-400`}
+                className={`w-full px-5 py-4 bg-white border ${
+                  fieldErrors.schoolId ? 'border-rose-300 focus:ring-rose-500/5' : 'border-slate-200 focus:border-indigo-500'
+                } rounded-2xl text-[15px] font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all uppercase placeholder:normal-case placeholder:font-medium placeholder:text-slate-300`}
               />
               <button
                 type="button"
                 onClick={handleValidateSchoolCode}
                 disabled={isValidatingSchool}
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-2 text-xs font-extrabold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl transition cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1.5 text-[10px] font-black bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-xl transition cursor-pointer uppercase tracking-tighter"
               >
-                {isValidatingSchool ? <Loader2 className="w-4 h-4 animate-spin" /> : 'VALIDATE'}
+                {isValidatingSchool ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Check'}
               </button>
             </div>
             {fieldErrors.schoolId && (
-              <p className="text-xs font-bold text-rose-500 mt-1.5 ml-1">{fieldErrors.schoolId}</p>
+              <p className="text-[11px] font-bold text-rose-500 mt-1.5 ml-1">{fieldErrors.schoolId}</p>
             )}
           </div>
 
           {/* 2. Institutional Email */}
           <div>
-            <label htmlFor="email-input" className="block text-xs sm:text-sm font-extrabold text-slate-700 uppercase tracking-wider mb-2 ml-1">
-              {language === 'hi' ? 'ईमेल आईडी / उपयोगकर्ता नाम' : 'Institutional Email / Username'} <span className="text-rose-500">*</span>
+            <label htmlFor="email-input" className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">
+              {language === 'hi' ? 'ईमेल आईडी' : 'Email Address'}
             </label>
-            <div className="relative group">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
-              <input
-                id="email-input"
-                type="email"
-                placeholder="e.g. user@school.edu"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: '' }));
-                }}
-                className={`w-full pl-12 pr-4 py-3.5 sm:py-4 bg-slate-50 border ${
-                  fieldErrors.email ? 'border-rose-400 focus:ring-rose-500/10' : 'border-slate-200 focus:border-indigo-500'
-                } rounded-2xl text-sm sm:text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:font-normal placeholder:text-slate-400`}
-              />
-            </div>
+            <input
+              id="email-input"
+              type="email"
+              placeholder="name@school.edu"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: '' }));
+              }}
+              className={`w-full px-5 py-4 bg-white border ${
+                fieldErrors.email ? 'border-rose-300 focus:ring-rose-500/5' : 'border-slate-200 focus:border-indigo-500'
+              } rounded-2xl text-[15px] font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all placeholder:font-medium placeholder:text-slate-300`}
+            />
             {fieldErrors.email && (
-              <p className="text-xs font-bold text-rose-500 mt-1.5 ml-1">{fieldErrors.email}</p>
+              <p className="text-[11px] font-bold text-rose-500 mt-1.5 ml-1">{fieldErrors.email}</p>
             )}
           </div>
 
           {/* 3. Password */}
           <div>
             <div className="flex justify-between items-center mb-2 ml-1">
-              <label htmlFor="password-input" className="block text-xs sm:text-sm font-extrabold text-slate-700 uppercase tracking-wider">
-                {language === 'hi' ? 'पासवर्ड' : 'Password'} <span className="text-rose-500">*</span>
+              <label htmlFor="password-input" className="block text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                {language === 'hi' ? 'पासवर्ड' : 'Password'}
               </label>
               <button
                 type="button"
                 onClick={() => onNavigate ? onNavigate('/forgot-password') : null}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-700 cursor-pointer transition"
+                className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
               >
-                {language === 'hi' ? 'पासवर्ड भूल गए?' : 'Forgot Password?'}
+                {language === 'hi' ? 'पासवर्ड भूल गए?' : 'Forgot?'}
               </button>
             </div>
-            <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+            <div className="relative">
               <input
                 id="password-input"
                 type={showPassword ? 'text' : 'password'}
@@ -271,72 +273,62 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                   setPassword(e.target.value);
                   if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: '' }));
                 }}
-                className={`w-full pl-12 pr-12 py-3.5 sm:py-4 bg-slate-50 border ${
-                  fieldErrors.password ? 'border-rose-400 focus:ring-rose-500/10' : 'border-slate-200 focus:border-indigo-500'
-                } rounded-2xl text-sm sm:text-base font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all`}
+                className={`w-full px-5 py-4 bg-white border ${
+                  fieldErrors.password ? 'border-rose-300 focus:ring-rose-500/5' : 'border-slate-200 focus:border-indigo-500'
+                } rounded-2xl text-[15px] font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition cursor-pointer p-1"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
             {fieldErrors.password && (
-              <p className="text-xs font-bold text-rose-500 mt-1.5 ml-1">{fieldErrors.password}</p>
+              <p className="text-[11px] font-bold text-rose-500 mt-1.5 ml-1">{fieldErrors.password}</p>
             )}
           </div>
 
           {/* 4. Remember Me & Support */}
           <div className="flex items-center justify-between pt-2">
-            <label htmlFor="remember_me_check" className="flex items-center gap-2.5 cursor-pointer select-none">
-              <input
-                id="remember_me_check"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 transition cursor-pointer"
-              />
-              <span className="text-xs sm:text-sm font-bold text-slate-700">
-                {language === 'hi' ? 'मुझे याद रखें' : 'Remember me'}
+            <label htmlFor="remember_me_check" className="flex items-center gap-3 cursor-pointer group">
+              <div className="relative flex items-center">
+                <input
+                  id="remember_me_check"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-5 h-5 rounded-lg border-slate-200 text-indigo-600 focus:ring-indigo-500/20 transition cursor-pointer"
+                />
+              </div>
+              <span className="text-[13px] font-bold text-slate-500 group-hover:text-slate-700 transition-colors">
+                {language === 'hi' ? 'मुझे याद रखें' : 'Stay signed in'}
               </span>
             </label>
-
-            <button
-              type="button"
-              onClick={() => onNavigate ? onNavigate('/login-help') : null}
-              className="text-xs sm:text-sm font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1.5 transition cursor-pointer"
-            >
-              <HelpCircle className="w-4 h-4" />
-              <span>{language === 'hi' ? 'सहायता' : 'Help / Support'}</span>
-            </button>
           </div>
 
           {/* 5. Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-black text-sm sm:text-base rounded-2xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed group mt-3"
+            className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[15px] rounded-2xl shadow-[0_10px_25px_rgba(79,70,229,0.2)] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed mt-4 active:scale-[0.98]"
           >
             {isLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin text-white" />
-                <span>VERIFYING CREDENTIALS...</span>
-              </>
+              <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <>
-                <span>SIGN IN TO GALAXY ERP</span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <span>Sign In</span>
+                <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>
         </form>
 
-        <p className="text-xs text-center text-slate-400 font-semibold mt-6">
-          🔒 Encrypted enterprise connection. Unauthorized access attempts are logged and reported.
-        </p>
+        <div className="mt-10 flex items-center justify-center gap-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>Encrypted Session</span>
+        </div>
           </>
         )}
       </div>

@@ -34,26 +34,40 @@ export type SecurityAuditEventType =
   | 'MOBILE_LOGIN_SUCCESS'
   | 'MOBILE_LOGIN_FAILED'
   | 'UNAUTHORIZED_TENANT_ACCESS_ATTEMPT'
-  | 'OTP_REQUEST_FAILED';
+  | 'OTP_REQUEST_FAILED'
+  | 'CAMPUS_CREATED'
+  | 'CAMPUS_UPDATED'
+  | 'PRINCIPAL_ASSIGNED'
+  | 'INSTITUTION_UPDATED'
+  | 'DEPARTMENT_CREATED'
+  | 'DEPARTMENT_UPDATED'
+  | 'SESSION_CREATED'
+  | 'SESSION_ACTIVATED'
+  | 'SESSION_ARCHIVED'
+  | 'AFFILIATION_UPDATED';
 
 export interface AuditLogEntry {
   eventType: SecurityAuditEventType;
   userId?: string;
+  tenantId?: string;
   email?: string;
   details?: string;
   ipAddress?: string;
   userAgent?: string;
   timestamp: string;
+  metadata?: any;
 }
 
 export class AuditLogger {
   /**
    * General log method wrapper for MFA and security events
    */
-  public static log(data: { event_type: SecurityAuditEventType; details?: any; userId?: string; email?: string }): void {
-    this.logEvent(data.event_type, {
+  public static log(data: { eventType: SecurityAuditEventType; details?: any; userId?: string; email?: string; tenantId?: string; metadata?: any }): void {
+    this.logEvent(data.eventType, {
       userId: data.userId,
       email: data.email,
+      tenantId: data.tenantId,
+      metadata: data.metadata,
       details: typeof data.details === 'string' ? data.details : JSON.stringify(data.details || {})
     });
   }
@@ -63,13 +77,15 @@ export class AuditLogger {
    */
   public static async logEvent(
     eventType: SecurityAuditEventType,
-    metadata?: { userId?: string; email?: string; details?: string }
+    metadata?: { userId?: string; email?: string; details?: string; tenantId?: string; metadata?: any }
   ): Promise<void> {
     const entry: AuditLogEntry = {
       eventType,
       userId: metadata?.userId,
+      tenantId: metadata?.tenantId,
       email: metadata?.email,
       details: metadata?.details,
+      metadata: metadata?.metadata,
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
       timestamp: new Date().toISOString()
     };
@@ -77,23 +93,34 @@ export class AuditLogger {
     // Safe dev log
     console.log(`[SECURITY AUDIT] [${entry.eventType}]`, {
       userId: entry.userId,
+      tenantId: entry.tenantId,
       email: entry.email,
       details: entry.details,
       timestamp: entry.timestamp
     });
 
-    // Try saving to database table 'security_audit_logs' if present
+    // Try saving to database table 'audit_logs' (preferred) or 'security_audit_logs'
     try {
-      await supabase.from('security_audit_logs').insert([{
+      const logPayload = {
         event_type: entry.eventType,
         user_id: entry.userId,
+        tenant_id: entry.tenantId,
         email: entry.email,
         details: entry.details,
+        metadata: entry.metadata,
         user_agent: entry.userAgent,
         created_at: entry.timestamp
-      }]);
+      };
+
+      // Try audit_logs first
+      const { error: auditError } = await supabase.from('audit_logs').insert([logPayload]);
+      
+      if (auditError && auditError.code === '42P01') {
+        // Fallback to security_audit_logs
+        await supabase.from('security_audit_logs').insert([logPayload]);
+      }
     } catch (e) {
-      // Table might not exist yet, catch silently without breaking user experience
+      // Catch silently
     }
   }
 }

@@ -61,7 +61,7 @@ export class MFAService {
   static async enrollTOTP(friendlyName: string = 'Authenticator App'): Promise<TOTPEnrollmentResult> {
     try {
       AuditLogger.log({
-        event_type: 'MFA_ENROLLMENT_STARTED',
+        eventType: 'MFA_ENROLLMENT_STARTED',
         details: { friendlyName }
       });
 
@@ -72,7 +72,7 @@ export class MFAService {
 
       if (error || !data) {
         AuditLogger.log({
-          event_type: 'MFA_ENROLLMENT_FAILED',
+          eventType: 'MFA_ENROLLMENT_FAILED',
           details: { error: error?.message || 'Enrollment response empty' }
         });
         return {
@@ -95,7 +95,7 @@ export class MFAService {
       };
     } catch (err: any) {
       AuditLogger.log({
-        event_type: 'MFA_ENROLLMENT_FAILED',
+        eventType: 'MFA_ENROLLMENT_FAILED',
         details: { error: err.message }
       });
       return {
@@ -119,7 +119,7 @@ export class MFAService {
 
     try {
       AuditLogger.log({
-        event_type: 'MFA_CHALLENGE_STARTED',
+        eventType: 'MFA_CHALLENGE_STARTED',
         details: { factorId }
       });
 
@@ -132,7 +132,7 @@ export class MFAService {
         // Fallback check if testing without live Supabase MFA server
         if (cleanCode === '123456' || cleanCode === '000000') {
           AuditLogger.log({
-            event_type: 'MFA_VERIFICATION_SUCCESS',
+            eventType: 'MFA_VERIFICATION_SUCCESS',
             details: { factorId, method: 'dev_fallback' }
           });
           return {
@@ -142,7 +142,7 @@ export class MFAService {
         }
 
         AuditLogger.log({
-          event_type: 'MFA_VERIFICATION_FAILED',
+          eventType: 'MFA_VERIFICATION_FAILED',
           details: { factorId, error: challengeError?.message }
         });
         return {
@@ -160,7 +160,7 @@ export class MFAService {
 
       if (verifyError) {
         AuditLogger.log({
-          event_type: 'MFA_VERIFICATION_FAILED',
+          eventType: 'MFA_VERIFICATION_FAILED',
           details: { factorId, error: verifyError.message }
         });
         return {
@@ -170,7 +170,7 @@ export class MFAService {
       }
 
       AuditLogger.log({
-        event_type: 'MFA_VERIFICATION_SUCCESS',
+        eventType: 'MFA_VERIFICATION_SUCCESS',
         details: { factorId, aal: 'aal2' }
       });
 
@@ -180,7 +180,7 @@ export class MFAService {
       };
     } catch (err: any) {
       AuditLogger.log({
-        event_type: 'MFA_VERIFICATION_FAILED',
+        eventType: 'MFA_VERIFICATION_FAILED',
         details: { factorId, error: err.message }
       });
       return {
@@ -202,7 +202,7 @@ export class MFAService {
       }
 
       AuditLogger.log({
-        event_type: 'MFA_FACTOR_REMOVED',
+        eventType: 'MFA_FACTOR_REMOVED',
         details: { factorId }
       });
 
