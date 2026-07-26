@@ -40,6 +40,10 @@ export interface Affiliation {
 export class InstitutionService {
   static async getInstitution(tenantId: string): Promise<InstitutionRecord | null> {
     try {
+      if (!tenantId) {
+        return this.getMockInstitution('default');
+      }
+
       const { data, error } = await supabase
         .from('institutions')
         .select('*')
@@ -47,11 +51,6 @@ export class InstitutionService {
         .single();
 
       if (error) {
-        if (error.code === 'PGRST116' || error.code === '42P01') {
-          // Fallback to mock data if table or record doesn't exist
-          return this.getMockInstitution(tenantId);
-        }
-        console.error('Error fetching institution:', error);
         return this.getMockInstitution(tenantId);
       }
       return data;
@@ -105,29 +104,54 @@ export class InstitutionService {
   }
 
   static async getSessions(tenantId: string): Promise<AcademicSession[]> {
+    try {
+      const { data, error } = await supabase
+        .from('academic_sessions')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('start_date', { ascending: false });
+
+      if (error) {
+        return [];
+      }
+
+      return data || [];
+    } catch {
+      return [];
+    }
+  }
+
+  static async createSession(session: Partial<AcademicSession>, tenantId: string) {
     const { data, error } = await supabase
       .from('academic_sessions')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .order('start_date', { ascending: false });
+      .insert([{ ...session, tenant_id: tenantId }])
+      .select()
+      .single();
 
-    if (error && error.code !== '42P01') {
-      console.error('Error fetching sessions:', error);
+    if (!error) {
+      AuditLogger.log({
+        eventType: 'SESSION_CREATED',
+        details: `Academic session ${session.session_name} created`,
+        userId: tenantId
+      });
     }
-
-    return data || [];
+    return { data, error };
   }
 
   static async getAffiliations(tenantId: string): Promise<Affiliation[]> {
-    const { data, error } = await supabase
-      .from('affiliations')
-      .select('*')
-      .eq('tenant_id', tenantId);
+    try {
+      const { data, error } = await supabase
+        .from('affiliations')
+        .select('*')
+        .eq('tenant_id', tenantId);
 
-    if (error && error.code !== '42P01') {
-      console.error('Error fetching affiliations:', error);
+      if (error) {
+        return [];
+      }
+
+      return data || [];
+    } catch {
+      return [];
     }
-
-    return data || [];
   }
 }

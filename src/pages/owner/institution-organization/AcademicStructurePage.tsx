@@ -4,20 +4,19 @@ import {
   Plus, 
   Search, 
   Calendar, 
-  CheckCircle2, 
   Clock, 
-  ChevronRight,
   RefreshCw,
   MoreHorizontal,
-  LayoutGrid,
-  List,
   AlertCircle,
   ArrowRight,
   ShieldCheck,
-  History
+  History,
+  X,
+  Loader2
 } from 'lucide-react';
 import { Tenant } from '../../../types';
 import { motion, AnimatePresence } from 'motion/react';
+import { InstitutionService, AcademicSession } from '../../../services/InstitutionService';
 
 interface AcademicStructurePageProps {
   tenant: Tenant;
@@ -26,18 +25,76 @@ interface AcademicStructurePageProps {
 
 export const AcademicStructurePage: React.FC<AcademicStructurePageProps> = ({ tenant, onNavigate }) => {
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [showSessionModal, setShowSessionModal] = useState(false);
+  const [creating, setCreating] = useState(false);
 
-  const sessions = [
-    { id: '1', year: '2026-27', status: 'ACTIVE', start: 'April 2026', end: 'March 2027', isDefault: true, admissionStatus: 'OPEN' },
-    { id: '2', year: '2025-26', status: 'COMPLETED', start: 'April 2025', end: 'March 2026', isDefault: false, admissionStatus: 'CLOSED' },
-    { id: '3', year: '2027-28', status: 'PLANNING', start: 'April 2027', end: 'March 2028', isDefault: false, admissionStatus: 'UPCOMING' },
-  ];
+  const [newSession, setNewSession] = useState({
+    session_name: '',
+    start_date: '',
+    end_date: '',
+    status: 'ACTIVE' as const
+  });
+
+  const effectiveTenantId = tenant?.id || 'apex_k12';
+
+  const loadSessions = async () => {
+    setLoading(true);
+    try {
+      const fetched = await InstitutionService.getSessions(effectiveTenantId);
+      if (fetched && fetched.length > 0) {
+        setSessions(fetched.map(s => ({
+          id: s.id,
+          year: s.session_name,
+          status: s.status || (s.is_active ? 'ACTIVE' : 'COMPLETED'),
+          start: s.start_date ? new Date(s.start_date).toLocaleDateString() : 'April 2026',
+          end: s.end_date ? new Date(s.end_date).toLocaleDateString() : 'March 2027',
+          isDefault: s.is_active
+        })));
+      } else {
+        setSessions([
+          { id: '1', year: '2026-27', status: 'ACTIVE', start: 'April 2026', end: 'March 2027', isDefault: true },
+          { id: '2', year: '2025-26', status: 'COMPLETED', start: 'April 2025', end: 'March 2026', isDefault: false },
+          { id: '3', year: '2027-28', status: 'PLANNING', start: 'April 2027', end: 'March 2028', isDefault: false },
+        ]);
+      }
+    } catch (err) {
+      console.error('Error fetching sessions:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+    loadSessions();
+  }, [effectiveTenantId]);
+
+  const handleCreateSession = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSession.session_name) return;
+
+    setCreating(true);
+    try {
+      const payload: Partial<AcademicSession> = {
+        session_name: newSession.session_name,
+        start_date: newSession.start_date || new Date().toISOString(),
+        end_date: newSession.end_date || new Date(Date.now() + 31536000000).toISOString(),
+        status: newSession.status,
+        is_active: newSession.status === 'ACTIVE'
+      };
+
+      const { error } = await InstitutionService.createSession(payload, effectiveTenantId);
+      if (!error) {
+        setShowSessionModal(false);
+        setNewSession({ session_name: '', start_date: '', end_date: '', status: 'ACTIVE' });
+        loadSessions();
+      }
+    } catch (err) {
+      console.error('Create session error:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-12 pb-32 px-4 sm:px-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -55,7 +112,10 @@ export const AcademicStructurePage: React.FC<AcademicStructurePageProps> = ({ te
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
-           <button className="flex items-center gap-3 px-8 py-5 bg-indigo-600 text-white rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-200 hover:bg-indigo-700 hover:translate-y-[-2px] transition-all">
+           <button 
+             onClick={() => setShowSessionModal(true)}
+             className="flex items-center gap-3 px-8 py-5 bg-indigo-600 text-white rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-200 hover:bg-indigo-700 hover:translate-y-[-2px] transition-all cursor-pointer"
+           >
             <Plus className="w-4 h-4" /> Provision New Session
           </button>
         </div>
@@ -163,6 +223,89 @@ export const AcademicStructurePage: React.FC<AcademicStructurePageProps> = ({ te
                     </button>
                  </div>
               </div>
+           </div>
+        </div>
+      )}
+
+      {/* Provision Session Modal */}
+      {showSessionModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-6 animate-in zoom-in-95 duration-200 text-left">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                 <div>
+                    <h3 className="text-lg font-black text-slate-900">Provision Academic Session</h3>
+                    <p className="text-xs text-slate-500 font-medium">Register a new temporal academic cycle.</p>
+                 </div>
+                 <button onClick={() => setShowSessionModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                    <X className="w-5 h-5" />
+                 </button>
+              </div>
+
+              <form onSubmit={handleCreateSession} className="space-y-4">
+                 <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Session Year / Name *</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={newSession.session_name}
+                      onChange={e => setNewSession({...newSession, session_name: e.target.value})}
+                      placeholder="e.g. 2027-28"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Start Date</label>
+                       <input 
+                         type="date" 
+                         value={newSession.start_date}
+                         onChange={e => setNewSession({...newSession, start_date: e.target.value})}
+                         className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                       />
+                    </div>
+                    <div>
+                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">End Date</label>
+                       <input 
+                         type="date" 
+                         value={newSession.end_date}
+                         onChange={e => setNewSession({...newSession, end_date: e.target.value})}
+                         className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                       />
+                    </div>
+                 </div>
+
+                 <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Initial Status</label>
+                    <select 
+                      value={newSession.status}
+                      onChange={e => setNewSession({...newSession, status: e.target.value as any})}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                    >
+                       <option value="ACTIVE">ACTIVE</option>
+                       <option value="UPCOMING">UPCOMING</option>
+                       <option value="PLANNING">PLANNING</option>
+                    </select>
+                 </div>
+
+                 <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowSessionModal(false)}
+                      className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                       Cancel
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={creating}
+                      className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-all shadow-xs flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                    >
+                       {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                       Provision Session
+                    </button>
+                 </div>
+              </form>
            </div>
         </div>
       )}

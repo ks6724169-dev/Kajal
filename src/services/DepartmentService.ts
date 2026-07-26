@@ -13,6 +13,8 @@ export interface DepartmentRecord {
   staff_count?: number;
 }
 
+export type Department = DepartmentRecord;
+
 export class DepartmentService {
   static async getDepartments(tenantId: string): Promise<DepartmentRecord[]> {
     const { data, error } = await supabase

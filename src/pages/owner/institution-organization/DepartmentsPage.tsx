@@ -3,21 +3,21 @@ import {
   Layers, 
   Plus, 
   Search, 
-  MoreVertical, 
-  Building, 
-  Users, 
-  ChevronRight,
-  ExternalLink,
   RefreshCw,
   MoreHorizontal,
   LayoutGrid,
   List,
   User,
-  Shield,
-  BookOpen
+  BookOpen,
+  Users,
+  ExternalLink,
+  X,
+  Loader2
 } from 'lucide-react';
 import { Tenant } from '../../../types';
 import { motion, AnimatePresence } from 'motion/react';
+import { DepartmentService, DepartmentRecord } from '../../../services/DepartmentService';
+import { CampusService, CampusRecord } from '../../../services/CampusService';
 
 interface DepartmentsPageProps {
   tenant: Tenant;
@@ -28,20 +28,89 @@ export const DepartmentsPage: React.FC<DepartmentsPageProps> = ({ tenant, onNavi
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [campuses, setCampuses] = useState<CampusRecord[]>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [creating, setCreating] = useState(false);
 
-  // Mock data for now since we don't have a DepartmentService yet
-  const departments = [
-    { id: '1', name: 'Science & Research', code: 'SCI-01', head: 'Dr. Sarah Wilson', staffCount: 24, studentCount: 450, color: 'bg-indigo-600' },
-    { id: '2', name: 'Mathematics', code: 'MATH-02', head: 'Prof. James Bond', staffCount: 18, studentCount: 320, color: 'bg-emerald-600' },
-    { id: '3', name: 'Humanities & Arts', code: 'HUM-03', head: 'Ms. Elena Gilbert', staffCount: 32, studentCount: 680, color: 'bg-amber-600' },
-    { id: '4', name: 'Computer Applications', code: 'COMP-04', head: 'Mr. Alan Turing', staffCount: 15, studentCount: 210, color: 'bg-blue-600' },
-    { id: '5', name: 'Physical Education', code: 'PE-05', head: 'Coach Carter', staffCount: 12, studentCount: 890, color: 'bg-rose-600' },
-  ];
+  const [newDept, setNewDept] = useState({
+    name: '',
+    code: '',
+    head_name: '',
+    campus_id: ''
+  });
+
+  const effectiveTenantId = tenant?.id || 'apex_k12';
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [deptData, campusData] = await Promise.all([
+        DepartmentService.getDepartments(effectiveTenantId),
+        CampusService.getCampuses(effectiveTenantId)
+      ]);
+
+      setCampuses(campusData);
+
+      if (deptData && deptData.length > 0) {
+        setDepartments(deptData.map(d => ({
+          id: d.id,
+          name: d.name,
+          code: d.code,
+          head: d.head_user_id || 'Department Head',
+          staffCount: d.staff_count || 12,
+          studentCount: 300,
+          campusName: (d as any).campus?.name || 'Main Campus',
+          color: 'bg-indigo-600'
+        })));
+      } else {
+        // Fallback default departments
+        setDepartments([
+          { id: '1', name: 'Science & Research', code: 'SCI-01', head: 'Dr. Sarah Wilson', staffCount: 24, studentCount: 450, color: 'bg-indigo-600', campusName: 'Main Heritage Campus' },
+          { id: '2', name: 'Mathematics', code: 'MATH-02', head: 'Prof. James Bond', staffCount: 18, studentCount: 320, color: 'bg-emerald-600', campusName: 'Main Heritage Campus' },
+          { id: '3', name: 'Humanities & Arts', code: 'HUM-03', head: 'Ms. Elena Gilbert', staffCount: 32, studentCount: 680, color: 'bg-amber-600', campusName: 'Main Heritage Campus' },
+          { id: '4', name: 'Computer Applications', code: 'COMP-04', head: 'Mr. Alan Turing', staffCount: 15, studentCount: 210, color: 'bg-blue-600', campusName: 'Science & Innovation Node' },
+          { id: '5', name: 'Physical Education', code: 'PE-05', head: 'Coach Carter', staffCount: 12, studentCount: 890, color: 'bg-rose-600', campusName: 'Main Heritage Campus' },
+        ]);
+      }
+    } catch (err) {
+      console.error('Error loading department data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+    loadData();
+  }, [effectiveTenantId]);
+
+  const handleCreateDepartment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDept.name || !newDept.code) return;
+
+    setCreating(true);
+    try {
+      const selectedCampus = campuses.find(c => c.id === newDept.campus_id) || campuses[0];
+      const payload: Partial<DepartmentRecord> = {
+        name: newDept.name,
+        code: newDept.code,
+        campus_id: selectedCampus?.id || '00000000-0000-0000-0000-000000000001',
+        head_user_id: newDept.head_name || 'Department Lead',
+        status: 'ACTIVE'
+      };
+
+      const { error } = await DepartmentService.createDepartment(payload, effectiveTenantId);
+      if (!error) {
+        setShowAddModal(false);
+        setNewDept({ name: '', code: '', head_name: '', campus_id: '' });
+        loadData();
+      }
+    } catch (err) {
+      console.error('Create department error:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const filteredDepartments = departments.filter(d => 
     d.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -95,7 +164,10 @@ export const DepartmentsPage: React.FC<DepartmentsPageProps> = ({ tenant, onNavi
               </div>
            </div>
 
-           <button className="flex items-center gap-3 px-8 py-5 bg-indigo-600 text-white rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-200 hover:bg-indigo-700 hover:translate-y-[-2px] transition-all">
+           <button 
+             onClick={() => setShowAddModal(true)}
+             className="flex items-center gap-3 px-8 py-5 bg-indigo-600 text-white rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-200 hover:bg-indigo-700 hover:translate-y-[-2px] transition-all cursor-pointer"
+           >
             <Plus className="w-4 h-4" /> Add Department
           </button>
         </div>
@@ -195,6 +267,93 @@ export const DepartmentsPage: React.FC<DepartmentsPageProps> = ({ tenant, onNavi
            <p className="text-slate-400 font-medium mt-2 max-w-xs mx-auto text-center">
              Refine your search parameters or register a new functional department.
            </p>
+        </div>
+      )}
+
+      {/* Add Department Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-6 animate-in zoom-in-95 duration-200 text-left">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                 <div>
+                    <h3 className="text-lg font-black text-slate-900">Provision Department Node</h3>
+                    <p className="text-xs text-slate-500 font-medium">Create a new academic or operational department.</p>
+                 </div>
+                 <button onClick={() => setShowAddModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                    <X className="w-5 h-5" />
+                 </button>
+              </div>
+
+              <form onSubmit={handleCreateDepartment} className="space-y-4">
+                 <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Department Name *</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={newDept.name}
+                      onChange={e => setNewDept({...newDept, name: e.target.value})}
+                      placeholder="e.g. Department of Cybernetics"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Code *</label>
+                       <input 
+                         type="text" 
+                         required
+                         value={newDept.code}
+                         onChange={e => setNewDept({...newDept, code: e.target.value})}
+                         placeholder="e.g. CYB-01"
+                         className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                       />
+                    </div>
+                    <div>
+                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Campus Node</label>
+                       <select 
+                         value={newDept.campus_id}
+                         onChange={e => setNewDept({...newDept, campus_id: e.target.value})}
+                         className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                       >
+                          <option value="">Default / All Campuses</option>
+                          {campuses.map(c => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                       </select>
+                    </div>
+                 </div>
+
+                 <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Department Head Name</label>
+                    <input 
+                      type="text" 
+                      value={newDept.head_name}
+                      onChange={e => setNewDept({...newDept, head_name: e.target.value})}
+                      placeholder="e.g. Dr. Alan Grant"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                 </div>
+
+                 <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowAddModal(false)}
+                      className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                       Cancel
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={creating}
+                      className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-all shadow-xs flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                    >
+                       {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                       Create Department
+                    </button>
+                 </div>
+              </form>
+           </div>
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { History, Search, Filter, Clock, UserCheck, Activity, Shield, Download, RefreshCw } from 'lucide-react';
 import { Tenant } from '../../../types';
+import { AuditLogger } from '../../../services/AuditLogger';
 
 interface AuditHistoryPageProps {
   tenant: Tenant;
@@ -9,18 +10,14 @@ interface AuditHistoryPageProps {
 export const AuditHistoryPage: React.FC<AuditHistoryPageProps> = ({ tenant }) => {
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
   const effectiveTenantId = tenant?.id || '00000000-0000-0000-0000-000000000001';
 
   const loadLogs = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/gateway/v1/organizations/audit-logs', {
-        headers: { 'x-tenant-id': effectiveTenantId }
-      });
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) setLogs(result.data || []);
-      }
+      const fetchedLogs = await AuditLogger.getLogs(effectiveTenantId);
+      setLogs(fetchedLogs || []);
     } catch (err) {
       console.error('Error loading audit logs:', err);
     } finally {
@@ -32,19 +29,54 @@ export const AuditHistoryPage: React.FC<AuditHistoryPageProps> = ({ tenant }) =>
     loadLogs();
   }, [effectiveTenantId]);
 
+  const filteredLogs = logs.filter(log => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      (log.event_type && log.event_type.toLowerCase().includes(q)) ||
+      (log.details && log.details.toLowerCase().includes(q)) ||
+      (log.performer_name && log.performer_name.toLowerCase().includes(q))
+    );
+  });
+
+  const exportLogs = () => {
+    if (!filteredLogs || filteredLogs.length === 0) return;
+    const headers = ['Timestamp', 'Event Type', 'Details', 'Performer'];
+    const rows = filteredLogs.map(log => [
+      `"${new Date(log.created_at).toISOString()}"`,
+      `"${log.event_type || ''}"`,
+      `"${(log.details || '').replace(/"/g, '""')}"`,
+      `"${log.performer_name || 'System'}"`
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Audit_Logs_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 text-left">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">System Audit History</h2>
           <p className="text-sm text-slate-500 font-medium mt-1">Immutable trail of institutional modifications and security events.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={loadLogs} className="p-2.5 bg-white border border-slate-200 rounded-2xl text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-2xs">
+          <button onClick={loadLogs} className="p-2.5 bg-white border border-slate-200 rounded-2xl text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-2xs cursor-pointer">
             <RefreshCw className="w-4 h-4" />
           </button>
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-2xl text-xs font-bold uppercase tracking-wider shadow-sm hover:bg-slate-50 transition-all">
-            <Download className="w-4 h-4" /> Export Logs
+          <button 
+            onClick={exportLogs}
+            disabled={filteredLogs.length === 0}
+            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-2xl text-xs font-bold uppercase tracking-wider shadow-sm hover:bg-slate-50 transition-all disabled:opacity-50 cursor-pointer"
+          >
+            <Download className="w-4 h-4" /> Export CSV ({filteredLogs.length})
           </button>
         </div>
       </div>
@@ -54,7 +86,13 @@ export const AuditHistoryPage: React.FC<AuditHistoryPageProps> = ({ tenant }) =>
             <div className="flex items-center gap-4">
                <div className="relative group">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                  <input type="text" placeholder="Filter by user or event..." className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-wider w-64 outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" />
+                  <input 
+                    type="text" 
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Filter by user or event..." 
+                    className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-wider w-64 outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" 
+                  />
                </div>
             </div>
             <div className="flex items-center gap-2">
@@ -83,8 +121,8 @@ export const AuditHistoryPage: React.FC<AuditHistoryPageProps> = ({ tenant }) =>
                          </div>
                       </td>
                     </tr>
-                  ) : logs.length > 0 ? (
-                    logs.map((log, idx) => (
+                  ) : filteredLogs.length > 0 ? (
+                    filteredLogs.map((log, idx) => (
                       <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-3">

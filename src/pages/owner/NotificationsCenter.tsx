@@ -81,51 +81,33 @@ export const NotificationsCenter: React.FC<NotificationsCenterProps> = ({ onNavi
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-        <div className="flex items-center gap-3">
-          {onNavigate && (
-            <button onClick={() => onNavigate('dashboard')} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 cursor-pointer">
-              <ArrowLeft className="w-5 h-5" />
+    <div className="pt-6 px-6 pb-6 max-w-5xl mx-auto space-y-6">
+      {/* Filters */}
+      <div className="flex items-center justify-between gap-4 overflow-x-auto pb-2 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-2 overflow-x-auto">
+          <Filter className="w-4 h-4 text-slate-400 shrink-0 ml-1" />
+          {(['all', 'unread', 'security', 'finance', 'academic'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setFilter(tab)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold capitalize transition whitespace-nowrap cursor-pointer ${
+                filter === tab
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              {tab}
             </button>
-          )}
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900">Notifications Center</h1>
-              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-indigo-100 text-indigo-700">
-                {notifications.filter(n => !n.read).length} Unread
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">Real-time enterprise alerts & system logs</p>
-          </div>
+          ))}
         </div>
 
         <button 
           onClick={markAllAsRead}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer"
+          className="flex items-center gap-2 px-4 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer shrink-0 ml-auto"
         >
           <CheckCheck className="w-4 h-4 text-emerald-600" />
           <span>Mark all as read</span>
         </button>
-      </div>
-
-      {/* Filters */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        <Filter className="w-4 h-4 text-slate-400 shrink-0 ml-1" />
-        {(['all', 'unread', 'security', 'finance', 'academic'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setFilter(tab)}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold capitalize transition whitespace-nowrap cursor-pointer ${
-              filter === tab
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
       </div>
 
       {/* Notifications List */}

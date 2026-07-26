@@ -62,28 +62,31 @@ export const QuickActionCenter: React.FC<QuickActionCenterProps> = ({ onNavigate
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 h-full flex flex-col">
-      <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
-        <span className="text-xl">⚡</span> Quick Actions
+    <div className="bg-white rounded-2xl border border-slate-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-6 h-full flex flex-col transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+      <h3 className="font-bold text-slate-900 text-sm md:text-base flex items-center gap-2 mb-5">
+        <span className="text-base">⚡</span>
+        System Shortcuts
       </h3>
       
       <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar">
         {actions.map((category) => (
-          <div key={category.id} className="border border-slate-100 rounded-lg overflow-hidden group">
-            <button className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
-              <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
-                <category.icon className="w-4 h-4 text-indigo-600" />
+          <div key={category.id} className="border border-slate-100/80 rounded-xl overflow-hidden group">
+            <button className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100/60 transition-colors cursor-pointer">
+              <div className="flex items-center gap-2.5 text-slate-700 font-bold text-[13px]">
+                <div className="p-1.5 bg-white rounded-lg border border-slate-200/40 shadow-2xs">
+                  <category.icon className="w-3.5 h-3.5 text-slate-600 stroke-[2.2]" />
+                </div>
                 {category.title}
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition" />
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600 transition" />
             </button>
-            <div className="hidden group-hover:block p-3 bg-white border-t border-slate-100">
+            <div className="hidden group-hover:block p-3.5 bg-white border-t border-slate-100">
               <div className="flex flex-wrap gap-2">
                 {category.items.map((item, idx) => (
                   <button 
                     key={idx} 
                     onClick={() => onNavigate(item.route)}
-                    className="px-2.5 py-1.5 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 text-xs font-medium rounded border border-slate-200 hover:border-indigo-200 transition-colors cursor-pointer"
+                    className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-900 text-slate-600 hover:text-white text-[11px] font-bold rounded-lg border border-slate-200/60 hover:border-slate-950 transition-all duration-200 cursor-pointer"
                   >
                     {item.label}
                   </button>

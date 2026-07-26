@@ -5,6 +5,7 @@ import { BentoGrid } from './landing/BentoGrid';
 import { FooterSection } from './landing/FooterSection';
 import { ArrowUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { RolePreviewButtons } from '../../components/common/RolePreviewButtons';
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -81,19 +82,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* Admin Quick Entry - Subtle */}
-      <div className="fixed bottom-6 left-6 z-[100]">
-        <button 
-          onClick={() => {
-            import('../../store/authStore').then(({ authStore }) => {
-              authStore.login({ id: 'test-owner', name: 'Test Owner', role: 'organization_owner', email: 'owner@test.com' }, false);
-              if (onNavigate) onNavigate('/app');
-            });
-          }}
-          className="px-3 py-1.5 rounded-full bg-slate-100 text-[9px] font-bold text-slate-500 uppercase tracking-widest border border-slate-200 hover:bg-slate-200 transition-colors opacity-40 hover:opacity-100"
-        >
-          Dev Access
-        </button>
+      {/* Admin Quick Entry - Role Previews */}
+      <div className="fixed bottom-6 left-6 z-[100] hidden sm:block">
+        <RolePreviewButtons variant="compact" onNavigate={navigate} />
       </div>
     </div>
   );

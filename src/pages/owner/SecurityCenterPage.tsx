@@ -7,27 +7,7 @@ interface SecurityCenterPageProps {
 
 export const SecurityCenterPage: React.FC<SecurityCenterPageProps> = ({ onNavigate }) => {
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-        <div className="flex items-center gap-3">
-          {onNavigate && (
-            <button onClick={() => onNavigate('dashboard')} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 cursor-pointer">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-          )}
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Security & Audit Center</h1>
-            <p className="text-xs text-slate-500">Supabase RLS policies, RBAC access logs & session controls</p>
-          </div>
-        </div>
-
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold rounded-full">
-          <CheckCircle className="w-4 h-4 text-emerald-600" />
-          <span>RLS Enforced</span>
-        </span>
-      </div>
-
+    <div className="pt-6 px-6 pb-6 max-w-5xl mx-auto space-y-6">
       {/* Security Status Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-2">

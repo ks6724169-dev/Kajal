@@ -32,20 +32,7 @@ export const OwnerHelpSupportPage: React.FC<OwnerHelpSupportPageProps> = ({ onNa
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        {onNavigate && (
-          <button onClick={() => onNavigate('dashboard')} className="p-2 hover:bg-slate-200/60 rounded-xl text-slate-600 transition cursor-pointer">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        )}
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Owner Help & Support Center</h1>
-          <p className="text-xs text-slate-500">System documentation, module guides & developer support tickets</p>
-        </div>
-      </div>
-
+    <div className="pt-6 px-6 pb-6 max-w-5xl mx-auto space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* FAQs Column */}
         <div className="lg:col-span-2 space-y-4">

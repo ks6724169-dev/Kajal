@@ -7,8 +7,9 @@ import {
   Users, 
   Building2, 
   ShieldCheck,
-  ChevronRight,
   Globe,
+  Plus,
+  X,
   Loader2
 } from 'lucide-react';
 import { Tenant } from '../../../types';
@@ -22,23 +23,80 @@ interface CampusOverviewPageProps {
 export const CampusOverviewPage: React.FC<CampusOverviewPageProps> = ({ tenant, onNavigate }) => {
   const [loading, setLoading] = useState(true);
   const [campuses, setCampuses] = useState<CampusRecord[]>([]);
+  const [search, setSearch] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  const [newCampus, setNewCampus] = useState({
+    name: '',
+    code: '',
+    type: 'PRIMARY',
+    address: '',
+    city: '',
+    state: '',
+    pincode: '',
+    phone: '',
+    email: '',
+    capacity: 500
+  });
 
   const effectiveTenantId = tenant?.id || 'apex_k12';
 
+  const loadCampuses = async () => {
+    setLoading(true);
+    try {
+      const data = await CampusService.getCampuses(effectiveTenantId);
+      setCampuses(data);
+    } catch (err) {
+      console.error('Campus Load Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadCampuses = async () => {
-      setLoading(true);
-      try {
-        const data = await CampusService.getCampuses(effectiveTenantId);
-        setCampuses(data);
-      } catch (err) {
-        console.error('Campus Load Error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadCampuses();
   }, [effectiveTenantId]);
+
+  const handleCreateCampus = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCampus.name || !newCampus.code) return;
+
+    setCreating(true);
+    try {
+      const { error } = await CampusService.createCampus(newCampus as any, effectiveTenantId);
+      if (!error) {
+        setShowAddModal(false);
+        setNewCampus({
+          name: '',
+          code: '',
+          type: 'PRIMARY',
+          address: '',
+          city: '',
+          state: '',
+          pincode: '',
+          phone: '',
+          email: '',
+          capacity: 500
+        });
+        loadCampuses();
+      }
+    } catch (err) {
+      console.error('Error creating campus:', err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const filteredCampuses = campuses.filter(c => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      c.name.toLowerCase().includes(q) ||
+      c.code.toLowerCase().includes(q) ||
+      (c.city && c.city.toLowerCase().includes(q))
+    );
+  });
 
   if (loading) {
     return (
@@ -50,39 +108,44 @@ export const CampusOverviewPage: React.FC<CampusOverviewPageProps> = ({ tenant, 
   }
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 pb-10">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-200 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-           <div className="flex items-center gap-2 text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-2">
+           <div className="flex items-center gap-2 text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-1">
              <div className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
-             Work Area: 03
+             Campus Overview
            </div>
-           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Campus Overview</h1>
-           <p className="text-slate-500 text-sm mt-1 max-w-xl">Unified monitoring of institutional nodes across regions.</p>
+           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Institutional Campus Nodes</h1>
+           <p className="text-slate-500 text-xs mt-0.5 max-w-xl">Unified monitoring of institutional nodes across regions.</p>
         </div>
 
-        <div className="flex items-center gap-3">
-           <div className="relative group">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+           <div className="relative group w-full sm:w-56">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
                 type="text" 
+                value={search}
+                onChange={e => setSearch(e.target.value)}
                 placeholder="Search campus..."
-                className="pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-900 focus:bg-white focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all w-64 shadow-sm"
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all shadow-xs"
               />
            </div>
-           <button className="p-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-all shadow-sm">
-              <Filter className="w-4 h-4" />
+           <button 
+             onClick={() => setShowAddModal(true)}
+             className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold shadow-xs hover:bg-indigo-700 transition-all cursor-pointer whitespace-nowrap shrink-0"
+           >
+              <Plus className="w-4 h-4" /> Add Campus
            </button>
         </div>
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {campuses.length > 0 ? campuses.map((campus) => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {filteredCampuses.length > 0 ? filteredCampuses.map((campus) => (
           <div 
             key={campus.id}
-            className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col sm:flex-row gap-8 hover:shadow-md hover:border-indigo-200 transition-all group"
+            className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-6 hover:shadow-md hover:border-indigo-200 transition-all group"
           >
              <div className="w-24 h-24 rounded-lg bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100 shadow-sm overflow-hidden group-hover:scale-105 transition-transform">
                 <div className="text-slate-200">
@@ -101,7 +164,7 @@ export const CampusOverviewPage: React.FC<CampusOverviewPageProps> = ({ tenant, 
                    </div>
                    <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-600 rounded text-[9px] font-bold uppercase tracking-widest border border-emerald-100">
                       <div className="w-1 h-1 rounded-full bg-emerald-500" />
-                      {campus.status}
+                      {campus.status || 'ACTIVE'}
                    </div>
                 </div>
 
@@ -112,7 +175,7 @@ export const CampusOverviewPage: React.FC<CampusOverviewPageProps> = ({ tenant, 
                       </div>
                       <div>
                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Location</p>
-                         <p className="text-[11px] font-bold text-slate-900">{campus.city}, {campus.state}</p>
+                         <p className="text-[11px] font-bold text-slate-900">{campus.city || 'Central'}, {campus.state || 'Region'}</p>
                       </div>
                    </div>
                    <div className="flex items-center gap-3">
@@ -120,8 +183,8 @@ export const CampusOverviewPage: React.FC<CampusOverviewPageProps> = ({ tenant, 
                          <Users className="w-4 h-4" />
                       </div>
                       <div>
-                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Students</p>
-                         <p className="text-[11px] font-bold text-slate-900">{campus.student_count?.toLocaleString() || '0'}</p>
+                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Capacity</p>
+                         <p className="text-[11px] font-bold text-slate-900">{campus.student_count?.toLocaleString() || campus.capacity || '500'}</p>
                       </div>
                    </div>
                 </div>
@@ -135,7 +198,7 @@ export const CampusOverviewPage: React.FC<CampusOverviewPageProps> = ({ tenant, 
                    </div>
                    <button 
                      onClick={() => onNavigate(`/owner/dashboard`)}
-                     className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 text-slate-500 hover:bg-indigo-600 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all"
+                     className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 text-slate-500 hover:bg-indigo-600 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer"
                    >
                       Manage <ArrowUpRight className="w-3 h-3" />
                    </button>
@@ -150,7 +213,128 @@ export const CampusOverviewPage: React.FC<CampusOverviewPageProps> = ({ tenant, 
         )}
       </div>
 
-      {/* Strategy Panel (Microsoft Fluent Style) */}
+      {/* Add Campus Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-6 animate-in zoom-in-95 duration-200 text-left">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                 <div>
+                    <h3 className="text-lg font-bold text-slate-900">Add New Campus Node</h3>
+                    <p className="text-xs text-slate-500">Register a new physical or virtual educational branch.</p>
+                 </div>
+                 <button onClick={() => setShowAddModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                    <X className="w-5 h-5" />
+                 </button>
+              </div>
+
+              <form onSubmit={handleCreateCampus} className="space-y-4">
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Campus Name *</label>
+                       <input 
+                         type="text" 
+                         required
+                         value={newCampus.name}
+                         onChange={e => setNewCampus({...newCampus, name: e.target.value})}
+                         placeholder="e.g. Westside Innovation Campus"
+                         className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                       />
+                    </div>
+                    <div>
+                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Campus Code *</label>
+                       <input 
+                         type="text" 
+                         required
+                         value={newCampus.code}
+                         onChange={e => setNewCampus({...newCampus, code: e.target.value})}
+                         placeholder="e.g. CAMPUS-03"
+                         className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                       />
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Node Type</label>
+                       <select 
+                         value={newCampus.type}
+                         onChange={e => setNewCampus({...newCampus, type: e.target.value})}
+                         className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                       >
+                          <option value="PRIMARY">PRIMARY</option>
+                          <option value="SECONDARY">SECONDARY</option>
+                          <option value="SATELLITE">SATELLITE</option>
+                          <option value="ONLINE">ONLINE</option>
+                       </select>
+                    </div>
+                    <div>
+                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Capacity</label>
+                       <input 
+                         type="number" 
+                         value={newCampus.capacity}
+                         onChange={e => setNewCampus({...newCampus, capacity: parseInt(e.target.value) || 0})}
+                         className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                       />
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">City</label>
+                       <input 
+                         type="text" 
+                         value={newCampus.city}
+                         onChange={e => setNewCampus({...newCampus, city: e.target.value})}
+                         placeholder="e.g. San Francisco"
+                         className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                       />
+                    </div>
+                    <div>
+                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">State / Province</label>
+                       <input 
+                         type="text" 
+                         value={newCampus.state}
+                         onChange={e => setNewCampus({...newCampus, state: e.target.value})}
+                         placeholder="e.g. CA"
+                         className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                       />
+                    </div>
+                 </div>
+
+                 <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Street Address</label>
+                    <input 
+                      type="text" 
+                      value={newCampus.address}
+                      onChange={e => setNewCampus({...newCampus, address: e.target.value})}
+                      placeholder="e.g. 700 Innovation Blvd"
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                 </div>
+
+                 <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowAddModal(false)}
+                      className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                       Cancel
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={creating}
+                      className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-all shadow-xs flex items-center gap-2 disabled:opacity-50"
+                    >
+                       {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                       Create Campus
+                    </button>
+                 </div>
+              </form>
+           </div>
+        </div>
+      )}
+
+      {/* Strategy Panel */}
       <div className="bg-white rounded-xl p-8 border border-slate-200 shadow-sm relative overflow-hidden group">
          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
             <div>
@@ -159,7 +343,7 @@ export const CampusOverviewPage: React.FC<CampusOverviewPageProps> = ({ tenant, 
                   Nodes represent functional operational units. Ensure geographic distribution aligns with institutional growth targets and operational compliance.
                </p>
             </div>
-            <button className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-md hover:bg-black transition-all">
+            <button className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-md hover:bg-black transition-all cursor-pointer">
                Node Distribution Report <ArrowUpRight className="w-4 h-4 ml-1" />
             </button>
          </div>

@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigation } from '../hooks/useNavigation';
 import { useWorkspace } from '../hooks/useWorkspace';
 import { Tenant } from '../types';
+import { PreviewModeBanner } from '../components/common/PreviewModeBanner';
 
 interface RoleRouterProps {
   route: string;
@@ -106,5 +107,11 @@ export const RoleRouter: React.FC<RoleRouterProps> = ({
     );
   }
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 flex flex-col">
+        {children}
+      </div>
+    </div>
+  );
 };

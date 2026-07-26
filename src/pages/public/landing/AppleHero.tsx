@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { ChevronRight, Play, ShieldCheck } from 'lucide-react';
 import { FeaturesSidebar } from './components/FeaturesSidebar';
 import { authStore } from '../../../store/authStore';
+import { RolePreviewButtons } from '../../../components/common/RolePreviewButtons';
 
 export const AppleHero: React.FC<{ onNavigate: (path: string) => void }> = ({ onNavigate }) => {
   const handleTestOwnerLogin = () => {
@@ -76,16 +77,9 @@ export const AppleHero: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                 Watch the film <Play className="w-4 h-4 fill-indigo-600" />
               </button>
 
-              {/* Developer Testing Tool */}
-              <div className="w-full mt-4 flex items-center gap-4">
-                <button
-                  onClick={handleTestOwnerLogin}
-                  className="group flex items-center gap-2 px-6 py-2.5 bg-slate-50 hover:bg-indigo-600 text-slate-500 hover:text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 border border-slate-200/50 hover:border-indigo-500 shadow-sm"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                  <span>Test Owner Dashboard</span>
-                </button>
-                <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest hidden md:inline">Development Tool</span>
+              {/* Developer Testing Role Previews */}
+              <div className="w-full mt-6">
+                <RolePreviewButtons variant="hero" onNavigate={onNavigate} />
               </div>
             </motion.div>
 

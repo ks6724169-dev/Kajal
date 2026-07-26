@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../../core/theme/ThemeContext';
 import { useTranslation } from '../../../core/i18n/I18nContext';
+import { RolePreviewButtons } from '../../../components/common/RolePreviewButtons';
 
 interface NavigationDrawerProps {
   isOpen: boolean;
@@ -105,6 +106,8 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({ isOpen, onCl
             </div>
 
             <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 space-y-3">
+              <RolePreviewButtons variant="drawer" onNavigate={(path) => { onNavigate(path); onClose(); }} />
+
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <button 
                   onClick={() => setLanguage('en')}

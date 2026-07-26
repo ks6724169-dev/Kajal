@@ -160,118 +160,108 @@ export const InstitutionProfilePage: React.FC<InstitutionProfilePageProps> = ({ 
   ] as const;
 
   return (
-    <div className="max-w-[1200px] mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
-      {/* Page Header (Structured Header) */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 pb-6 border-b border-slate-200">
-        <div>
-           <div className="flex items-center gap-2 text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-2">
-             <div className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
-             Work Area: 01
-           </div>
-           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Institution Profile</h1>
-           <p className="text-slate-500 text-sm mt-1 max-w-xl">Manage legal registration, statutory identity, and core organizational metadata.</p>
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
+      {/* Action Row & Segmented Section Navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/80 p-2 rounded-xl border border-slate-200/80">
+        <div className="flex items-center overflow-x-auto no-scrollbar gap-1">
+          {sections.map(section => (
+            <button
+              key={section.id}
+              onClick={() => setActiveSection(section.id as ProfileSection)}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                activeSection === section.id 
+                  ? 'bg-indigo-600 text-white shadow-xs' 
+                  : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
+              }`}
+            >
+              <section.icon className="w-3.5 h-3.5" /> {section.label}
+            </button>
+          ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 shrink-0">
           {!isEditing ? (
             <button 
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold shadow-sm hover:bg-indigo-700 transition-all active:scale-[0.98]"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold shadow-xs hover:bg-indigo-700 transition-all cursor-pointer"
             >
-              <Edit2 className="w-4 h-4" /> Edit Profile
+              <Edit2 className="w-3.5 h-3.5" /> Edit Profile
             </button>
           ) : (
             <div className="flex items-center gap-2">
                <button 
                  onClick={() => setIsEditing(false)}
-                 className="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-all"
+                 className="px-3.5 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-100 transition-all cursor-pointer"
                >
                  Cancel
                </button>
                <button 
                  onClick={handleSave}
                  disabled={saving}
-                 className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold shadow-sm hover:bg-emerald-700 transition-all disabled:opacity-50"
+                 className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold shadow-xs hover:bg-emerald-700 transition-all disabled:opacity-50 cursor-pointer"
                >
-                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} 
-                 Save Changes
+                 {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} 
+                 Save
                </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Segmented Navigation (Fluent/Material style) */}
-      <div className="bg-white border border-slate-200 rounded-xl p-1 flex overflow-x-auto no-scrollbar gap-1 mb-10 shadow-sm">
-        {sections.map(section => (
-          <button
-            key={section.id}
-            onClick={() => setActiveSection(section.id as ProfileSection)}
-            className={`flex items-center gap-2.5 px-6 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest whitespace-nowrap transition-all ${
-              activeSection === section.id 
-                ? 'bg-slate-900 text-white shadow-md' 
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-            }`}
-          >
-            <section.icon className="w-4 h-4" /> {section.label}
-          </button>
-        ))}
-      </div>
-
       {/* Section Content */}
-      <div className="space-y-10">
+      <div className="space-y-6">
         {activeSection === 'overview' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-             <div className="md:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-8 space-y-8">
-                <div className="flex items-center gap-6 pb-8 border-b border-slate-100">
-                   <div className="w-20 h-20 rounded-lg bg-slate-50 border border-slate-200 shadow-sm flex items-center justify-center shrink-0">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+             <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6 md:p-8 space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 pb-6 border-b border-slate-100">
+                   <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-slate-50 border border-slate-200 shadow-sm flex items-center justify-center shrink-0">
                       {institution?.logo_url ? (
-                        <img src={institution.logo_url} className="w-full h-full object-contain p-3" />
-                      ) : <Building className="w-10 h-10 text-slate-200" />}
+                        <img src={institution.logo_url} className="w-full h-full object-contain p-2 sm:p-3" />
+                      ) : <Building className="w-8 h-8 sm:w-10 sm:h-10 text-slate-200" />}
                    </div>
                    <div>
-                      <h3 className="text-xl font-bold text-slate-900 tracking-tight">{form.name || 'Organization Name'}</h3>
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">{form.name || 'Organization Name'}</h3>
                       <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mt-1">{form.institution_type || 'Entity Type'}</p>
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                    <div>
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Registration Number</label>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Registration Number</label>
                       <p className="text-sm font-bold text-slate-900">{form.registration_number || 'Not Provided'}</p>
                    </div>
                    <div>
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Established Year</label>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Established Year</label>
                       <p className="text-sm font-bold text-slate-900">{form.established_year || 'Not Provided'}</p>
                    </div>
                    <div className="sm:col-span-2">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Official Website</label>
-                      <a href={`https://${form.website}`} target="_blank" rel="noreferrer" className="text-sm font-bold text-indigo-600 hover:underline flex items-center gap-2">
-                         {form.website || 'No website listed'} <ExternalLink className="w-3 h-3" />
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Official Website</label>
+                      <a href={`https://${form.website}`} target="_blank" rel="noreferrer" className="text-sm font-bold text-indigo-600 hover:underline flex items-center gap-2 break-all">
+                         {form.website || 'No website listed'} <ExternalLink className="w-3 h-3 shrink-0" />
                       </a>
                    </div>
                 </div>
              </div>
 
-             <div className="bg-slate-900 rounded-xl p-8 text-white relative overflow-hidden shadow-lg border border-slate-800">
+             <div className="bg-slate-900 rounded-xl p-5 sm:p-6 md:p-8 text-white relative overflow-hidden shadow-lg border border-slate-800">
                 <div className="relative z-10 flex flex-col h-full">
-                   <div className="flex items-center gap-3 mb-8">
+                   <div className="flex items-center gap-3 mb-6">
                       <div className="w-10 h-10 rounded-lg bg-white/10 backdrop-blur-xl flex items-center justify-center">
                          <Shield className="w-5 h-5 text-indigo-400" />
                       </div>
-                      <h3 className="text-lg font-bold tracking-tight">Identity Health</h3>
+                      <h3 className="text-base sm:text-lg font-bold tracking-tight">Identity Health</h3>
                    </div>
-                   <div className="space-y-6 flex-1">
-                      <div className="flex items-center justify-between py-4 border-b border-white/5">
+                   <div className="space-y-4 flex-1">
+                      <div className="flex items-center justify-between py-3 border-b border-white/10">
                          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Completeness</span>
-                         <span className="text-lg font-bold text-white">92%</span>
+                         <span className="text-base sm:text-lg font-bold text-white">92%</span>
                       </div>
-                      <div className="flex items-center justify-between py-4 border-b border-white/5">
+                      <div className="flex items-center justify-between py-3 border-b border-white/10">
                          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Security Tier</span>
-                         <span className="text-lg font-bold text-white">Verified</span>
+                         <span className="text-base sm:text-lg font-bold text-white">Verified</span>
                       </div>
                    </div>
-                   <button className="mt-10 w-full py-3 bg-white/5 hover:bg-white/10 transition-all rounded-lg text-[10px] font-bold uppercase tracking-widest border border-white/10">
+                   <button className="mt-6 sm:mt-10 w-full py-2.5 sm:py-3 bg-white/5 hover:bg-white/10 transition-all rounded-lg text-[10px] font-bold uppercase tracking-widest border border-white/10 cursor-pointer">
                       Download Identity Summary
                    </button>
                 </div>
@@ -283,7 +273,7 @@ export const InstitutionProfilePage: React.FC<InstitutionProfilePageProps> = ({ 
         )}
 
         {activeSection === 'basic' && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 lg:p-12 space-y-10">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6 md:p-8 lg:p-12 space-y-6 sm:space-y-10">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Full Institution Name</label>
@@ -360,15 +350,237 @@ export const InstitutionProfilePage: React.FC<InstitutionProfilePageProps> = ({ 
           </div>
         )}
 
-        {(activeSection !== 'overview' && activeSection !== 'basic') && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-20 text-center">
-             <div className="w-16 h-16 rounded-xl bg-slate-50 flex items-center justify-center mx-auto mb-6 border border-slate-100">
-                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+        {activeSection === 'registration' && (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 lg:p-12 space-y-8">
+             <div className="flex items-center justify-between pb-6 border-b border-slate-100">
+                <div>
+                   <h3 className="text-lg font-bold text-slate-900 tracking-tight">Legal Registration & Statutory Identity</h3>
+                   <p className="text-xs text-slate-500 font-medium">Statutory registration credentials verified with education regulatory authorities.</p>
+                </div>
+                <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-emerald-200">Statutory Verified</span>
              </div>
-             <h3 className="text-xl font-bold text-slate-900 tracking-tight mb-2">Syncing Module Data</h3>
-             <p className="text-xs font-semibold text-slate-500 max-w-xs mx-auto uppercase tracking-widest leading-loose">
-                Please wait while the {activeSection} workspace is synchronized with the master control plane.
-             </p>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Registration / Accreditation Number</label>
+                   {isEditing ? (
+                     <input 
+                       type="text" 
+                       value={form.registration_number}
+                       onChange={e => setForm({...form, registration_number: e.target.value})}
+                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-900 focus:bg-white focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all"
+                     />
+                   ) : (
+                     <p className="px-4 py-3 bg-slate-50 rounded-lg text-sm font-bold text-slate-900">{form.registration_number || 'REG-2026-X89'}</p>
+                   )}
+                </div>
+                <div className="space-y-2">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Tax / EIN Identification ID</label>
+                   {isEditing ? (
+                     <input 
+                       type="text" 
+                       value={form.tax_id}
+                       onChange={e => setForm({...form, tax_id: e.target.value})}
+                       placeholder="e.g. TAX-8839210-US"
+                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-900 focus:bg-white focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all"
+                     />
+                   ) : (
+                     <p className="px-4 py-3 bg-slate-50 rounded-lg text-sm font-bold text-slate-900">{form.tax_id || 'TAX-9988221-EX'}</p>
+                   )}
+                </div>
+             </div>
+          </div>
+        )}
+
+        {activeSection === 'affiliation' && (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 lg:p-12 space-y-8">
+             <div className="flex items-center justify-between pb-6 border-b border-slate-100">
+                <div>
+                   <h3 className="text-lg font-bold text-slate-900 tracking-tight">Board & Academic Affiliations</h3>
+                   <p className="text-xs text-slate-500 font-medium">Educational board accreditation and university affiliation credentials.</p>
+                </div>
+                <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-indigo-200">Active Board</span>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Board / Education Authority</label>
+                   {isEditing ? (
+                     <input 
+                       type="text" 
+                       value={form.board}
+                       onChange={e => setForm({...form, board: e.target.value})}
+                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-900 focus:bg-white focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all"
+                     />
+                   ) : (
+                     <p className="px-4 py-3 bg-slate-50 rounded-lg text-sm font-bold text-slate-900">{form.board || 'Central Board of Education'}</p>
+                   )}
+                </div>
+                <div className="space-y-2">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Affiliation Code / Registration No.</label>
+                   {isEditing ? (
+                     <input 
+                       type="text" 
+                       value={form.affiliation_number}
+                       onChange={e => setForm({...form, affiliation_number: e.target.value})}
+                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-900 focus:bg-white focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all"
+                     />
+                   ) : (
+                     <p className="px-4 py-3 bg-slate-50 rounded-lg text-sm font-bold text-slate-900">{form.affiliation_number || 'AFF-9921-2026'}</p>
+                   )}
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Associated University (if applicable)</label>
+                   {isEditing ? (
+                     <input 
+                       type="text" 
+                       value={form.university}
+                       onChange={e => setForm({...form, university: e.target.value})}
+                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-900 focus:bg-white focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all"
+                     />
+                   ) : (
+                     <p className="px-4 py-3 bg-slate-50 rounded-lg text-sm font-bold text-slate-900">{form.university || 'State Central University'}</p>
+                   )}
+                </div>
+             </div>
+          </div>
+        )}
+
+        {activeSection === 'branding' && (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 lg:p-12 space-y-8">
+             <div className="flex items-center justify-between pb-6 border-b border-slate-100">
+                <div>
+                   <h3 className="text-lg font-bold text-slate-900 tracking-tight">Institutional Branding & Logo</h3>
+                   <p className="text-xs text-slate-500 font-medium">Public visual identifiers, insignia logo URL, and institutional motto.</p>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                <div className="flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-xl">
+                   <div className="w-28 h-28 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center p-4 mb-4">
+                      {form.logo_url ? (
+                        <img src={form.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                      ) : (
+                        <Building className="w-12 h-12 text-slate-300" />
+                      )}
+                   </div>
+                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Insignia Emblem</span>
+                </div>
+
+                <div className="md:col-span-2 space-y-6">
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Emblem Image URL</label>
+                      {isEditing ? (
+                        <input 
+                          type="text" 
+                          value={form.logo_url}
+                          onChange={e => setForm({...form, logo_url: e.target.value})}
+                          placeholder="https://example.com/logo.png"
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-900 focus:bg-white focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all"
+                        />
+                      ) : (
+                        <p className="px-4 py-3 bg-slate-50 rounded-lg text-sm font-mono text-slate-700 truncate">{form.logo_url || 'Default System Icon'}</p>
+                      )}
+                   </div>
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Official Motto</label>
+                      <p className="px-4 py-3 bg-slate-50 rounded-lg text-sm font-semibold text-slate-800 italic">"Excellence, Integrity & Innovation in Education"</p>
+                   </div>
+                </div>
+             </div>
+          </div>
+        )}
+
+        {activeSection === 'contact' && (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 lg:p-12 space-y-8">
+             <div className="flex items-center justify-between pb-6 border-b border-slate-100">
+                <div>
+                   <h3 className="text-lg font-bold text-slate-900 tracking-tight">Official Communication & Headquarters</h3>
+                   <p className="text-xs text-slate-500 font-medium">Official administrative email addresses, phone contacts, and physical headquarters location.</p>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Official Email</label>
+                   {isEditing ? (
+                     <input 
+                       type="email" 
+                       value={form.official_email}
+                       onChange={e => setForm({...form, official_email: e.target.value})}
+                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-900 focus:bg-white focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all"
+                     />
+                   ) : (
+                     <p className="px-4 py-3 bg-slate-50 rounded-lg text-sm font-bold text-slate-900">{form.official_email || 'admin@galaxy-edu.org'}</p>
+                   )}
+                </div>
+                <div className="space-y-2">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Official Phone</label>
+                   {isEditing ? (
+                     <input 
+                       type="text" 
+                       value={form.official_phone}
+                       onChange={e => setForm({...form, official_phone: e.target.value})}
+                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-900 focus:bg-white focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all"
+                     />
+                   ) : (
+                     <p className="px-4 py-3 bg-slate-50 rounded-lg text-sm font-bold text-slate-900">{form.official_phone || '+1 800-GALAXY-0'}</p>
+                   )}
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Headquarters Street Address</label>
+                   {isEditing ? (
+                     <input 
+                       type="text" 
+                       value={form.address}
+                       onChange={e => setForm({...form, address: e.target.value})}
+                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-900 focus:bg-white focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 outline-none transition-all"
+                     />
+                   ) : (
+                     <p className="px-4 py-3 bg-slate-50 rounded-lg text-sm font-bold text-slate-900">{form.address || '123 Enterprise Way, Silicon Valley, CA 94025'}</p>
+                   )}
+                </div>
+             </div>
+          </div>
+        )}
+
+        {activeSection === 'documents' && (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 lg:p-12 space-y-8">
+             <div className="flex items-center justify-between pb-6 border-b border-slate-100">
+                <div>
+                   <h3 className="text-lg font-bold text-slate-900 tracking-tight">Statutory Identity Documents</h3>
+                   <p className="text-xs text-slate-500 font-medium">Compliance filings, registration certificates, and statutory identity records.</p>
+                </div>
+                <button 
+                  onClick={() => onNavigate('/owner/workspaces/admin-governance')} 
+                  className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition-all"
+                >
+                  View All Compliance Docs
+                </button>
+             </div>
+
+             <div className="space-y-4">
+                {[
+                  { name: 'Incorporation Certificate.pdf', date: '2023-11-15', size: '2.4 MB', status: 'VERIFIED' },
+                  { name: 'Tax Exemption Record (501c3).pdf', date: '2024-01-10', size: '1.8 MB', status: 'ACTIVE' },
+                  { name: 'Board Accreditation Renewal.pdf', date: '2025-04-20', size: '3.1 MB', status: 'VERIFIED' },
+                ].map((doc, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200/80 rounded-xl hover:bg-white hover:shadow-sm transition-all">
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+                           PDF
+                        </div>
+                        <div>
+                           <p className="text-xs font-bold text-slate-900">{doc.name}</p>
+                           <p className="text-[10px] text-slate-400 font-medium">Uploaded {doc.date} • {doc.size}</p>
+                        </div>
+                     </div>
+                     <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md text-[9px] font-bold uppercase tracking-wider border border-emerald-200">
+                        {doc.status}
+                     </span>
+                  </div>
+                ))}
+             </div>
           </div>
         )}
       </div>

@@ -55,30 +55,7 @@ export const OwnerProfilePage: React.FC<OwnerProfilePageProps> = ({ onNavigate }
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* Back button & Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {onNavigate && (
-            <button onClick={() => onNavigate('dashboard')} className="p-2 hover:bg-slate-200/60 rounded-xl text-slate-600 transition cursor-pointer">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-          )}
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Owner Profile & Security</h1>
-            <p className="text-xs text-slate-500">Manage account credentials, active sessions & security preferences</p>
-          </div>
-        </div>
-
-        <button
-          onClick={() => setIsEditingProfile(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer"
-        >
-          <Edit className="w-4 h-4" />
-          <span>Edit Profile</span>
-        </button>
-      </div>
-
+    <div className="pt-6 px-6 pb-6 max-w-5xl mx-auto space-y-6">
       {profileSuccess && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2">

@@ -33,12 +33,23 @@ export function useAuth() {
     authStore.logout();
   };
 
+  const startRolePreview = (role: 'organization_owner' | 'principal' | 'vice_principal') => {
+    authStore.startRolePreview(role);
+  };
+
+  const exitPreviewMode = () => {
+    authStore.exitPreviewMode();
+  };
+
   return {
     user: state.user,
     isAuthenticated: state.isAuthenticated,
     isLoading: state.isLoading || isLoading,
     permissions: state.permissions,
+    previewConfig: state.previewConfig,
     login,
-    logout
+    logout,
+    startRolePreview,
+    exitPreviewMode
   };
 }

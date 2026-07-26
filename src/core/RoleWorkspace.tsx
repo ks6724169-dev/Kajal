@@ -47,8 +47,13 @@ export const RoleWorkspace: React.FC<RoleWorkspaceProps> = ({
     setActivePath(path);
   };
 
-  // Render dedicated Owner Panel without sidebar
-  if (user?.role === 'organization_owner' || currentRole === 'organization_owner') {
+  // Render dedicated Institution Management Panel for Owner, Principal, and Vice Principal
+  const isInstitutionAdminRole = 
+    user?.role === 'organization_owner' || currentRole === 'organization_owner' ||
+    user?.role === 'principal' || currentRole === 'principal' ||
+    user?.role === 'vice_principal' || currentRole === 'vice_principal';
+
+  if (isInstitutionAdminRole) {
     return <OwnerDashboardPage tenant={currentTenant} activePath={activePath} onNavigate={handleNavigationChange} />;
   }
 

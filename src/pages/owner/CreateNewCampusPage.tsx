@@ -99,52 +99,7 @@ export const CreateNewCampusPage: React.FC<CreateNewCampusPageProps> = ({ tenant
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 text-left">
-      {/* Top Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-        <div className="flex items-center gap-3">
-          {onNavigate && (
-            <button 
-              onClick={() => onNavigate('dashboard')}
-              className="p-2 hover:bg-slate-200/60 rounded-xl text-slate-600 transition cursor-pointer"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-          )}
-          <div>
-            <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-indigo-600" />
-              <h1 className="text-xl font-bold text-slate-900">Create New Campus</h1>
-            </div>
-            <p className="text-xs text-slate-500">Add a new educational branch to your organization tenant</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onNavigate && onNavigate('dashboard')}
-            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => handleCreate(true)}
-            disabled={loading}
-            className="px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-xl transition cursor-pointer"
-          >
-            Save as Draft
-          </button>
-          <button
-            onClick={() => handleCreate(false)}
-            disabled={loading}
-            className="flex items-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer disabled:opacity-50"
-          >
-            <Save className="w-4 h-4" />
-            <span>{loading ? 'Creating...' : 'Create Campus'}</span>
-          </button>
-        </div>
-      </div>
-
+    <div className="pt-6 px-6 pb-6 max-w-5xl mx-auto space-y-6 text-left">
       {/* Messages */}
       {errorMsg && (
         <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-800 flex items-center gap-2">

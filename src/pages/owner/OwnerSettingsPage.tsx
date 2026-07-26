@@ -22,28 +22,13 @@ export const OwnerSettingsPage: React.FC<OwnerSettingsPageProps> = ({ tenant, on
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-        <div className="flex items-center gap-3">
-          {onNavigate && (
-            <button onClick={() => onNavigate('dashboard')} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 cursor-pointer">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-          )}
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Settings Center</h1>
-            <p className="text-xs text-slate-500">Configure global school parameters, campus defaults & notifications</p>
-          </div>
+    <div className="pt-6 px-6 pb-6 max-w-5xl mx-auto space-y-6 text-left">
+      {saved && (
+        <div className="flex items-center gap-2 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-2xl animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          <span>Settings Saved Successfully</span>
         </div>
-
-        {saved && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl animate-fade-in">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>Settings Saved</span>
-          </div>
-        )}
-      </div>
+      )}
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* School & Organization Settings */}

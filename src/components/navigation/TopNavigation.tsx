@@ -53,24 +53,20 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
       </div>
 
       {/* Center Segment: Enterprise Branding (After Login) */}
-      <div className="hidden xl:flex items-center gap-6 px-6 border-x border-slate-100 h-full">
-        <div className="flex items-center gap-3">
-          <GalaxyLogo size="sm" showText={false} />
+      <div className="hidden lg:flex items-center gap-3 px-6 border-x border-slate-100 h-full">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-xs shrink-0">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
           <div className="text-left">
-            <h3 className="text-sm font-black text-slate-900 truncate max-w-[200px]">
-              {currentTenant?.name || 'GALAXY ENTERPRISE'}
+            <h3 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight leading-none">
+              {user?.role === 'student' ? 'Galaxy ERP — Student & Parent Portal' :
+               user?.role === 'teacher' ? 'Galaxy ERP — Teacher & Faculty Panel' :
+               'Galaxy ERP — Institution Management Panel'}
             </h3>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                <MapPin className="w-3 h-3" />
-                {user?.campus || 'MAIN CAMPUS'}
-              </span>
-              <span className="w-1 h-1 rounded-full bg-slate-200"></span>
-              <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                <CalendarDays className="w-3 h-3" />
-                {currentTenant?.academicYear || '2023-24'}
-              </span>
-            </div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+              {currentTenant?.name || 'GALAXY ENTERPRISE'}
+            </p>
           </div>
         </div>
       </div>

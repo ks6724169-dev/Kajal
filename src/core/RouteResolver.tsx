@@ -22,9 +22,9 @@ import { SecurityCenterPage } from '../pages/owner/SecurityCenterPage';
 import { GlobalSearchPage } from '../pages/owner/GlobalSearchPage';
 import { OwnerHelpSupportPage } from '../pages/owner/OwnerHelpSupportPage';
 import { CreateNewCampusPage } from '../pages/owner/CreateNewCampusPage';
-import { ModulesCataloguePage } from '../pages/owner/ModulesCataloguePage';
 import { ModuleComingSoonPage } from '../pages/owner/ModuleComingSoonPage';
 import { InstitutionManagementPage } from '../pages/owner/InstitutionManagementPage';
+import { InstitutionWorkspaceLayout } from '../components/owner/workspace/InstitutionWorkspaceLayout';
 
 export class RouteResolver {
   static renderRoute(
@@ -32,6 +32,17 @@ export class RouteResolver {
     tenant: Tenant, 
     onNavigate: (path: string) => void
   ): React.ReactNode {
+    // 8 Core Workspaces Routing
+    if (
+      path.startsWith('/owner/workspaces/') || 
+      path.startsWith('/owner/workspace/') || 
+      path.startsWith('workspace_') ||
+      path === '/owner/workspaces' ||
+      path === 'workspaces'
+    ) {
+      return <InstitutionWorkspaceLayout tenant={tenant} activePath={path} onNavigate={onNavigate} />;
+    }
+
     if (path === 'module_institution' || path === '/owner/institution-organization' || path.startsWith('/owner/institution-organization/')) {
       return <InstitutionManagementPage tenant={tenant} activePath={path} onNavigate={onNavigate} />;
     }
@@ -79,8 +90,6 @@ export class RouteResolver {
         return <MobileAppSimulator />;
       case 'design_system':
         return <FrontendExperiencePlatform />;
-      case 'modules_catalogue':
-        return <ModulesCataloguePage onNavigate={onNavigate} />;
       default:
         if (path.startsWith('module_')) {
           return <ModuleComingSoonPage modulePath={path} onNavigate={onNavigate} />;

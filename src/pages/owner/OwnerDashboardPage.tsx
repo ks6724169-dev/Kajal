@@ -9,7 +9,7 @@ import { QuickActionCenter } from '../../components/owner/QuickActionCenter';
 import { useAuth } from '../../hooks/useAuth';
 import { Tenant } from '../../types';
 import { RouteResolver } from '../../core/RouteResolver';
-import { ArrowLeft, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, RefreshCw, Settings, Building2, Search, Shield, Bell, User, HelpCircle } from 'lucide-react';
 import { useOwnerDashboard } from '../../hooks/useOwnerDashboard';
 import { InstitutionManagementPage } from './InstitutionManagementPage';
 
@@ -33,7 +33,7 @@ export const OwnerDashboardPage: React.FC<OwnerDashboardPageProps> = ({ tenant, 
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-[#FBFBFD] font-sans text-slate-900 flex flex-col">
       <OwnerHeader 
         tenantName={tenant?.name || 'Galaxy International School'}
         tenantType={tenant?.type || 'K-12 School'}
@@ -44,7 +44,7 @@ export const OwnerDashboardPage: React.FC<OwnerDashboardPageProps> = ({ tenant, 
       />
 
       <main className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
-        {activePath === 'dashboard' ? (
+        {activePath === 'dashboard' || activePath === '' ? (
           <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto w-full animate-fade-in">
             {/* Top Control Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -89,70 +89,14 @@ export const OwnerDashboardPage: React.FC<OwnerDashboardPageProps> = ({ tenant, 
                   </div>
                 </section>
 
-                {/* Operations & Alerts Row */}
-                <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-1 h-full">
-                    <QuickActionCenter onNavigate={onNavigate} />
-                  </div>
-                  <div className="lg:col-span-1 h-full">
-                    <AlertCenter onNavigate={onNavigate} stats={stats} />
-                  </div>
-                  <div className="lg:col-span-1 h-full">
-                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 h-full flex flex-col">
-                       <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
-                         <span className="text-xl">📅</span> Today's Operations
-                       </h3>
-                       <div className="flex-1 space-y-4">
-                         <div className="flex items-center justify-between">
-                           <span className="text-sm text-slate-600">Avg Attendance</span>
-                           <span className="text-sm font-bold text-slate-900">{stats?.avgAttendance || 0}%</span>
-                         </div>
-                         <div className="flex items-center justify-between">
-                           <span className="text-sm text-slate-600">Active Staff</span>
-                           <span className="text-sm font-bold text-slate-900">{stats?.activeStaff || 0}</span>
-                         </div>
-                         <div className="flex items-center justify-between">
-                           <span className="text-sm text-slate-600">Total Students</span>
-                           <span className="text-sm font-bold text-slate-900">{stats?.totalStudents || 0}</span>
-                         </div>
-                         <div className="flex items-center justify-between">
-                           <span className="text-sm text-slate-600">Fees Collected</span>
-                           <span className="text-sm font-bold text-green-600">₹{(stats?.feesCollected || 0).toLocaleString()}</span>
-                         </div>
-                         <div className="flex items-center justify-between">
-                           <span className="text-sm text-slate-600">Active Routes</span>
-                           <span className="text-sm font-bold text-slate-900">{stats?.activeRoutes || 0}</span>
-                         </div>
-                         <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                            <span className="text-xs font-bold text-slate-500 uppercase">Overall Health</span>
-                            <div className="flex items-center gap-2">
-                              <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-green-500 w-[89%]"></div>
-                              </div>
-                              <span className="text-xs font-bold text-green-600">89%</span>
-                            </div>
-                         </div>
-                       </div>
-                     </div>
-                  </div>
-                </section>
+
 
               </>
             )}
           </div>
         ) : (
-          <div className="p-4 md:p-6 lg:p-8 flex-1 max-w-[1600px] mx-auto w-full animate-fade-in">
-             <div className="mb-4">
-                <button 
-                  onClick={() => onNavigate('dashboard')}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition cursor-pointer"
-                >
-                  <ArrowLeft className="w-4 h-4" /> Back to Executive Dashboard
-                </button>
-             </div>
-             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[600px]">
-                {RouteResolver.renderRoute(activePath, tenant, onNavigate)}
-             </div>
+          <div className="w-full flex-1 animate-fade-in">
+            {RouteResolver.renderRoute(activePath, tenant, onNavigate)}
           </div>
         )}
       </main>

@@ -24,20 +24,7 @@ export const GlobalSearchPage: React.FC<GlobalSearchPageProps> = ({ onNavigate }
   });
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        {onNavigate && (
-          <button onClick={() => onNavigate('dashboard')} className="p-2 hover:bg-slate-200/60 rounded-xl text-slate-600 transition cursor-pointer">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        )}
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Global Search Engine</h1>
-          <p className="text-xs text-slate-500">Query students, staff, fee ledgers & campus modules in real time</p>
-        </div>
-      </div>
-
+    <div className="pt-6 px-6 pb-6 max-w-5xl mx-auto space-y-6">
       {/* Search Bar */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4">
         <div className="relative">
