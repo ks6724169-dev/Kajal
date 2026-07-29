@@ -72,50 +72,53 @@ export const ExecutiveKPICards: React.FC<ExecutiveKPICardsProps> = ({ onNavigate
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
       {kpis.map((kpi) => (
         <div 
           key={kpi.id} 
           onClick={() => onNavigate(kpi.route)}
-          className="bg-white rounded-2xl border border-slate-200/50 p-5 hover:shadow-[0_12px_24px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group flex flex-col justify-between"
+          className="bg-slate-50/80 backdrop-blur-sm rounded-[2rem] border border-slate-100 p-6 hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 hover:bg-white hover:border-slate-200 transition-all duration-300 cursor-pointer group flex flex-col justify-between relative overflow-hidden"
         >
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-2.5 rounded-xl ${kpi.color} shadow-xs flex items-center justify-center`}>
-                <kpi.icon className="w-4 h-4 stroke-[2.2]" />
+          {/* Subtle gradient glow effect on hover */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className={`p-3 rounded-2xl ${kpi.color} shadow-sm flex items-center justify-center`}>
+                <kpi.icon className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div className="flex items-center">
                 {kpi.trendType === 'positive' && (
-                  <span className="inline-flex items-center text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                    <TrendingUp className="w-3 h-3 mr-0.5 shrink-0" /> Stable
+                  <span className="inline-flex items-center text-[10px] font-bold text-emerald-700 bg-emerald-100/50 border border-emerald-200/50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                    <TrendingUp className="w-3 h-3 mr-1 shrink-0" /> Stable
                   </span>
                 )}
                 {kpi.trendType === 'negative' && (
-                  <span className="inline-flex items-center text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
-                    <TrendingDown className="w-3 h-3 mr-0.5 shrink-0" /> Alert
+                  <span className="inline-flex items-center text-[10px] font-bold text-rose-700 bg-rose-100/50 border border-rose-200/50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                    <TrendingDown className="w-3 h-3 mr-1 shrink-0" /> Alert
                   </span>
                 )}
                 {kpi.trendType === 'neutral' && (
-                  <span className="inline-flex items-center text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center text-[10px] font-bold text-slate-700 bg-slate-200/50 border border-slate-300/50 px-2.5 py-1 rounded-full uppercase tracking-wider">
                     Normal
                   </span>
                 )}
               </div>
             </div>
-            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1.5">{kpi.title}</p>
-            <div className="text-3xl font-bold tracking-tight text-slate-900">{kpi.value}</div>
-            <p className={`text-xs font-semibold mt-2.5 ${
+            <p className="text-slate-500 text-[11px] font-extrabold uppercase tracking-widest mb-1">{kpi.title}</p>
+            <div className="text-3xl font-black tracking-tight text-slate-900 leading-none mb-2">{kpi.value}</div>
+            <p className={`text-xs font-bold mt-3 ${
               kpi.trendType === 'positive' ? 'text-emerald-600' :
               kpi.trendType === 'negative' ? 'text-rose-600' :
-              'text-slate-400'
+              'text-slate-500'
             }`}>
               {kpi.trend}
             </p>
           </div>
           
-          <div className="mt-5 pt-3 border-t border-slate-100/70 flex items-center justify-between text-xs font-bold text-slate-400 group-hover:text-indigo-600 transition-colors">
-            <span className="tracking-wide text-[11px] font-bold">{kpi.action}</span>
-            <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+          <div className="relative z-10 mt-8 pt-4 border-t border-slate-200/60 flex items-center justify-between text-[11px] font-extrabold tracking-wide text-slate-500 group-hover:text-indigo-600 transition-colors">
+            <span>{kpi.action}</span>
+            <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
       ))}

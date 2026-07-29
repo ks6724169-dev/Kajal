@@ -12,6 +12,7 @@ import { RouteResolver } from './RouteResolver';
 import { BreadcrumbResolver } from './BreadcrumbResolver';
 import { Tenant } from '../types';
 import { OwnerDashboardPage } from '../pages/owner/OwnerDashboardPage';
+import { UniversalCommandHub } from '../components/command-hub/UniversalCommandHub';
 
 interface RoleWorkspaceProps {
   language: string;
@@ -54,7 +55,12 @@ export const RoleWorkspace: React.FC<RoleWorkspaceProps> = ({
     user?.role === 'vice_principal' || currentRole === 'vice_principal';
 
   if (isInstitutionAdminRole) {
-    return <OwnerDashboardPage tenant={currentTenant} activePath={activePath} onNavigate={handleNavigationChange} />;
+    return (
+      <>
+        <OwnerDashboardPage tenant={currentTenant} activePath={activePath} onNavigate={handleNavigationChange} />
+        <UniversalCommandHub onNavigate={handleNavigationChange} activePath={activePath} />
+      </>
+    );
   }
 
   return (

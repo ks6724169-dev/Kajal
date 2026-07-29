@@ -21,8 +21,9 @@ export const ExecutiveAnalytics: React.FC<ExecutiveAnalyticsProps> = ({ currentC
   const attendanceData = stats?.attendanceData || [];
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.02)] overflow-hidden flex flex-col h-[400px]">
-      <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+    <div className="bg-slate-50/80 backdrop-blur-sm rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col h-[400px] relative group hover:shadow-xl hover:shadow-indigo-500/5 hover:border-slate-200 transition-all duration-300">
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+      <div className="px-6 py-5 border-b border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10 bg-white/40">
         <h3 className="font-bold text-slate-900 text-sm md:text-base flex items-center gap-2">
           <LineChartIcon className="w-4 h-4 text-slate-700 stroke-[2.2]" />
           Executive Performance

@@ -10,6 +10,8 @@ import { Role } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../services/supabase';
 import { authStore } from '../store/authStore';
+import { Navigation } from '../pages/public/landing/Navigation';
+import { FooterSection } from '../pages/public/landing/FooterSection';
 
 interface LoginPageProps {
   onBack: () => void;
@@ -173,33 +175,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess, on
         </AnimatePresence>
       </div>
 
-      {/* Apple-style Top Navigation */}
-      <header className="w-full max-w-7xl mx-auto px-8 h-24 flex items-center justify-between z-10">
-        <button 
-          id="auth-global-back-btn"
-          onClick={() => {
-            if (authRoute !== 'login') {
-              setAuthRoute('login');
-            } else {
-              onBack();
-            }
-          }}
-          className="flex items-center gap-2.5 px-5 py-2.5 bg-white/70 hover:bg-white border border-slate-200/50 text-slate-900 font-bold text-[13px] rounded-full shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer backdrop-blur-sm"
-        >
-          <ArrowLeft className="w-4 h-4 text-slate-900" />
-          <span>{authRoute === 'login' ? 'Marketing' : 'Login'}</span>
-        </button>
-
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-          <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">
-            Network Secure
-          </span>
-        </div>
-      </header>
+      <Navigation onNavigate={handleNavigate} />
 
       {/* Main Container */}
-      <main className="max-w-7xl w-full mx-auto px-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center py-12 z-10">
+      <main className="max-w-7xl w-full mx-auto px-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center pt-40 pb-48 min-h-[110vh] z-10">
         
         {/* Left Side: Refined Typography & Visuals */}
         <div className="lg:col-span-5 hidden lg:flex flex-col justify-center space-y-10 select-none">
@@ -294,19 +273,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess, on
 
       </main>
 
-      {/* Apple-style minimalist Footer */}
-      <footer className="w-full py-12 px-8 z-10 mt-auto">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 border-t border-slate-200 pt-8">
-          <div className="flex items-center gap-4 text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-            <span>Galaxy Ingress</span>
-            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-            <span>Version 4.2.0</span>
-          </div>
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-            © 2026 Galaxy ERP Solutions Inc.
-          </p>
-        </div>
-      </footer>
+      <FooterSection onNavigate={handleNavigate} />
     </div>
   );
 };

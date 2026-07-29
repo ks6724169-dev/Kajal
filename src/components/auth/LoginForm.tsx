@@ -138,19 +138,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
   return (
     <div id="galaxy-erp-login-card" className="w-full max-w-xl mx-auto">
-      {/* Institution / Branding Header */}
-      <div className="text-center mb-8">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center"
-        >
-          <GalaxyLogo size="xl" />
-        </motion.div>
-      </div>
-
       {/* Main Login Form Container */}
-      <div className="bg-white rounded-[2.5rem] p-10 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden">
+      <div className="bg-white rounded-[2.5rem] p-10 md:p-12 min-h-[500px] flex flex-col justify-center shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden">
         
         {showMFAChallenge ? (
           <MFAChallenge

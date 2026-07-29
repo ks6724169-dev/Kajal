@@ -47,9 +47,10 @@ export default function App() {
   const { isAuthenticated, user } = useAuth();
 
   const navigate = (path: string) => {
-    setRoute(path);
-    if (window.location.pathname !== path && path.startsWith('/')) {
-      window.history.pushState({}, '', path);
+    const safePath = path || '';
+    setRoute(safePath);
+    if (window.location.pathname !== safePath && safePath.startsWith('/')) {
+      window.history.pushState({}, '', safePath);
     }
     if (path === '/' || path === '/landing') {
       setCurrentView('landing');
@@ -140,7 +141,9 @@ export default function App() {
   };
 
   const renderAppBody = () => {
-    if (route === '/') {
+    const safeRoute = route || '';
+
+    if (safeRoute === '/') {
       return (
         <LandingPage 
           onLogin={() => navigate('/login')} 
@@ -153,12 +156,12 @@ export default function App() {
       );
     }
 
-    if (route === '/register') {
+    if (safeRoute === '/register') {
       return <RegisterSchoolPage navigate={navigate} />;
     }
 
-    if (route.startsWith('/school-registration/') && route.endsWith('/payment')) {
-      const parts = route.split('/');
+    if (safeRoute.startsWith('/school-registration/') && safeRoute.endsWith('/payment')) {
+      const parts = safeRoute.split('/');
       const registrationId = parts[2];
       return <SchoolPaymentCheckoutPage registrationId={registrationId} navigate={navigate} />;
     }

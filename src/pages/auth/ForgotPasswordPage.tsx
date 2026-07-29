@@ -39,13 +39,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ navigate
   };
 
   return (
-    <div id="forgot-password-page" className="w-full max-w-md mx-auto">
-      <div className="text-center mb-6">
-        <div className="flex flex-col items-center">
-          <GalaxyLogo size="xl" showText={true} />
-        </div>
-      </div>
-
+    <div id="forgot-password-page" className="w-full max-w-md mx-auto pt-10">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}

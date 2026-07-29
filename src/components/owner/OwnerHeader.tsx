@@ -47,7 +47,7 @@ export const OwnerHeader: React.FC<OwnerHeaderProps> = ({
 
   return (
     <>
-      <header className="bg-white/85 backdrop-blur-xl border-b border-slate-200/80 sticky top-0 z-50 px-3 sm:px-6 py-4 sm:py-5 transition-all shadow-xs">
+      <header className="bg-transparent sticky top-0 z-[210] px-3 sm:px-6 py-4 sm:py-5 transition-all">
         <div className="max-w-[1700px] mx-auto flex items-center justify-between gap-2.5 sm:gap-4">
           
           {/* LEFT: APPLE STYLE BRAND & ROLE IDENTIFIER */}
@@ -107,8 +107,12 @@ export const OwnerHeader: React.FC<OwnerHeaderProps> = ({
 
             {/* Control Group 2: PROMINENT WORKSPACE BUTTON */}
             <button 
-              onClick={() => setShowWorkspaceLauncher(true)}
-              className="h-8.5 px-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl shadow-xs shadow-indigo-600/20 text-xs font-extrabold flex items-center gap-1.5 transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
+              onClick={() => setShowWorkspaceLauncher(!showWorkspaceLauncher)}
+              className={`h-8.5 px-3.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all duration-200 cursor-pointer whitespace-nowrap active:scale-95 shrink-0 ${
+                showWorkspaceLauncher
+                  ? 'bg-indigo-700 text-white ring-2 ring-indigo-500/50 shadow-md shadow-indigo-600/30'
+                  : 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-xs shadow-indigo-600/20'
+              }`}
               title="Open Workspaces"
             >
               <LayoutGrid className="w-4 h-4 text-white stroke-[2.2]" />

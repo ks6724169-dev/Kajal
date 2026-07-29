@@ -1,4 +1,6 @@
 import { RegistrationCertificateModal } from "../../components/auth/RegistrationCertificateModal";
+import { Navigation } from '../public/landing/Navigation';
+import { FooterSection } from '../public/landing/FooterSection';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -649,166 +651,18 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
   };
 
   return (
-    <div id="register-school-page" className="w-full min-h-screen bg-slate-50 flex flex-col lg:flex-row font-sans relative overflow-hidden selection:bg-indigo-600 selection:text-white">
+    <div id="register-school-page" className="w-full min-h-screen bg-slate-50 flex flex-col font-sans relative overflow-hidden selection:bg-indigo-600 selection:text-white">
+      <Navigation onNavigate={navigate} />
       
       {/* Decorative Blur Blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-50/40 blur-[120px] pointer-events-none z-0"></div>
       <div className="absolute bottom-[-15%] right-[-10%] w-[45vw] h-[45vw] rounded-full bg-purple-50/30 blur-[130px] pointer-events-none z-0"></div>
 
-      {/* LEFT PANEL - 40% Width */}
-      <div className="hidden lg:flex flex-col lg:w-[40%] bg-gradient-to-br from-indigo-50/40 via-slate-50/60 to-purple-50/20 border-r border-slate-200/60 p-12 overflow-y-auto h-screen justify-between relative z-10">
+      <main className="flex-1 w-full max-w-4xl mx-auto px-4 md:px-8 z-10 flex flex-col justify-center my-auto py-10 md:py-14">
+        <div className="w-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-indigo-500/10 overflow-hidden border border-slate-200/60">
+          {/* MAIN FORM PANEL */}
+          <div className="w-full flex flex-col justify-between bg-white relative">
         
-        {/* Brand Header */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-100">
-              <svg className="w-5.5 h-5.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 21l8.982-11.795H13.62l1.317-7.3H9L6 11.23H10.5l-1.688 4.674z" />
-              </svg>
-            </div>
-            <div>
-              <span className="font-display font-extrabold text-base tracking-wide text-slate-950 flex items-center gap-1.5 leading-none">
-                GALAXY <span className="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full font-bold">ERP</span>
-              </span>
-              <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest block mt-0.5 leading-none">Educational Operating System</span>
-            </div>
-          </div>
-
-          <div className="pt-8 space-y-3">
-            <h1 className="font-display font-extrabold text-3xl leading-tight text-slate-900 tracking-tight">
-              Command your campus. <br />
-              <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 bg-clip-text text-transparent">Fully automated.</span>
-            </h1>
-            <p className="text-xs text-slate-500 leading-relaxed max-w-sm">
-              Onboard your institution to GALAXY ERP and experience an integrated operating system for modern administrative control, dynamic security, and predictive insights.
-            </p>
-          </div>
-        </div>
-
-        {/* Live CSS Interactive Dashboard Graphic */}
-        <div className="my-8 relative bg-white/80 border border-slate-200/50 p-6 rounded-2xl shadow-xl shadow-slate-100/50 backdrop-blur-md">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-              <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Galaxy AI Hub Active</span>
-            </div>
-            <span className="text-[9px] font-mono font-semibold text-indigo-600 px-2 py-0.5 bg-indigo-50 rounded">SLA UPTIME 99.99%</span>
-          </div>
-
-          <div className="space-y-3">
-            <div className="p-3 bg-slate-50 rounded-xl flex items-center justify-between border border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                  <Cpu className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="text-[11px] font-bold text-slate-900">Biometric Attendance Module</h4>
-                  <p className="text-[9px] text-slate-400">Continuous check-in model</p>
-                </div>
-              </div>
-              <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Online</span>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl flex items-center justify-between border border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
-                  <CreditCard className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="text-[11px] font-bold text-slate-900">Automated Fee Collection</h4>
-                  <p className="text-[9px] text-slate-400">UPI / Cards Gateway sync</p>
-                </div>
-              </div>
-              <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">Awaiting Setup</span>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl flex items-center justify-between border border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-                  <Users className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="text-[11px] font-bold text-slate-900">Parent-Teacher Comm Node</h4>
-                  <p className="text-[9px] text-slate-400">Interactive SMS/Push triggers</p>
-                </div>
-              </div>
-              <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Ready</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Trust Badges */}
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-200/60 pt-4">
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <ShieldCheck className="w-4 h-4 text-slate-400" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">AES-256 Encrypted</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <Award className="w-4 h-4 text-slate-400" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">SOC 2 Type II</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <CheckCircle className="w-4 h-4 text-slate-400" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">GDPR Compliant</span>
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-400 leading-normal">
-            Galaxy Educational Operating Systems are hosted across geographically redundant secure data zones. 100% cloud-native SLA guaranteed.
-          </p>
-        </div>
-      </div>
-
-      {/* RIGHT PANEL - 60% Width */}
-      <div className="w-full lg:w-[60%] flex flex-col justify-between min-h-screen bg-white relative overflow-y-auto z-10">
-        
-        {/* TOP STATUS BAR */}
-        <div className="px-6 py-4 md:px-12 border-b border-slate-100 flex items-center justify-between bg-white/80 backdrop-blur-sm sticky top-0 z-20">
-          <div className="flex items-center gap-2.5 lg:hidden" onClick={() => navigate('/')}>
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 21l8.982-11.795H13.62l1.317-7.3H9L6 11.23H10.5l-1.688 4.674z" />
-              </svg>
-            </div>
-            <span className="font-display font-extrabold text-sm tracking-wide text-slate-900">GALAXY ERP</span>
-          </div>
-
-          {/* Save Draft Indicator */}
-          <div className="flex items-center gap-4 ml-auto">
-            <div className="flex items-center gap-2 text-xs">
-              {saveStatus === 'saving' && (
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></div>
-                  <span>Saving draft...</span>
-                </div>
-              )}
-              {saveStatus === 'saved' && (
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                  <span>Draft saved ({lastSavedTime})</span>
-                </div>
-              )}
-              {saveStatus === 'idle' && (
-                <button
-                  onClick={handleManualSave}
-                  className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-semibold text-xs focus:outline-none"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  Save Draft
-                </button>
-              )}
-            </div>
-
-            <button 
-              id="reg-back-to-login"
-              onClick={() => navigate('/auth/login')}
-              className="text-xs font-semibold text-slate-500 hover:text-slate-800 border border-slate-200/80 px-3 py-1.5 rounded-lg transition-all"
-            >
-              Back to Sign In
-            </button>
-          </div>
-        </div>
-
         {/* WIZARD PROGRESS BAR */}
         {!isSuccess && (
           <div className="px-6 py-6 md:px-12 bg-slate-50/50 border-b border-slate-100">
@@ -1917,12 +1771,11 @@ export const RegisterSchoolPage: React.FC<RegisterSchoolPageProps> = ({ navigate
                 </motion.div>
               )}
             </AnimatePresence>
-
           </div>
         </div>
-
       </div>
-
+      </div>
+      </main>
       <RegistrationCertificateModal
         isOpen={isCertificateModalOpen}
         onClose={() => setIsCertificateModalOpen(false)}

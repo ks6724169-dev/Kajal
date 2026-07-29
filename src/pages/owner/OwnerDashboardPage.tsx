@@ -24,16 +24,21 @@ export const OwnerDashboardPage: React.FC<OwnerDashboardPageProps> = ({ tenant, 
   const [currentCampus, setCurrentCampus] = useState('All Campuses');
   const { stats, campuses, loading, error } = useOwnerDashboard(currentCampus, tenant?.id);
 
-  const isModule01 = activePath === 'module_institution' || 
-                     activePath === '/owner/institution-organization' || 
-                     activePath.startsWith('/owner/institution-organization');
+  const safeActivePath = activePath || '';
+  const isModule01 = safeActivePath === 'module_institution' || 
+                     safeActivePath === '/owner/institution-organization' || 
+                     safeActivePath.startsWith('/owner/institution-organization');
 
   if (isModule01) {
-    return <InstitutionManagementPage tenant={tenant} activePath={activePath} onNavigate={onNavigate} />;
+    return <InstitutionManagementPage tenant={tenant} activePath={safeActivePath} onNavigate={onNavigate} />;
   }
 
   return (
-    <div className="min-h-screen bg-[#FBFBFD] font-sans text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-white font-sans text-slate-900 flex flex-col relative overflow-hidden">
+      {/* Premium Background Elements matching Landing Page */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[80%] h-[80%] bg-gradient-to-b from-indigo-50/50 to-transparent rounded-full blur-[120px]"></div>
+      </div>
       <OwnerHeader 
         tenantName={tenant?.name || 'Galaxy International School'}
         tenantType={tenant?.type || 'K-12 School'}

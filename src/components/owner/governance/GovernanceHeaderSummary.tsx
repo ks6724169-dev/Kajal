@@ -35,8 +35,9 @@ export const GovernanceHeaderSummary: React.FC<GovernanceHeaderSummaryProps> = (
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-5 lg:p-6 shadow-2xs mb-4 sm:mb-6 text-left">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-5 border-b border-slate-100">
+    <div className="bg-slate-50/80 backdrop-blur-sm rounded-[2rem] border border-slate-100 p-6 shadow-sm mb-4 sm:mb-6 text-left relative overflow-hidden group">
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none"></div>
+      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-5 border-b border-slate-200/60">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs shadow-indigo-600/20">
             <Building2 className="w-4 h-4 sm:w-5 sm:h-5" />

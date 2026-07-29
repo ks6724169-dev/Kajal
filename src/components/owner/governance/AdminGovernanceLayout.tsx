@@ -113,8 +113,9 @@ export const AdminGovernanceLayout: React.FC<AdminGovernanceLayoutProps> = ({
       />
 
       {/* Governance Work Group Navigation Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-1.5 sm:p-2 shadow-2xs">
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 scroll-smooth">
+      <div className="bg-slate-50/80 backdrop-blur-sm rounded-2xl border border-slate-100 p-1.5 sm:p-2 shadow-sm relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none"></div>
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 scroll-smooth relative z-10">
           {GOVERNANCE_WORK_GROUPS.map((group) => {
             const Icon = group.icon;
             const isActive = activeWorkGroupId === group.id;

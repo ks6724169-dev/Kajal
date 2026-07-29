@@ -32,22 +32,23 @@ export class RouteResolver {
     tenant: Tenant, 
     onNavigate: (path: string) => void
   ): React.ReactNode {
+    const safePath = path || '';
     // 8 Core Workspaces Routing
     if (
-      path.startsWith('/owner/workspaces/') || 
-      path.startsWith('/owner/workspace/') || 
-      path.startsWith('workspace_') ||
-      path === '/owner/workspaces' ||
-      path === 'workspaces'
+      safePath.startsWith('/owner/workspaces/') || 
+      safePath.startsWith('/owner/workspace/') || 
+      safePath.startsWith('workspace_') ||
+      safePath === '/owner/workspaces' ||
+      safePath === 'workspaces'
     ) {
-      return <InstitutionWorkspaceLayout tenant={tenant} activePath={path} onNavigate={onNavigate} />;
+      return <InstitutionWorkspaceLayout tenant={tenant} activePath={safePath} onNavigate={onNavigate} />;
     }
 
-    if (path === 'module_institution' || path === '/owner/institution-organization' || path.startsWith('/owner/institution-organization/')) {
-      return <InstitutionManagementPage tenant={tenant} activePath={path} onNavigate={onNavigate} />;
+    if (safePath === 'module_institution' || safePath === '/owner/institution-organization' || safePath.startsWith('/owner/institution-organization/')) {
+      return <InstitutionManagementPage tenant={tenant} activePath={safePath} onNavigate={onNavigate} />;
     }
 
-    switch (path) {
+    switch (safePath) {
       case 'dashboard':
         return <DashboardHome tenant={tenant} onNavigate={onNavigate} />;
       case 'notifications':
@@ -91,15 +92,15 @@ export class RouteResolver {
       case 'design_system':
         return <FrontendExperiencePlatform />;
       default:
-        if (path.startsWith('module_')) {
-          return <ModuleComingSoonPage modulePath={path} onNavigate={onNavigate} />;
+        if (safePath.startsWith('module_')) {
+          return <ModuleComingSoonPage modulePath={safePath} onNavigate={onNavigate} />;
         }
         return (
           <div className="p-8 flex flex-col items-center justify-center text-center space-y-4">
             <div className="text-4xl">🌌</div>
             <h3 className="text-lg font-bold text-slate-800">Operational Space Synchronizing</h3>
             <p className="text-xs text-slate-500 max-w-sm">
-              The workspace sub-module (<code>{path}</code>) is resolving in our educational operating system.
+              The workspace sub-module (<code>{safePath}</code>) is resolving in our educational operating system.
             </p>
             <button
               onClick={() => onNavigate('dashboard')}

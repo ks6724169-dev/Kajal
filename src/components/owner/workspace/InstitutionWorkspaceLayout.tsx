@@ -26,11 +26,12 @@ export const InstitutionWorkspaceLayout: React.FC<InstitutionWorkspaceLayoutProp
 
   // Extract active workspace ID from path if present e.g. /owner/workspaces/academic-curriculum or workspace_academic-curriculum
   const extractWorkspaceId = (): string => {
-    if (activePath.startsWith('/owner/workspaces/')) {
-      return activePath.replace('/owner/workspaces/', '');
+    const safePath = activePath || '';
+    if (safePath.startsWith('/owner/workspaces/')) {
+      return safePath.replace('/owner/workspaces/', '');
     }
-    if (activePath.startsWith('workspace_')) {
-      return activePath.replace('workspace_', '');
+    if (safePath.startsWith('workspace_')) {
+      return safePath.replace('workspace_', '');
     }
     if (initialWorkspaceId) {
       return initialWorkspaceId;
